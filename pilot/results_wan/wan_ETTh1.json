@@ -1,0 +1,42 @@
+{
+  "config": {
+    "dataset": "ETTh1",
+    "data_dir": "/nyx-storage1/hanliu/wm4ts/data",
+    "out_dir": "pilot/results_wan",
+    "subsample": 96,
+    "subsample_seed": 123,
+    "steps": 20,
+    "guidance": 1.0,
+    "shift": 3.0,
+    "height": 480,
+    "width": 832,
+    "fpp": 4,
+    "batch": 2,
+    "sdedit": 0.6,
+    "sdedit_init": "smean",
+    "prompt": "bands",
+    "save_probe": "",
+    "P": 24,
+    "context": 288,
+    "horizon": 96,
+    "n": 96
+  },
+  "results": {
+    "naive": {
+      "MSE": 0.8981,
+      "MAE": 0.5971
+    },
+    "snaive": {
+      "MSE": 0.5524,
+      "MAE": 0.4499
+    },
+    "smean": {
+      "MSE": 0.3849,
+      "MAE": 0.3995
+    },
+    "wan21_1.3b": {
+      "MSE": 0.3806,
+      "MAE": 0.3989
+    }
+  }
+}

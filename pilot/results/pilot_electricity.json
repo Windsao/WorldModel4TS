@@ -1,0 +1,35 @@
+{
+  "config": {
+    "dataset": "electricity",
+    "P": 24,
+    "context": 288,
+    "horizon": 96,
+    "n_series": 13824
+  },
+  "results": {
+    "naive": {
+      "MSE": 1.5532,
+      "MAE": 0.904
+    },
+    "snaive": {
+      "MSE": 0.3186,
+      "MAE": 0.3252
+    },
+    "smean": {
+      "MSE": 0.2138,
+      "MAE": 0.2853
+    },
+    "visionts": {
+      "MSE": 0.2372,
+      "MAE": 0.2952
+    },
+    "videomae": {
+      "MSE": 0.2223,
+      "MAE": 0.2968
+    },
+    "videomae_zero": {
+      "MSE": 0.2251,
+      "MAE": 0.3036
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "config": {
+    "dataset": "traffic",
+    "P": 24,
+    "context": 288,
+    "horizon": 96,
+    "train_windows": 40000,
+    "epochs": 1,
+    "train_cap": 40000
+  },
+  "results": {
+    "videomae_ln": {
+      "MSE": 0.4669,
+      "MAE": 0.3662
+    },
+    "videomae_full": {
+      "MSE": 0.3062,
+      "MAE": 0.2559
+    },
+    "videomae_rand": {
+      "MSE": 0.4099,
+      "MAE": 0.3604
+    }
+  }
+}

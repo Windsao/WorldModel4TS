@@ -1,0 +1,53 @@
+{
+  "config": {
+    "dataset": "ETTh1",
+    "P": 24,
+    "context": 2352,
+    "horizon": 336,
+    "stride": 1,
+    "n_test": 17815,
+    "n_train": 41671
+  },
+  "results": {
+    "naive": {
+      "MSE": 1.3299,
+      "MAE": 0.746
+    },
+    "snaive": {
+      "MSE": 0.6499,
+      "MAE": 0.5008
+    },
+    "smean": {
+      "MSE": 0.5673,
+      "MAE": 0.5626
+    },
+    "visionts_zs": {
+      "MSE": 0.4026,
+      "MAE": 0.4181
+    },
+    "visionts_ft": {
+      "MSE": 0.4028,
+      "MAE": 0.4191
+    },
+    "lcvmae_zs": {
+      "MSE": 0.5706,
+      "MAE": 0.566
+    },
+    "lcvmae_zero": {
+      "MSE": 0.5728,
+      "MAE": 0.5676
+    },
+    "lcvmae_ft": {
+      "MSE": 0.5671,
+      "MAE": 0.5622
+    },
+    "lcvmae_fullft": {
+      "MSE": 0.5186,
+      "MAE": 0.4884
+    },
+    "visionts_fullft": {
+      "MSE": 0.4934,
+      "MAE": 0.4612
+    }
+  }
+}

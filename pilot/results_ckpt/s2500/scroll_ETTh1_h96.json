@@ -1,0 +1,21 @@
+{
+  "config": {
+    "dataset": "ETTh1",
+    "P": 24,
+    "context": 960,
+    "horizon": 96,
+    "scroll": 2,
+    "stride": 32,
+    "n_test": 616
+  },
+  "results": {
+    "scroll_zs": {
+      "MSE": 0.6752,
+      "MAE": 0.5284
+    },
+    "scroll_zero": {
+      "MSE": 0.8675,
+      "MAE": 0.6864
+    }
+  }
+}

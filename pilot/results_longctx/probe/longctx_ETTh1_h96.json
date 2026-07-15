@@ -1,0 +1,45 @@
+{
+  "config": {
+    "dataset": "ETTh1",
+    "P": 24,
+    "context": 2592,
+    "horizon": 96,
+    "stride": 64,
+    "n_test": 308,
+    "n_train": 3000
+  },
+  "results": {
+    "naive": {
+      "MSE": 1.2226,
+      "MAE": 0.7032
+    },
+    "snaive": {
+      "MSE": 0.5173,
+      "MAE": 0.4353
+    },
+    "smean": {
+      "MSE": 0.5641,
+      "MAE": 0.5649
+    },
+    "visionts_zs": {
+      "MSE": 0.3537,
+      "MAE": 0.3855
+    },
+    "visionts_ft": {
+      "MSE": 0.343,
+      "MAE": 0.3813
+    },
+    "lcvmae_zs": {
+      "MSE": 0.5656,
+      "MAE": 0.5663
+    },
+    "lcvmae_zero": {
+      "MSE": 0.5715,
+      "MAE": 0.5702
+    },
+    "lcvmae_ft": {
+      "MSE": 0.563,
+      "MAE": 0.5642
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "config": {
+    "dataset": "solar",
+    "P": 144,
+    "context": 1728,
+    "horizon": 576,
+    "n_series": 96
+  },
+  "results": {
+    "visionts": {
+      "MSE": 0.2924,
+      "MAE": 0.2457
+    },
+    "videomae": {
+      "MSE": 0.192,
+      "MAE": 0.2187
+    },
+    "videomae_zero": {
+      "MSE": 0.2044,
+      "MAE": 0.2367
+    }
+  }
+}

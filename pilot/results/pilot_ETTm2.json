@@ -1,0 +1,35 @@
+{
+  "config": {
+    "dataset": "ETTm2",
+    "P": 96,
+    "context": 1152,
+    "horizon": 384,
+    "n_series": 819
+  },
+  "results": {
+    "naive": {
+      "MSE": 0.3975,
+      "MAE": 0.3925
+    },
+    "snaive": {
+      "MSE": 0.3861,
+      "MAE": 0.3765
+    },
+    "smean": {
+      "MSE": 0.3569,
+      "MAE": 0.3922
+    },
+    "visionts": {
+      "MSE": 0.3168,
+      "MAE": 0.3456
+    },
+    "videomae": {
+      "MSE": 0.3591,
+      "MAE": 0.3932
+    },
+    "videomae_zero": {
+      "MSE": 0.3571,
+      "MAE": 0.3923
+    }
+  }
+}

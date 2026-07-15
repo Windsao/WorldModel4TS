@@ -1,0 +1,17 @@
+{
+  "config": {
+    "dataset": "traffic",
+    "P": 24,
+    "context": 288,
+    "horizon": 96,
+    "train_windows": 40000,
+    "epochs": 1,
+    "train_cap": 40000
+  },
+  "results": {
+    "chronos": {
+      "MSE": 0.3182,
+      "MAE": 0.2529
+    }
+  }
+}

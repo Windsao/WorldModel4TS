@@ -1,0 +1,35 @@
+{
+  "config": {
+    "dataset": "ETTh2",
+    "P": 24,
+    "context": 288,
+    "horizon": 96,
+    "n_series": 819
+  },
+  "results": {
+    "naive": {
+      "MSE": 0.4017,
+      "MAE": 0.4012
+    },
+    "snaive": {
+      "MSE": 0.3885,
+      "MAE": 0.3791
+    },
+    "smean": {
+      "MSE": 0.3573,
+      "MAE": 0.3931
+    },
+    "visionts": {
+      "MSE": 0.3246,
+      "MAE": 0.3502
+    },
+    "videomae": {
+      "MSE": 0.3603,
+      "MAE": 0.3946
+    },
+    "videomae_zero": {
+      "MSE": 0.3568,
+      "MAE": 0.3929
+    }
+  }
+}

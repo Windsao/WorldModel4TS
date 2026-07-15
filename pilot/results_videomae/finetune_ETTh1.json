@@ -1,0 +1,25 @@
+{
+  "config": {
+    "dataset": "ETTh1",
+    "P": 24,
+    "context": 288,
+    "horizon": 96,
+    "train_windows": 40000,
+    "epochs": 1,
+    "train_cap": 40000
+  },
+  "results": {
+    "videomae_ln": {
+      "MSE": 0.4128,
+      "MAE": 0.4087
+    },
+    "videomae_full": {
+      "MSE": 0.3945,
+      "MAE": 0.4037
+    },
+    "videomae_rand": {
+      "MSE": 0.3882,
+      "MAE": 0.4057
+    }
+  }
+}

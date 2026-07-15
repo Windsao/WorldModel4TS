@@ -1,0 +1,35 @@
+{
+  "config": {
+    "dataset": "traffic",
+    "P": 24,
+    "context": 288,
+    "horizon": 96,
+    "n_series": 9152
+  },
+  "results": {
+    "naive": {
+      "MSE": 2.2463,
+      "MAE": 1.0467
+    },
+    "snaive": {
+      "MSE": 0.9434,
+      "MAE": 0.4918
+    },
+    "smean": {
+      "MSE": 0.5048,
+      "MAE": 0.3819
+    },
+    "visionts": {
+      "MSE": 0.5776,
+      "MAE": 0.3978
+    },
+    "videomae": {
+      "MSE": 0.5159,
+      "MAE": 0.3888
+    },
+    "videomae_zero": {
+      "MSE": 0.5149,
+      "MAE": 0.3929
+    }
+  }
+}
