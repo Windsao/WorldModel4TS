@@ -6,6 +6,10 @@ image-pretrained models (VisionTS / ImageNet MAE) or TS baselines — plus ongoi
 work on *making* the transfer work via continued pretraining on synthetic
 TS-rendered videos.
 
+> **Preprocessing status:** Phase 6 currently has two causal-leakage risks in the
+> synthetic renderer. See [Known Issues and Data-Preprocessing Research Plan](PREPROCESSING_AND_KNOWN_ISSUES.md)
+> before interpreting or extending continued-pretraining results.
+
 **TL;DR (as of 2026-07-15):** naive transfer of video models to time series
 **fails** under every protocol we tested — zero-shot, LayerNorm fine-tuning, full
 fine-tuning, pretraining ablations, literature-level long-context protocols, and
