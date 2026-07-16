@@ -1,0 +1,189 @@
+{
+  "method": "step_shift_video",
+  "status": "supported_non_degenerate_temporal_axis_not_a_broad_baseline_win",
+  "protocol": {
+    "checkpoint": "MCG-NJU/videomae-base",
+    "context": 600,
+    "horizons": [96, 192],
+    "training_windows": 4096,
+    "training_window_seed": 0,
+    "model_seeds": [0, 1, 2],
+    "validation_cap": 0,
+    "test_cap": 0,
+    "evaluation_stride": 24,
+    "epochs": 8,
+    "patience": 3,
+    "video_frames": 2,
+    "tubelets": 1,
+    "trainable_components": ["ingest_mlp", "forecast_mlp"],
+    "frozen_backbone_parameters": 86227200,
+    "test_used_for_selection": false
+  },
+  "construction": {
+    "previous_frame": "[x_0, x_0, ..., x_(L-2)]",
+    "current_frame": "[x_0, x_1, ..., x_(L-1)]",
+    "normalization": "shared statistics from the observed current context only",
+    "repeat_control": "two copies of the current frame; exactly the static-image input",
+    "reverse_control": "current frame followed by previous frame"
+  },
+  "input_non_degeneracy": {
+    "metric": "mean squared pixel difference between consecutive frames over the first 16 fixed training windows",
+    "ETTh1": {"96": 0.005975, "192": 0.006738},
+    "ETTm1": {"96": 0.002798, "192": 0.001998},
+    "weather": {"96": 0.001449, "192": 0.000316}
+  },
+  "control_protocol": "After selecting each forward model checkpoint by validation MSE, evaluate that same checkpoint on repeated and reversed validation clips without retraining. Positive deltas mean the chronological previous/current clip is better.",
+  "results": {
+    "ETTh1": {
+      "96": {
+        "test": {
+          "MSE_seeds": [0.3822, 0.3946, 0.3851],
+          "MSE_mean": 0.3873,
+          "MSE_std": 0.0065,
+          "MAE_seeds": [0.4150, 0.4186, 0.4135],
+          "MAE_mean": 0.4157,
+          "MAE_std": 0.0026
+        },
+        "validation_counterfactual": {
+          "forward_MSE_seeds": [0.7194, 0.7706, 0.7299],
+          "repeat_MSE_seeds": [0.8099, 0.7569, 0.8694],
+          "reverse_MSE_seeds": [1.0073, 0.7757, 0.8671],
+          "repeat_minus_forward_mean": 0.0721,
+          "reverse_minus_forward_mean": 0.1434,
+          "forward_better_than_repeat_seeds": 2,
+          "forward_better_than_reverse_seeds": 3
+        },
+        "comparison_MSE_mean": {
+          "static_image": 0.4026,
+          "residual_dyadic_rgb": 0.3946
+        }
+      },
+      "192": {
+        "test": {
+          "MSE_seeds": [0.4236, 0.4092, 0.4316],
+          "MSE_mean": 0.4215,
+          "MSE_std": 0.0114,
+          "MAE_seeds": [0.4465, 0.4301, 0.4416],
+          "MAE_mean": 0.4394,
+          "MAE_std": 0.0084
+        },
+        "validation_counterfactual": {
+          "forward_MSE_seeds": [0.9896, 0.9845, 0.9860],
+          "repeat_MSE_seeds": [1.0886, 1.0086, 0.9993],
+          "reverse_MSE_seeds": [1.3158, 1.0522, 1.0074],
+          "repeat_minus_forward_mean": 0.0455,
+          "reverse_minus_forward_mean": 0.1384,
+          "forward_better_than_repeat_seeds": 3,
+          "forward_better_than_reverse_seeds": 3
+        },
+        "comparison_MSE_mean": {
+          "static_image": 0.4369,
+          "residual_dyadic_rgb": 0.4145
+        }
+      }
+    },
+    "ETTm1": {
+      "96": {
+        "test": {
+          "MSE_seeds": [0.3303, 0.3375, 0.3273],
+          "MSE_mean": 0.3317,
+          "MSE_std": 0.0052,
+          "MAE_seeds": [0.3762, 0.3859, 0.3771],
+          "MAE_mean": 0.3797,
+          "MAE_std": 0.0054
+        },
+        "validation_counterfactual": {
+          "forward_MSE_seeds": [0.4391, 0.4175, 0.4253],
+          "repeat_MSE_seeds": [0.4582, 0.4390, 0.4339],
+          "reverse_MSE_seeds": [0.4632, 0.4202, 0.4297],
+          "repeat_minus_forward_mean": 0.0164,
+          "reverse_minus_forward_mean": 0.0104,
+          "forward_better_than_repeat_seeds": 3,
+          "forward_better_than_reverse_seeds": 3
+        },
+        "comparison_MSE_mean": {
+          "static_image": 0.3332,
+          "residual_dyadic_rgb": 0.3302
+        }
+      },
+      "192": {
+        "test": {
+          "MSE_seeds": [0.3665, 0.3586, 0.3677],
+          "MSE_mean": 0.3643,
+          "MSE_std": 0.0049,
+          "MAE_seeds": [0.4000, 0.3942, 0.3997],
+          "MAE_mean": 0.3980,
+          "MAE_std": 0.0033
+        },
+        "validation_counterfactual": {
+          "forward_MSE_seeds": [0.5331, 0.5386, 0.5403],
+          "repeat_MSE_seeds": [0.5502, 0.5695, 0.5469],
+          "reverse_MSE_seeds": [0.5507, 0.5419, 0.5421],
+          "repeat_minus_forward_mean": 0.0182,
+          "reverse_minus_forward_mean": 0.0076,
+          "forward_better_than_repeat_seeds": 3,
+          "forward_better_than_reverse_seeds": 3
+        },
+        "comparison_MSE_mean": {
+          "static_image": 0.3542,
+          "residual_dyadic_rgb": 0.3605
+        }
+      }
+    },
+    "weather": {
+      "96": {
+        "test": {
+          "MSE_seeds": [0.1776, 0.1601, 0.1751],
+          "MSE_mean": 0.1709,
+          "MSE_std": 0.0095,
+          "MAE_seeds": [0.2379, 0.2141, 0.2308],
+          "MAE_mean": 0.2276,
+          "MAE_std": 0.0122
+        },
+        "validation_counterfactual": {
+          "forward_MSE_seeds": [0.4499, 0.4286, 0.4446],
+          "repeat_MSE_seeds": [0.4631, 0.4308, 0.4469],
+          "reverse_MSE_seeds": [0.4605, 0.4321, 0.4559],
+          "repeat_minus_forward_mean": 0.0059,
+          "reverse_minus_forward_mean": 0.0085,
+          "forward_better_than_repeat_seeds": 3,
+          "forward_better_than_reverse_seeds": 3
+        },
+        "comparison_MSE_mean": {
+          "static_image": 0.1721,
+          "residual_dyadic_rgb": 0.1661
+        }
+      },
+      "192": {
+        "test": {
+          "MSE_seeds": [0.2045, 0.2186, 0.2127],
+          "MSE_mean": 0.2119,
+          "MSE_std": 0.0071,
+          "MAE_seeds": [0.2556, 0.2718, 0.2658],
+          "MAE_mean": 0.2644,
+          "MAE_std": 0.0082
+        },
+        "validation_counterfactual": {
+          "forward_MSE_seeds": [0.4778, 0.4970, 0.5164],
+          "repeat_MSE_seeds": [0.4783, 0.4942, 0.5199],
+          "reverse_MSE_seeds": [0.4801, 0.4983, 0.5258],
+          "repeat_minus_forward_mean": 0.0004,
+          "reverse_minus_forward_mean": 0.0043,
+          "forward_better_than_repeat_seeds": 2,
+          "forward_better_than_reverse_seeds": 3
+        },
+        "comparison_MSE_mean": {
+          "static_image": 0.2140,
+          "residual_dyadic_rgb": 0.2084
+        }
+      }
+    }
+  },
+  "summary": {
+    "positive_mean_repeat_control_cells": 6,
+    "positive_mean_reverse_control_cells": 6,
+    "test_MSE_cells_better_than_static_image": 5,
+    "test_MSE_cells_better_than_residual_dyadic_rgb": 1,
+    "claim_boundary": "The previous/current pair is a genuinely used time axis and is competitive with the static adapter. It does not establish a broad accuracy improvement over residual dyadic RGB or deterministic time-series baselines."
+  }
+}

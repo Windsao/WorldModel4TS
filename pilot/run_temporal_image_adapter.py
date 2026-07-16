@@ -1,6 +1,6 @@
 """Causal temporal augmentations of VisionTS images for frozen VideoMAE.
 
-Two simple, dataset-independent views are implemented:
+The following dataset-independent views are implemented:
 
 ``prefix_video``
     Uniformly spaced causal prefixes of the observed context become a short
@@ -25,6 +25,12 @@ Two simple, dataset-independent views are implemented:
     A coarse-to-fine video whose grayscale frames use dyadic sampling strides
     (for four frames: 8, 4, 2, 1).  This exposes temporal scale to VideoMAE's
     temporal convolution without dataset-specific lag choices.
+
+``step_shift_video``
+    Full-context frames end at consecutive observed steps.  A two-frame clip is
+    exactly previous-step then current-step and uses one tubelet/196 tokens—the
+    same capacity as the static model.  Repeat/reverse variants isolate whether
+    the genuine one-step arrow of time contributes.
 
 Only the pixel ingest MLP and final forecast MLP are trainable.
 """
@@ -124,6 +130,22 @@ class CausalImageViews(nn.Module):
                 )
             self.video_frames = video_frames
             self.input_channels = 1
+        elif mode in {
+            "step_shift_video",
+            "step_shift_video_repeat",
+            "step_shift_video_reverse",
+        }:
+            if video_frames != 2:
+                raise ValueError(
+                    "step-shift video is validated for exactly two frames"
+                )
+            if context < 2:
+                raise ValueError("context is too short for a previous/current pair")
+            self.shift_renderer = static.VisionTSRenderer(
+                context, horizon, periodicity
+            )
+            self.video_frames = video_frames
+            self.input_channels = 1
         else:
             raise ValueError(f"unknown temporal image mode: {mode}")
         self.full_renderer = static.VisionTSRenderer(
@@ -149,6 +171,26 @@ class CausalImageViews(nn.Module):
             for stride, renderer in zip(self.scales, self.renderers):
                 start = (self.context - 1) % stride
                 images.append(renderer(x[:, start::stride])[0])
+            return torch.stack(images, dim=1), mean, scale
+
+        if self.mode.startswith("step_shift_video"):
+            images = []
+            for lag in range(self.video_frames - 1, -1, -1):
+                if lag:
+                    shifted = torch.cat(
+                        (x[:, :1].expand(-1, lag), x[:, :-lag]), dim=1
+                    )
+                else:
+                    shifted = x
+                images.append(
+                    self.shift_renderer.render_with_statistics(
+                        shifted, mean, scale
+                    )
+                )
+            if self.mode == "step_shift_video_repeat":
+                images = [images[-1]] * self.video_frames
+            elif self.mode == "step_shift_video_reverse":
+                images = images[::-1]
             return torch.stack(images, dim=1), mean, scale
 
         frames = []
@@ -286,6 +328,8 @@ def main():
             "prefix_video", "dyadic_rgb", "dyadic_rgb_residual",
             "dyadic_prefix_video",
             "dyadic_scale_video",
+            "step_shift_video", "step_shift_video_repeat",
+            "step_shift_video_reverse",
         )
     )
     parser.add_argument("--video-frames", type=int, default=4)
@@ -306,6 +350,10 @@ def main():
     parser.add_argument("--weight-decay", type=float, default=1e-3)
     parser.add_argument("--no-checkpoint", action="store_true")
     parser.add_argument("--skip-test", action="store_true")
+    parser.add_argument(
+        "--eval-controls", action="store_true",
+        help="evaluate the selected checkpoint on repeated/reversed validation views",
+    )
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument(
         "--window-seed", type=int, default=None,
@@ -355,9 +403,19 @@ def main():
         raise RuntimeError(f"unexpected trainable parameters: {trainable_names}")
     trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
     frozen = sum(p.numel() for p in model.parameters() if not p.requires_grad)
+    with torch.no_grad():
+        diagnostic_x = torch.from_numpy(
+            bundles["train"][0][:min(16, len(bundles["train"][0]))]
+        ).to(DEVICE)
+        diagnostic_frames, _, _ = model.views(diagnostic_x)
+        temporal_delta_mse = float(
+            (diagnostic_frames[:, 1:] - diagnostic_frames[:, :-1])
+            .float().square().mean().item()
+        )
     print(
         f"video_frames={model.views.video_frames} "
         f"tubelets={model.views.video_frames // 2} "
+        f"temporal_delta_MSE={temporal_delta_mse:.6f} "
         f"trainable={trainable:,} frozen={frozen:,}",
         flush=True,
     )
@@ -366,6 +424,28 @@ def main():
         args.batch_size, args.input_lr, args.head_lr,
         args.weight_decay, args.patience,
     )
+    validation_controls = {}
+    control_modes = {
+        "step_shift_video": (
+            "step_shift_video_repeat", "step_shift_video_reverse"
+        ),
+    }
+    if args.eval_controls and args.mode in control_modes:
+        original_mode = model.views.mode
+        for control_mode in control_modes[args.mode]:
+            model.views.mode = control_mode
+            score = static.evaluate(
+                model, bundles["val"], max(args.batch_size, 16)
+            )
+            validation_controls[control_mode] = {
+                key: round(value, 4) for key, value in score.items()
+            }
+            print(
+                f"[control:validation] {control_mode} "
+                f"{validation_controls[control_mode]}",
+                flush=True,
+            )
+        model.views.mode = original_mode
     result = None
     if not args.skip_test:
         result = static.evaluate(model, bundles["test"], max(args.batch_size, 16))
@@ -394,10 +474,12 @@ def main():
             "trainable_parameters": trainable,
             "frozen_parameters": frozen,
             "test_used_for_selection": False,
+            "input_temporal_delta_mse": temporal_delta_mse,
             "model_seed": args.seed,
             "effective_window_seed": window_seed,
         },
         "results": {} if result is None else {args.mode: result},
+        "validation_controls": validation_controls,
     }
     if args.mode in {"prefix_video", "dyadic_prefix_video"}:
         payload["config"]["prefix_endpoints"] = model.views.endpoints

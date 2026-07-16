@@ -67,11 +67,12 @@ class VisionTSRenderer(nn.Module):
         ) / self.norm_const
         return mean, scale
 
-    def forward(self, x):
-        if x.ndim != 2 or x.shape[1] != self.context:
-            raise ValueError(f"expected [batch, {self.context}], got {tuple(x.shape)}")
-        mean, scale = self.statistics(x)
-        normalized = (x - mean) / scale
+    def render_normalized(self, normalized):
+        """Render a pre-normalized, observed-only sequence."""
+        if normalized.ndim != 2 or normalized.shape[1] != self.context:
+            raise ValueError(
+                f"expected [batch, {self.context}], got {tuple(normalized.shape)}"
+            )
         if self.pad_left:
             normalized = F.pad(normalized, (self.pad_left, 0), mode="replicate")
         periods = normalized.shape[1] // self.periodicity
@@ -84,7 +85,16 @@ class VisionTSRenderer(nn.Module):
             dtype=image.dtype,
             device=image.device,
         )
-        return torch.cat((image, masked), dim=-1), mean, scale
+        return torch.cat((image, masked), dim=-1)
+
+    def render_with_statistics(self, x, mean, scale):
+        """Render ``x`` using explicitly supplied observed-only statistics."""
+        return self.render_normalized((x - mean) / scale)
+
+    def forward(self, x):
+        mean, scale = self.statistics(x)
+        image = self.render_with_statistics(x, mean, scale)
+        return image, mean, scale
 
 
 class PixelIngestMLP(nn.Module):

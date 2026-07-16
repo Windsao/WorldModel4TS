@@ -228,7 +228,7 @@ zero-shot suite. `pilot/download_benchmark_data.py` fetches the exact TSLib
 files. Every runner now supports periods 24, 96, and 144, and the original
 ETTh1 phase tokenization remains bit-exact.
 
-`pilot/run_temporal_image_adapter.py` tests five causal, dataset-independent
+`pilot/run_temporal_image_adapter.py` contains six causal, dataset-independent
 ways to expose time to VideoMAE. The selected method is **residual dyadic RGB**:
 
 1. subsample the complete observed context at strides 1, 2, and 4;
@@ -266,6 +266,44 @@ single-seed/capped-subset table even though the aggregate 3/6 count happens to
 remain unchanged. Protocol metadata, individual seed scores, statistical
 controls, and validation-only ablations are in `pilot/results_benchmark_grid/`.
 
+## Meaningful two-frame time axis
+
+The static and residual-RGB inputs above still duplicate one image to satisfy
+VideoMAE's size-two tubelet. `step_shift_video` instead makes the two frames
+carry consecutive observed states:
+
+```text
+frame 0 = VisionTS([x0, x0, ..., x(L-2)])
+frame 1 = VisionTS([x0, x1, ..., x(L-1)])
+```
+
+Both frames use statistics from the observed current context only. This remains
+one tubelet, 196 tokens, and the same ingest/forecast-MLP capacity as the static
+adapter. A repeat control is exactly the duplicated static input; a reverse
+control swaps the genuine frames.
+
+The control test evaluates the **same selected checkpoint** on forward, repeat,
+and reverse validation inputs. Separately training each convention would let
+the forecast head adapt and would not test whether the learned model uses time.
+Across the same full-split, three-seed protocol, repeat-minus-forward and
+reverse-minus-forward validation MSE are positive on average in all 6 cells.
+The input is therefore nondegenerate and its order is used.
+
+| dataset / H | previous/current MSE | static MSE | residual dyadic MSE | repeat Δ | reverse Δ |
+|---|---:|---:|---:|---:|---:|
+| ETTh1 / 96 | **0.3873 ± 0.0065** | 0.4026 ± 0.0155 | 0.3946 ± 0.0270 | +0.0721 | +0.1434 |
+| ETTh1 / 192 | 0.4215 ± 0.0114 | 0.4369 ± 0.0200 | **0.4145 ± 0.0043** | +0.0455 | +0.1384 |
+| ETTm1 / 96 | 0.3317 ± 0.0052 | 0.3332 ± 0.0085 | **0.3302 ± 0.0094** | +0.0164 | +0.0104 |
+| ETTm1 / 192 | 0.3643 ± 0.0049 | **0.3542 ± 0.0065** | 0.3605 ± 0.0089 | +0.0182 | +0.0076 |
+| Weather / 96 | 0.1709 ± 0.0095 | 0.1721 ± 0.0030 | **0.1661 ± 0.0048** | +0.0059 | +0.0085 |
+| Weather / 192 | 0.2119 ± 0.0071 | 0.2140 ± 0.0078 | **0.2084 ± 0.0034** | +0.0004 | +0.0043 |
+
+It improves mean MSE over the static adapter in 5/6 cells, but over residual
+dyadic RGB in only 1/6. This supports a meaningful and competitive temporal
+axis, not a broad accuracy or state-of-the-art claim. Full construction,
+limitations, seed scores, and reproduction instructions are in
+`pilot/PREVIOUS_CURRENT_VIDEO.md` and `pilot/results_temporal_axis/`.
+
 ## Diagnosed failure modes (why naive transfer fails)
 
 1. **Level-pathway blindness.** VideoMAE's `norm_pix_loss` training predicts
@@ -290,12 +328,13 @@ pilot/
   run_lagged_lora.py    # fast lag-matrix frozen-vs-LoRA experiment
   run_mlp_adapter.py    # ingest MLP -> frozen VideoMAE -> forecast MLP
   run_visionts_static_adapter.py # exact VisionTS image -> static VideoMAE
-  run_temporal_image_adapter.py # causal prefix/dyadic time augmentations
+  run_temporal_image_adapter.py # causal prefix/dyadic/previous-current views
   run_reference_baselines.py # naive, seasonal, VisionTS, and Chronos
   download_benchmark_data.py # official ETTm1 and Weather files
   test_no_lookahead.py  # split, scaling, and forecast-mask regression checks
   test_visionts_static_adapter.py # renderer equivalence and causality checks
   test_temporal_image_adapter.py # temporal view causality/geometry checks
+  PREVIOUS_CURRENT_VIDEO.md # validated nondegenerate two-frame construction
   PILOT_RESULTS.md      # detailed phase 1-3 write-up
   results*/             # result JSONs (+ Wan probe images)
 ```
@@ -327,6 +366,10 @@ python pilot/run_temporal_image_adapter.py --dataset ETTm1 \
   --data-dir pilot/data --mode dyadic_rgb_residual --horizon 96 \
   --train-cap 4096 --val-cap 1024 --test-cap 1024 --batch-size 32 \
   --no-checkpoint
+python pilot/run_temporal_image_adapter.py --dataset ETTm1 \
+  --data-dir pilot/data --mode step_shift_video --video-frames 2 \
+  --horizon 96 --train-cap 4096 --val-cap 0 --test-cap 0 \
+  --eval-stride 24 --window-seed 0 --seed 0 --no-checkpoint --eval-controls
 python pilot/test_temporal_image_adapter.py
 ```
 
