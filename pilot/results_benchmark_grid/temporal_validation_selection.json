@@ -1,0 +1,18 @@
+{
+  "selection_protocol": {
+    "horizon": 96,
+    "datasets": ["ETTh1", "ETTm1", "weather"],
+    "criterion": "validation MSE across all three datasets",
+    "test_evaluated_during_selection": false,
+    "globally_selected_method": "dyadic_rgb_residual"
+  },
+  "best_validation_mse": {
+    "static_image": {"ETTh1": 0.7497, "ETTm1": 0.4156, "weather": 0.4341},
+    "prefix_video_4": {"ETTh1": 0.7708, "ETTm1": 0.4323, "weather": 0.4039},
+    "dyadic_rgb": {"ETTh1": 0.7144, "ETTm1": 0.4022, "weather": 0.4325},
+    "dyadic_prefix_video_2": {"ETTh1": 0.7196, "ETTm1": 0.4247, "weather": 0.4320},
+    "dyadic_scale_video_4": {"ETTh1": 0.7419, "ETTm1": 0.4076, "weather": 0.3929},
+    "dyadic_rgb_residual": {"ETTh1": 0.7174, "ETTm1": 0.3934, "weather": 0.4319}
+  },
+  "interpretation": "Residual dyadic RGB was selected globally because it was strongest on ETTm1 and approximately tied with dyadic RGB on ETTh1 and Weather while preserving the static-image identity path."
+}

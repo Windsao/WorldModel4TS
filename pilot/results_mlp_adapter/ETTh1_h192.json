@@ -1,0 +1,32 @@
+{
+  "protocol": {
+    "dataset": "ETTh1",
+    "context": 600,
+    "horizon": 192,
+    "period": 24,
+    "train_windows": 4096,
+    "validation_windows": 791,
+    "test_windows": 791,
+    "evaluation_stride": 24,
+    "normalization": "dataset train-split standardization plus reversible per-window input statistics",
+    "training_loss": "MSE on targets normalized only with observed-context mean/std",
+    "lookahead_regression_checks": "passed"
+  },
+  "architecture": {
+    "path": "ingest_mlp -> frozen_videomae_encoder_12_blocks -> forecast_mlp",
+    "trainable_modules": ["ingest_mlp", "forecast_mlp"],
+    "trainable_parameters": 911246,
+    "frozen_parameters": 86227200,
+    "raw_or_embedding_skip": false,
+    "ridge_head": false
+  },
+  "selection": {
+    "criterion": "validation MSE",
+    "best_validation_mse": 1.0658342375114302,
+    "test_used_for_selection": false
+  },
+  "results": {
+    "mlp_adapter": {"MSE": 0.4728, "MAE": 0.4654}
+  },
+  "conclusion": "The strict two-MLP frozen-VideoMAE baseline is weaker at horizon 192 than at horizon 96."
+}

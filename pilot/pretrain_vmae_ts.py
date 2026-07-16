@@ -62,8 +62,14 @@ def synth_series(rng, n_periods, P):
 
 
 # ---------------------------------------------------------------- rendering
-def to_gray(y):
-    mu, sd = y.mean(), y.std() + 1e-8
+def to_gray(y, statistics):
+    """Scale rendered values using an explicitly observable reference only.
+
+    Using statistics from all of ``y`` leaks masked-future level and variance
+    into visible pixels.  Forecast examples pass their visible prefix; random
+    mask examples pass an independent, non-rendered burn-in prefix.
+    """
+    mu, sd = statistics.mean(), statistics.std() + 1e-8
     return np.clip((y - mu) / (3 * sd), -1, 1) * 0.5 + 0.5
 
 
@@ -121,7 +127,8 @@ class TSVideos(IterableDataset):
         while True:
             scroll = rng.random() < 0.5
             n_p = (NF - 1) * SCROLL + COLS if scroll else LC_STEPS * COLS
-            if rng.random() < 0.5:                         # forecast mask
+            forecast = rng.random() < 0.5
+            if forecast:                                  # forecast mask
                 # scroll: future must stay inside the last tubelet -> hp <= 4
                 hp = int(rng.integers(1, 5 if scroll else 9))
                 mask = (forecast_mask_scroll(hp) if scroll
@@ -134,7 +141,20 @@ class TSVideos(IterableDataset):
             vids = []
             for _ in range(self.batch):
                 P = int(rng.integers(16, 169))
-                g = to_gray(synth_series(rng, n_p, P))
+                # Random masks have no causal visible prefix, so draw an
+                # independent calibration segment that is never rendered.
+                # Forecast masks instead match evaluation exactly: statistics
+                # come from the observed context and never from the target.
+                burn_periods = 16
+                series = synth_series(rng, burn_periods + n_p, P)
+                burn = series[:burn_periods * P]
+                rendered = series[burn_periods * P:]
+                if forecast:
+                    visible_steps = (n_p - hp) * P
+                    statistics = rendered[:visible_steps]
+                else:
+                    statistics = burn
+                g = to_gray(rendered, statistics)
                 vid = (render_scroll(g, P) if scroll
                        else render_lc(g, P))
                 vids.append((vid - IMN_MEAN) / IMN_STD)

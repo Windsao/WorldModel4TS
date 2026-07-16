@@ -1,0 +1,36 @@
+{
+  "protocol": {
+    "dataset": "ETTh1",
+    "context": 600,
+    "horizon": 192,
+    "period": 24,
+    "train_windows": 4096,
+    "validation_windows": 791,
+    "test_windows": 791,
+    "evaluation_stride": 24,
+    "selection": "best validation MSE; test never used for selection",
+    "lookahead_regression_checks": "passed",
+    "visionts_renderer_equivalence": "bit-exact against visionts 1.0.1"
+  },
+  "architecture": {
+    "path": "VisionTS image -> ingest_mlp -> frozen VideoMAE patch projection and 12-block encoder -> forecast_mlp",
+    "visionts_input_patches": 4,
+    "visionts_masked_patches": 10,
+    "video_frames": 2,
+    "video_tubelets": 1,
+    "frames_are_identical": true,
+    "trainable_modules": ["ingest_mlp", "forecast_mlp"],
+    "trainable_parameters": 153195,
+    "frozen_parameters": 86227200,
+    "raw_or_embedding_skip": false
+  },
+  "selection": {
+    "best_validation_mse": 0.9982287056879107
+  },
+  "results": {
+    "visionts_static_videomae": {"MSE": 0.4225, "MAE": 0.4455},
+    "strict_phase_mlp_adapter": {"MSE": 0.4728, "MAE": 0.4654},
+    "visionts_zero_shot": {"MSE": 0.4266, "MAE": 0.4091},
+    "chronos_bolt_base_zero_shot": {"MSE": 0.4381, "MAE": 0.4102}
+  }
+}

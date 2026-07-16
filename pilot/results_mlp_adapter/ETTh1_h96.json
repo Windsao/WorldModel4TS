@@ -1,0 +1,34 @@
+{
+  "protocol": {
+    "dataset": "ETTh1",
+    "context": 600,
+    "horizon": 96,
+    "period": 24,
+    "train_windows": 4096,
+    "validation_windows": 819,
+    "test_windows": 819,
+    "evaluation_stride": 24,
+    "normalization": "dataset train-split standardization plus reversible per-window input statistics",
+    "training_loss": "MSE on targets normalized only with observed-context mean/std",
+    "lookahead_regression_checks": "passed"
+  },
+  "architecture": {
+    "path": "ingest_mlp -> frozen_videomae_encoder_12_blocks -> forecast_mlp",
+    "trainable_modules": ["ingest_mlp", "forecast_mlp"],
+    "trainable_parameters": 886574,
+    "frozen_parameters": 86227200,
+    "raw_or_embedding_skip": false,
+    "ridge_head": false
+  },
+  "selection": {
+    "criterion": "validation MSE",
+    "best_validation_mse": 0.7954877885221513,
+    "test_used_for_selection": false
+  },
+  "results": {
+    "mlp_adapter": {"MSE": 0.4188, "MAE": 0.4300},
+    "visionts_zero_shot": {"MSE": 0.3916, "MAE": 0.3810},
+    "chronos_bolt_base_zero_shot": {"MSE": 0.3899, "MAE": 0.3809}
+  },
+  "conclusion": "The strict two-MLP frozen-VideoMAE adapter runs correctly but is not competitive at horizon 96."
+}

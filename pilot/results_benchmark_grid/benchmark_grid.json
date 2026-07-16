@@ -1,0 +1,87 @@
+{
+  "protocol": {
+    "datasets": ["ETTh1", "ETTm1", "weather"],
+    "context": 600,
+    "horizons": [96, 192],
+    "train_windows_for_adapters": 4096,
+    "adapter_model_seeds": [0, 1, 2],
+    "fixed_window_seed": 0,
+    "evaluation_stride": 24,
+    "full_validation_and_test_splits": true,
+    "dataset_normalization": "statistics from training split only",
+    "window_normalization": "statistics from observed context only",
+    "checkpoint_selection": "validation MSE only",
+    "test_used_for_selection": false,
+    "no_lookahead_tests": "passed",
+    "primary_metric": "mean MSE over three adapter optimization seeds",
+    "warning": "n=3 estimates optimization variance but is not a significance study"
+  },
+  "results": {
+    "ETTh1": {
+      "96": {
+        "static_image": {"MSE_seeds": [0.3875, 0.4017, 0.4185], "MSE_mean": 0.4026, "MSE_std": 0.0155, "MAE_mean": 0.4276, "MAE_std": 0.0136},
+        "residual_dyadic_rgb": {"MSE_seeds": [0.3808, 0.4257, 0.3772], "MSE_mean": 0.3946, "MSE_std": 0.0270, "MAE_mean": 0.4231, "MAE_std": 0.0227},
+        "visionts": {"MSE": 0.3916, "MAE": 0.3810},
+        "chronos": {"MSE": 0.3899, "MAE": 0.3809},
+        "naive": {"MSE": 0.9996, "MAE": 0.6109},
+        "seasonal_naive": {"MSE": 0.5117, "MAE": 0.4333}
+      },
+      "192": {
+        "static_image": {"MSE_seeds": [0.4225, 0.4284, 0.4597], "MSE_mean": 0.4369, "MSE_std": 0.0200, "MAE_mean": 0.4511, "MAE_std": 0.0123},
+        "residual_dyadic_rgb": {"MSE_seeds": [0.4194, 0.4111, 0.4131], "MSE_mean": 0.4145, "MSE_std": 0.0043, "MAE_mean": 0.4349, "MAE_std": 0.0058},
+        "visionts": {"MSE": 0.4266, "MAE": 0.4091},
+        "chronos": {"MSE": 0.4381, "MAE": 0.4102},
+        "naive": {"MSE": 1.0129, "MAE": 0.6266},
+        "seasonal_naive": {"MSE": 0.5834, "MAE": 0.4698}
+      }
+    },
+    "ETTm1": {
+      "96": {
+        "static_image": {"MSE_seeds": [0.3346, 0.3241, 0.3410], "MSE_mean": 0.3332, "MSE_std": 0.0085, "MAE_mean": 0.3795, "MAE_std": 0.0049},
+        "residual_dyadic_rgb": {"MSE_seeds": [0.3215, 0.3401, 0.3290], "MSE_mean": 0.3302, "MSE_std": 0.0094, "MAE_mean": 0.3798, "MAE_std": 0.0097},
+        "visionts": {"MSE": 0.3687, "MAE": 0.3615},
+        "chronos": {"MSE": 0.3187, "MAE": 0.3292},
+        "naive": {"MSE": 1.3388, "MAE": 0.6782},
+        "seasonal_naive": {"MSE": 0.4224, "MAE": 0.3864}
+      },
+      "192": {
+        "static_image": {"MSE_seeds": [0.3528, 0.3485, 0.3613], "MSE_mean": 0.3542, "MSE_std": 0.0065, "MAE_mean": 0.3875, "MAE_std": 0.0007},
+        "residual_dyadic_rgb": {"MSE_seeds": [0.3580, 0.3704, 0.3532], "MSE_mean": 0.3605, "MSE_std": 0.0089, "MAE_mean": 0.3923, "MAE_std": 0.0065},
+        "visionts": {"MSE": 0.3838, "MAE": 0.3749},
+        "chronos": {"MSE": 0.3768, "MAE": 0.3633},
+        "naive": {"MSE": 1.3931, "MAE": 0.7076},
+        "seasonal_naive": {"MSE": 0.4628, "MAE": 0.4056}
+      }
+    },
+    "weather": {
+      "96": {
+        "static_image": {"MSE_seeds": [0.1694, 0.1716, 0.1754], "MSE_mean": 0.1721, "MSE_std": 0.0030, "MAE_mean": 0.2304, "MAE_std": 0.0043},
+        "residual_dyadic_rgb": {"MSE_seeds": [0.1716, 0.1644, 0.1624], "MSE_mean": 0.1661, "MSE_std": 0.0048, "MAE_mean": 0.2206, "MAE_std": 0.0052},
+        "visionts": {"MSE": 0.2942, "MAE": 0.2833},
+        "chronos": {"MSE": 0.1746, "MAE": 0.2073},
+        "naive": {"MSE": 0.2483, "MAE": 0.2523},
+        "seasonal_naive": {"MSE": 0.3164, "MAE": 0.2879}
+      },
+      "192": {
+        "static_image": {"MSE_seeds": [0.2228, 0.2114, 0.2078], "MSE_mean": 0.2140, "MSE_std": 0.0078, "MAE_mean": 0.2637, "MAE_std": 0.0087},
+        "residual_dyadic_rgb": {"MSE_seeds": [0.2115, 0.2089, 0.2048], "MSE_mean": 0.2084, "MSE_std": 0.0034, "MAE_mean": 0.2618, "MAE_std": 0.0058},
+        "visionts": {"MSE": 0.3053, "MAE": 0.2964},
+        "chronos": {"MSE": 0.2185, "MAE": 0.2498},
+        "naive": {"MSE": 0.2977, "MAE": 0.2893},
+        "seasonal_naive": {"MSE": 0.3423, "MAE": 0.3048}
+      }
+    }
+  },
+  "primary_mse_winners": {
+    "ETTh1_96": "chronos",
+    "ETTh1_192": "residual_dyadic_rgb",
+    "ETTm1_96": "chronos",
+    "ETTm1_192": "static_image",
+    "weather_96": "residual_dyadic_rgb",
+    "weather_192": "residual_dyadic_rgb"
+  },
+  "locked_residual_mse_wins": 3,
+  "locked_residual_mse_cells": 6,
+  "mae_wins_for_residual_method": 0,
+  "retracted_claim": "The earlier 3/6 count based on one seed and capped evaluation subsets is superseded by this full-split, three-seed table. The count happens to remain 3/6, but one winning cell changes and uncertainty is material."
+}

@@ -52,8 +52,9 @@ P = CONTEXT = HORIZON = None
 DATASETS = {
     "ETTh1":       dict(kind="ett",    file="ETTh1.csv",       P=24,  borders=(8640, 11520, 14400)),
     "ETTh2":       dict(kind="ett",    file="ETTh2.csv",       P=24,  borders=(8640, 11520, 14400)),
-    "ETTm1":       dict(kind="ett",    file="ETTm1.csv",       P=96,  borders=(34560, 46080, 57600)),
+    "ETTm1":       dict(kind="ett",    file="ETTm1.csv",       alt_file="ETT-small/ETTm1.csv", P=96, borders=(34560, 46080, 57600)),
     "ETTm2":       dict(kind="ett",    file="ETTm2.csv",       P=96,  borders=(34560, 46080, 57600)),
+    "weather":     dict(kind="csv",    file="weather.csv",     alt_file="weather/weather.csv", P=144),
     "electricity": dict(kind="lstnet", file="electricity.txt", P=24,  max_ch=64),
     "traffic":     dict(kind="lstnet", file="traffic.txt",     P=24,  max_ch=64),
     "solar":       dict(kind="lstnet", file="solar_AL.txt",    P=144, max_ch=64),
@@ -72,9 +73,17 @@ def load_dataset(name, data_dir):
     cfg = DATASETS[name]
     configure(cfg["P"])
     path = os.path.join(data_dir, cfg["file"])
-    if cfg["kind"] == "ett":
+    if not os.path.isfile(path) and cfg.get("alt_file"):
+        path = os.path.join(data_dir, cfg["alt_file"])
+    if cfg["kind"] in {"ett", "csv"}:
         data = pd.read_csv(path).iloc[:, 1:].values.astype(np.float32)
-        b_train, b_val, b_test = cfg["borders"]
+        if cfg["kind"] == "ett":
+            b_train, b_val, b_test = cfg["borders"]
+        else:
+            total = len(data)
+            b_train, b_val, b_test = (
+                int(0.7 * total), int(0.8 * total), total
+            )
     else:
         data = np.loadtxt(path, delimiter=",").astype(np.float32)
         T = len(data)

@@ -138,24 +138,133 @@ The VisionTS++ move, one modality up. Continue VideoMAE pretraining on
 AR noise + level shifts + spikes) rendered as videos in both layouts, with 50%
 forecast-shaped masks / 50% native tube masks, and **`norm_pix_loss=False`** so
 the model learns to predict raw pixels — directly repairing the diagnosed
-level-pathway blindness. Purely synthetic -> zero benchmark leakage.
+level-pathway blindness. Purely synthetic -> zero benchmark overlap.
 (`pilot/pretrain_vmae_ts.py`, 20k steps x batch 32, 2x A40)
 
-**First signals (checkpoint @ step 2500 of 20k, ETTh1 stride 32, zero-shot):**
+> **Leakage audit (2026-07-16):** the original synthetic renderer normalized
+> each clip using statistics from the complete clip, including masked forecast
+> values. Visible pixels therefore contained future level/variance information.
+> The code now uses visible-context statistics for forecast masks and a separate
+> non-rendered burn-in prefix for random masks. All checkpoints and numbers from
+> before this fix must be discarded and retrained.
+
+The now-invalid checkpoint @ step 2500 had reported:
 
 | | model | blank-control | Δ |
 |---|---|---|---|
 | LC layout | 0.740 | 1.083 | **model adds +31% signal** |
 | scroll layout | 0.675 | 0.868 | **model adds +22% signal** |
 
-The **first configuration in the entire study where a video model demonstrably
-predicts the future of a numeric series zero-shot** (Kinetics checkpoints never
-beat their controls). Absolute quality at 12.5% of training is still behind
-VisionTS (0.355); the learning curve across checkpoints (2.5k/5k/.../20k) will
-tell where it lands.
+These values are retained only as an audit record and are not evidence of
+zero-shot forecasting performance.
 
 Also tested: channel augmentation (R=raw, G=first difference, B=expanding mean)
 — no zero-shot gain with the Kinetics checkpoint (0.569 vs 0.566 grayscale).
+
+## Fast experimental arm — lag matrices + frozen/LoRA VideoMAE
+
+`pilot/run_lagged_lora.py` is a deliberately cheap alternative to continued
+pretraining. It keeps the Kinetics checkpoint frozen and compares it with
+query/value LoRA (rank 4 by default; no learned input or forecast head). Each of
+12 visible frames is a rolling lag matrix whose newest length-P window occupies
+the bottom patch row. RGB carries three history scales: raw-step stride 1,
+quarter-period stride P/4, and full-period stride P. Four future frames are fully
+masked and their reconstructed bottom rows give the next four periods.
+
+The default quick protocol uses 2,048 seeded training windows, 1,024 seeded test
+windows, and one LoRA epoch. It does not use a VideoMAE-TS checkpoint and is not
+included in the result tables above yet.
+
+## Strict two-MLP frozen-backbone adapter
+
+`pilot/run_mlp_adapter.py` implements the constrained architecture directly:
+
+```
+numeric tubelet features -> ingest MLP -> frozen VideoMAE encoder -> forecast MLP
+```
+
+The ingest MLP is initialized to the checkpoint's native constant-patch 3D
+convolution and learns a nonlinear residual. Gradients pass through all 12
+encoder blocks, but all 86.2M VideoMAE parameters remain frozen. The forecast
+MLP receives only the final encoder tokens; there is no raw-history,
+patch-embedding, inverse-projection, or ridge skip.
+
+Leakage-audited ETTh1 pilots (context 600, 4,096 train windows, full
+validation/test at stride 24) score **0.4188 / 0.4300** MSE/MAE at horizon 96
+and **0.4728 / 0.4654** at horizon 192. The results are stored in
+`pilot/results_mlp_adapter/`.
+
+## VisionTS image -> static VideoMAE -> MLP forecast
+
+`pilot/run_visionts_static_adapter.py` replaces the hand-built phase tubelets
+with the installed VisionTS 1.0.1 preprocessing exactly: context-only
+normalization, periodic folding, bilinear resizing to four observed patch
+columns, and ten zero forecast columns. Its output is one 224x224 grayscale
+image. VideoMAE's native temporal convolution has tubelet size 2, so a literal
+one-frame tensor is invalid; the runner duplicates the image into the smallest
+legal static clip, two identical frames and therefore exactly one tubelet.
+
+The trainable pixel MLP maps each grayscale value to VideoMAE's RGB input. The
+frozen patch projection and all 12 frozen encoder blocks produce 196 final
+tokens, which are the only input to the forecast MLP. There is no raw-series or
+embedding skip. The renderer is bit-exact against VisionTS and has a regression
+test proving that changing future values cannot alter its image or statistics.
+
+Initial seed-0 ETTh1 results (MSE / MAE; superseded by the multi-seed table below):
+
+| horizon | strict phase MLP | static-image VideoMAE | VisionTS zero-shot | Chronos-Bolt-base |
+|---:|---:|---:|---:|---:|
+| 96 | 0.4188 / 0.4300 | **0.3875** / 0.4195 | 0.3916 / 0.3810 | 0.3899 / **0.3809** |
+| 192 | 0.4728 / 0.4654 | **0.4225** / 0.4455 | 0.4266 / **0.4091** | 0.4381 / 0.4102 |
+
+The static-image adapter is competitive on MSE and is best in both rows, but it
+does not win MAE. Full configs and results are in `pilot/results_static_image/`.
+
+## Residual dyadic RGB time augmentation
+
+The expanded benchmark adds ETTm1 (15-minute electricity-transformer data) and
+Weather (10-minute meteorology), both from VisionTS's official six-dataset
+zero-shot suite. `pilot/download_benchmark_data.py` fetches the exact TSLib
+files. Every runner now supports periods 24, 96, and 144, and the original
+ETTh1 phase tokenization remains bit-exact.
+
+`pilot/run_temporal_image_adapter.py` tests five causal, dataset-independent
+ways to expose time to VideoMAE. The selected method is **residual dyadic RGB**:
+
+1. subsample the complete observed context at strides 1, 2, and 4;
+2. render each scale with the exact VisionTS transform;
+3. place the three images in RGB;
+4. initialize the ingest MLP to repeat only stride 1 as grayscale, exactly
+   reproducing the static input, while zero-initialized residual weights learn
+   whether strides 2/4 help;
+5. duplicate the image only because VideoMAE requires two frames per tubelet.
+
+The strides are a fixed dyadic scale-space, not dataset-specific seasonal lags.
+The residual version has only 70 more parameters than the static ingest MLP and
+still trains only the ingest/forecast MLPs. Actual short-video alternatives
+(four causal prefixes, a two-frame dyadic-prefix pair, and a four-frame
+coarse-to-fine scale video) were selected on validation only and did not win.
+
+Due-diligence results use every stride-24 validation/test window and three model
+seeds with a fixed set of 4,096 training windows. Trainable-method values below
+are mean ± sample standard deviation; zero-shot references are deterministic:
+
+| dataset / H | static image MSE | residual dyadic MSE | VisionTS MSE | Chronos MSE |
+|---|---:|---:|---:|---:|
+| ETTh1 / 96 | 0.4026 ± 0.0155 | 0.3946 ± 0.0270 | 0.3916 | **0.3899** |
+| ETTh1 / 192 | 0.4369 ± 0.0200 | **0.4145 ± 0.0043** | 0.4266 | 0.4381 |
+| ETTm1 / 96 | 0.3332 ± 0.0085 | 0.3302 ± 0.0094 | 0.3687 | **0.3187** |
+| ETTm1 / 192 | **0.3542 ± 0.0065** | 0.3605 ± 0.0089 | 0.3838 | 0.3768 |
+| Weather / 96 | 0.1721 ± 0.0030 | **0.1661 ± 0.0048** | 0.2942 | 0.1746 |
+| Weather / 192 | 0.2140 ± 0.0078 | **0.2084 ± 0.0034** | 0.3053 | 0.2185 |
+
+The globally selected residual method is best on mean MSE in **3/6 cells
+(50%)**, but seed variance is material—especially ETTh1/96—and it wins no MAE
+cells. Three seeds quantify optimization variance but do not establish
+statistical significance. This full-split table supersedes the earlier
+single-seed/capped-subset table even though the aggregate 3/6 count happens to
+remain unchanged. Protocol metadata, individual seed scores, statistical
+controls, and validation-only ablations are in `pilot/results_benchmark_grid/`.
 
 ## Diagnosed failure modes (why naive transfer fails)
 
@@ -178,6 +287,15 @@ pilot/
   run_longctx.py        # Phase 4: literature protocol, LC-VMAE layout
   run_scroll.py         # Phase 5: scrolling-window rendering
   pretrain_vmae_ts.py   # Phase 6: continued pretraining (torchrun, DDP)
+  run_lagged_lora.py    # fast lag-matrix frozen-vs-LoRA experiment
+  run_mlp_adapter.py    # ingest MLP -> frozen VideoMAE -> forecast MLP
+  run_visionts_static_adapter.py # exact VisionTS image -> static VideoMAE
+  run_temporal_image_adapter.py # causal prefix/dyadic time augmentations
+  run_reference_baselines.py # naive, seasonal, VisionTS, and Chronos
+  download_benchmark_data.py # official ETTm1 and Weather files
+  test_no_lookahead.py  # split, scaling, and forecast-mask regression checks
+  test_visionts_static_adapter.py # renderer equivalence and causality checks
+  test_temporal_image_adapter.py # temporal view causality/geometry checks
   PILOT_RESULTS.md      # detailed phase 1-3 write-up
   results*/             # result JSONs (+ Wan probe images)
 ```
@@ -194,6 +312,22 @@ python pilot/run_finetune.py --dataset ETTh1 --data-dir pilot/data
 python pilot/run_longctx.py  --dataset ETTh1 --hp 4 --stride 1
 VMAE_CKPT=<ckpt_dir> python pilot/run_longctx.py ...   # eval a continued-pretrained ckpt
 torchrun --nproc_per_node=2 pilot/pretrain_vmae_ts.py --steps 20000 --out <dir>
+python pilot/run_lagged_lora.py --dataset ETTh1 --data-dir pilot/data
+python pilot/test_no_lookahead.py
+python pilot/run_mlp_adapter.py --dataset ETTh1 --data-dir pilot/data \
+  --horizon 96 --train-cap 4096 --val-cap 0 --batch-size 32 --no-checkpoint
+python pilot/run_visionts_static_adapter.py --dataset ETTh1 \
+  --data-dir pilot/data --horizon 96 --train-cap 4096 --val-cap 0 \
+  --batch-size 32 --no-checkpoint
+python pilot/test_visionts_static_adapter.py
+python pilot/download_benchmark_data.py --data-dir pilot/data
+python pilot/run_reference_baselines.py --dataset ETTm1 --data-dir pilot/data \
+  --horizon 96
+python pilot/run_temporal_image_adapter.py --dataset ETTm1 \
+  --data-dir pilot/data --mode dyadic_rgb_residual --horizon 96 \
+  --train-cap 4096 --val-cap 1024 --test-cap 1024 --batch-size 32 \
+  --no-checkpoint
+python pilot/test_temporal_image_adapter.py
 ```
 
 ## Roadmap
@@ -203,7 +337,7 @@ torchrun --nproc_per_node=2 pilot/pretrain_vmae_ts.py --steps 20000 --out <dir>
       forecast-mask ratio; layout mix; equal-budget image-MAE continued
       pretraining as the critical *video-vs-image* control
 - [ ] LN-FT / full-FT on top of VideoMAE-TS
-- [ ] Hankel (delay-embedding) rendering — motion structure closest to video
+- [ ] Evaluate the implemented lag/Hankel LoRA arm on all 7 datasets
 - [ ] Wan2.1 with fine-tuned temporal-inpainting adapter (LoRA)
 
 ## Closest prior work
