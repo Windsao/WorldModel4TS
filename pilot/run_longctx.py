@@ -190,31 +190,114 @@ def predict(model, X, batch=48, **kw):
     return np.concatenate(out)
 
 
-def ln_finetune(model, Xtr, Ytr, lr=1e-4, batch=32, regime="ln"):
+def ln_finetune(model, Xtr, Ytr, lr=1e-4, batch=32, regime="ln", epochs=1):
+    import math
     n_tr = 0
     for n, p in model.named_parameters():
-        p.requires_grad = (regime == "full") or "norm" in n.lower()
+        p.requires_grad = (regime == "full") or "norm" in n.lower() \
+            or "head" in n.lower()
         n_tr += p.requires_grad * p.numel()
-    print(f"[info] {regime}-FT trainable {n_tr/1e6:.2f}M", flush=True)
+    print(f"[info] {regime}-FT trainable {n_tr/1e6:.2f}M epochs={epochs}",
+          flush=True)
     params = [p for p in model.parameters() if p.requires_grad]
     opt = torch.optim.AdamW(params, lr=lr)
+    n_steps = epochs * ((len(Xtr) + batch - 1) // batch)
+    si = 0
     model.train()
-    perm = np.random.default_rng(0).permutation(len(Xtr))
-    tot = 0.0
-    for i in range(0, len(Xtr), batch):
-        idx = perm[i:i + batch]
-        xb = torch.from_numpy(Xtr[idx]).float().to(DEVICE)
-        yb = torch.from_numpy(Ytr[idx]).float().to(DEVICE)
-        loss = F.mse_loss(model(xb), yb)
-        opt.zero_grad()
-        loss.backward()
-        torch.nn.utils.clip_grad_norm_(params, 1.0)
-        opt.step()
-        tot += loss.item() * len(idx)
-        if (i // batch) % 200 == 0:
-            print(f"[info] step {i//batch} loss {loss.item():.4f}", flush=True)
-    print(f"[info] epoch train MSE {tot/len(Xtr):.4f}", flush=True)
+    for ep in range(epochs):
+        perm = np.random.default_rng(ep).permutation(len(Xtr))
+        tot = 0.0
+        for i in range(0, len(Xtr), batch):
+            for pg in opt.param_groups:                    # cosine schedule
+                pg["lr"] = lr * 0.5 * (1 + math.cos(math.pi * si / n_steps))
+            si += 1
+            idx = perm[i:i + batch]
+            xb = torch.from_numpy(Xtr[idx]).float().to(DEVICE)
+            yb = torch.from_numpy(Ytr[idx]).float().to(DEVICE)
+            loss = F.mse_loss(model(xb), yb)
+            opt.zero_grad()
+            loss.backward()
+            torch.nn.utils.clip_grad_norm_(params, 1.0)
+            opt.step()
+            tot += loss.item() * len(idx)
+            if (i // batch) % 300 == 0:
+                print(f"[info] ep{ep} step {i//batch} loss {loss.item():.4f}",
+                      flush=True)
+        print(f"[info] epoch {ep} train MSE {tot/len(Xtr):.4f}", flush=True)
     return model
+
+
+class HankelHead(LCVMAE):
+    """Delay-embedding video + regression head (doc section 4.2/4.5).
+
+    Frame f = Hankel matrix of a sliding context window: H[i, j] = w[j + i*d]
+    (rows = lags, columns = time), so temporal evolution flows diagonally and
+    recurring motifs become textures — the closest TS analog of natural video
+    motion. Context-only rendering (no future pixels exist), causal by
+    construction; forecast comes from the numeric head, no decode needed.
+    """
+
+    W, D, NLAG = 512, 4, 64
+
+    def __init__(self, P, hp, pretrained=True):
+        super().__init__(P, hp, pretrained)
+        d = self.m.config.hidden_size
+        self.head = nn.Sequential(nn.LayerNorm(d), nn.Linear(d, hp * P))
+        nj = self.W - (self.NLAG - 1) * self.D
+        idx = (torch.arange(self.NLAG)[:, None] * self.D +
+               torch.arange(nj)[None, :])
+        self.register_buffer("hidx", idx)                  # [64, nj]
+
+    def forward(self, x, zero_pred=False):
+        B, L = x.shape
+        mu = x.mean(1, keepdim=True)
+        sd = x.std(1, keepdim=True) + 1e-8
+        g = (((x - mu) / (3 * sd)).clamp(-1, 1) + 1) / 2
+        s = max(1, (L - self.W) // 15)
+        frames = []
+        for f in range(16):
+            st = min(f * s, L - self.W)
+            w = g[:, st:st + self.W]
+            H = w[:, self.hidx]                            # [B, 64, nj]
+            frames.append(H)
+        fr = torch.stack(frames, 1)                        # [B, 16, 64, nj]
+        img = F.interpolate(fr.reshape(B * 16, 1, *fr.shape[2:]),
+                            size=(IMG, IMG), mode="bilinear",
+                            align_corners=False)
+        vid = img.view(B, 16, 1, IMG, IMG).repeat(1, 1, 3, 1, 1)
+        vid = (vid - self.imn_mean.to(x.device)) / self.imn_std.to(x.device)
+        out = self.m.videomae(pixel_values=vid)            # no mask: full video
+        z = self.head(out.last_hidden_state.mean(1))
+        return z * sd + mu
+
+
+class NLinearL(nn.Module):
+    def __init__(self, context, horizon):
+        super().__init__()
+        self.lin = nn.Linear(context, horizon)
+
+    def forward(self, x):
+        last = x[:, -1:]
+        return self.lin(x - last) + last
+
+
+class LCVMAEHead(LCVMAE):
+    """Encoder + direct regression head — bypasses the pixel-reconstruction
+    decode path entirely (the suspected zero-shot bottleneck)."""
+
+    def __init__(self, P, hp, pretrained=True):
+        super().__init__(P, hp, pretrained)
+        d = self.m.config.hidden_size
+        self.head = nn.Sequential(nn.LayerNorm(d), nn.Linear(d, hp * P))
+
+    def forward(self, x, zero_pred=False):
+        B = x.shape[0]
+        vid, mu, sd = self.render(x)
+        out = self.m.videomae(pixel_values=vid,
+                              bool_masked_pos=self.bool_masked.unsqueeze(0)
+                              .expand(B, -1))
+        z = self.head(out.last_hidden_state.mean(1))       # [B, horizon]
+        return z * sd + mu
 
 
 class VisionTSWrap(nn.Module):
@@ -280,6 +363,20 @@ def main():
         "visionts_fullft": lambda: predict(
             ln_finetune(VisionTSWrap(P, context, horizon).to(DEVICE), Xtr, Ytr,
                         lr=2e-5, regime="full"), Xte, batch=128),
+        # FT-focused arms: 3-epoch cosine recipe (use VMAE_CKPT=v2 for CPT init)
+        "lcvmae_ft3": lambda: predict(
+            ln_finetune(LCVMAE(P, args.hp).to(DEVICE), Xtr, Ytr,
+                        lr=5e-5, regime="full", epochs=3), Xte),
+        "lcvmae_head3": lambda: predict(
+            ln_finetune(LCVMAEHead(P, args.hp).to(DEVICE), Xtr, Ytr,
+                        lr=5e-5, regime="full", epochs=3), Xte),
+        "nlinear": lambda: predict(
+            ln_finetune(NLinearL(context, horizon).to(DEVICE), Xtr, Ytr,
+                        lr=1e-3, regime="full", epochs=10, batch=256),
+            Xte, batch=512),
+        "hankel_head3": lambda: predict(
+            ln_finetune(HankelHead(P, args.hp).to(DEVICE), Xtr, Ytr,
+                        lr=5e-5, regime="full", epochs=3), Xte),
     }
     names = list(METHODS) if args.methods == "all" else args.methods.split(",")
 

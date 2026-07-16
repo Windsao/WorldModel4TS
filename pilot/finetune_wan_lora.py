@@ -51,7 +51,7 @@ def main():
     pipe.text_encoder.to(DEVICE)
     pe, _ = pipe.encode_prompt(prompt=rw.PROMPT, negative_prompt=None,
                                do_classifier_free_guidance=False, device=DEVICE)
-    pe = pe.to(DEVICE, DTYPE)
+    pe = pe.detach().to(DEVICE, DTYPE)
     del pipe.text_encoder
     torch.cuda.empty_cache()
 
@@ -60,7 +60,6 @@ def main():
     ls = torch.tensor(vae.config.latents_std).view(1, vae.config.z_dim, 1, 1, 1).to(DEVICE, DTYPE)
 
     tf = pipe.transformer
-    tf.enable_gradient_checkpointing()
     lcfg = LoraConfig(r=args.rank, lora_alpha=args.rank, init_lora_weights="gaussian",
                       target_modules=["to_q", "to_k", "to_v", "to_out.0"])
     tf = get_peft_model(tf, lcfg).to(DEVICE)
