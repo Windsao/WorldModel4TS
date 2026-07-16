@@ -77,3 +77,26 @@ python pilot/run_temporal_image_adapter.py \
 ```
 
 Repeat with seeds 1 and 2 and with each dataset/horizon pair.
+
+## Multiscale RGB hybrid
+
+The direct combination places aligned stride-1/2/4 histories in RGB in both
+the previous and current frames. Each previous scale reuses its corresponding
+current scale's observed-only statistics. Its repeat-current control is
+bit-exact to the residual-dyadic-RGB input, so the comparison isolates the
+additional temporal frame without changing tubelet or head capacity.
+
+| dataset / H | hybrid MSE | residual RGB MSE | grayscale previous/current MSE | repeat−forward validation MSE | reverse−forward validation MSE |
+|---|---:|---:|---:|---:|---:|
+| ETTh1 / 96 | 0.3893 ± 0.0024 | 0.3946 ± 0.0270 | **0.3873 ± 0.0065** | +0.1845 | +0.2203 |
+| ETTh1 / 192 | 0.4197 ± 0.0124 | **0.4145 ± 0.0043** | 0.4215 ± 0.0114 | +0.0063 | +0.0528 |
+| ETTm1 / 96 | **0.3291 ± 0.0075** | 0.3302 ± 0.0094 | 0.3317 ± 0.0052 | +0.0164 | +0.0106 |
+| ETTm1 / 192 | **0.3575 ± 0.0062** | 0.3605 ± 0.0089 | 0.3643 ± 0.0049 | +0.0276 | +0.0127 |
+| Weather / 96 | **0.1649 ± 0.0046** | 0.1661 ± 0.0048 | 0.1709 ± 0.0095 | -0.0040 | +0.0000 |
+| Weather / 192 | 0.2171 ± 0.0059 | **0.2084 ± 0.0034** | 0.2119 ± 0.0071 | +0.0020 | +0.0022 |
+
+The hybrid beats each component in 4/6 cells, but its six-cell macro MSE
+(0.3129) remains slightly worse than residual RGB (0.3124). The controls show
+strong temporal use on ETTh1/ETTm1, weak use on Weather/192, and no benefit from
+the previous frame on Weather/96. Thus RGB scale and temporal order can coexist,
+but their benefits are domain-dependent rather than additive everywhere.

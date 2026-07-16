@@ -1,0 +1,123 @@
+{
+  "method": "step_shift_dyadic_rgb_residual",
+  "status": "competitive_hybrid_with_domain_dependent_temporal_use",
+  "protocol": {
+    "checkpoint": "MCG-NJU/videomae-base",
+    "context": 600,
+    "horizons": [96, 192],
+    "training_windows": 4096,
+    "training_window_seed": 0,
+    "model_seeds": [0, 1, 2],
+    "validation_cap": 0,
+    "test_cap": 0,
+    "evaluation_stride": 24,
+    "epochs": 8,
+    "patience": 3,
+    "video_frames": 2,
+    "tubelets": 1,
+    "test_used_for_selection": false
+  },
+  "construction": {
+    "rgb_channels": ["stride_1", "stride_2", "stride_4"],
+    "frame_order": ["previous", "current"],
+    "normalization": "each previous scale reuses statistics from its corresponding observed current scale",
+    "repeat_control": "two current multiscale frames; bit-exact residual_dyadic_rgb input",
+    "reverse_control": "current multiscale frame followed by previous multiscale frame"
+  },
+  "control_protocol": "Evaluate the same validation-selected checkpoint after replacing or reversing its input frames; controls are not retrained and do not select checkpoints.",
+  "results": {
+    "ETTh1": {
+      "96": {
+        "MSE_seeds": [0.3919, 0.3886, 0.3873],
+        "MSE_mean": 0.3893,
+        "MSE_std": 0.0024,
+        "MAE_seeds": [0.4252, 0.4191, 0.4115],
+        "MAE_mean": 0.4186,
+        "MAE_std": 0.0069,
+        "forward_validation_MSE": [0.6997896317888384, 0.7479651058695401, 0.7285548595572857],
+        "repeat_validation_MSE": [0.9011, 0.8842, 0.9444],
+        "reverse_validation_MSE": [0.8706, 0.9891, 0.9775],
+        "repeat_minus_forward_mean": 0.1845,
+        "reverse_minus_forward_mean": 0.2203
+      },
+      "192": {
+        "MSE_seeds": [0.4073, 0.4199, 0.4320],
+        "MSE_mean": 0.4197,
+        "MSE_std": 0.0124,
+        "MAE_seeds": [0.4278, 0.4333, 0.4427],
+        "MAE_mean": 0.4346,
+        "MAE_std": 0.0075,
+        "forward_validation_MSE": [0.942304395795421, 0.9760375105274713, 1.025917767775094],
+        "repeat_validation_MSE": [0.9737, 0.9946, 0.9949],
+        "reverse_validation_MSE": [0.9629, 1.0960, 1.0438],
+        "repeat_minus_forward_mean": 0.0063,
+        "reverse_minus_forward_mean": 0.0528
+      }
+    },
+    "ETTm1": {
+      "96": {
+        "MSE_seeds": [0.3250, 0.3378, 0.3246],
+        "MSE_mean": 0.3291,
+        "MSE_std": 0.0075,
+        "MAE_seeds": [0.3752, 0.3826, 0.3748],
+        "MAE_mean": 0.3775,
+        "MAE_std": 0.0044,
+        "forward_validation_MSE": [0.43719035850571364, 0.4335555502834512, 0.43515944097693526],
+        "repeat_validation_MSE": [0.4614, 0.4404, 0.4534],
+        "reverse_validation_MSE": [0.4552, 0.4354, 0.4472],
+        "repeat_minus_forward_mean": 0.0164,
+        "reverse_minus_forward_mean": 0.0106
+      },
+      "192": {
+        "MSE_seeds": [0.3541, 0.3647, 0.3537],
+        "MSE_mean": 0.3575,
+        "MSE_std": 0.0062,
+        "MAE_seeds": [0.3909, 0.3955, 0.3879],
+        "MAE_mean": 0.3914,
+        "MAE_std": 0.0038,
+        "forward_validation_MSE": [0.5320253103362413, 0.5427640234969191, 0.5372662747313126],
+        "repeat_validation_MSE": [0.5668, 0.5479, 0.5802],
+        "reverse_validation_MSE": [0.5503, 0.5506, 0.5494],
+        "repeat_minus_forward_mean": 0.0276,
+        "reverse_minus_forward_mean": 0.0127
+      }
+    },
+    "weather": {
+      "96": {
+        "MSE_seeds": [0.1701, 0.1613, 0.1632],
+        "MSE_mean": 0.1649,
+        "MSE_std": 0.0046,
+        "MAE_seeds": [0.2285, 0.2181, 0.2182],
+        "MAE_mean": 0.2216,
+        "MAE_std": 0.0060,
+        "forward_validation_MSE": [0.4405218483349073, 0.42743245764103865, 0.4213326227167366],
+        "repeat_validation_MSE": [0.4326, 0.4256, 0.4190],
+        "reverse_validation_MSE": [0.4386, 0.4334, 0.4173],
+        "repeat_minus_forward_mean": -0.0040,
+        "reverse_minus_forward_mean": 0.0000
+      },
+      "192": {
+        "MSE_seeds": [0.2123, 0.2237, 0.2153],
+        "MSE_mean": 0.2171,
+        "MSE_std": 0.0059,
+        "MAE_seeds": [0.2696, 0.2765, 0.2733],
+        "MAE_mean": 0.2731,
+        "MAE_std": 0.0035,
+        "forward_validation_MSE": [0.5182091627123828, 0.5108109179300689, 0.5005869688736746],
+        "repeat_validation_MSE": [0.5168, 0.5126, 0.5063],
+        "reverse_validation_MSE": [0.5196, 0.5145, 0.5022],
+        "repeat_minus_forward_mean": 0.0020,
+        "reverse_minus_forward_mean": 0.0022
+      }
+    }
+  },
+  "summary": {
+    "MSE_cells_better_than_residual_dyadic_rgb": 4,
+    "MSE_cells_better_than_previous_current_grayscale": 4,
+    "MSE_cells_better_than_Chronos": 5,
+    "six_cell_macro_MSE": 0.3129,
+    "residual_dyadic_rgb_six_cell_macro_MSE": 0.3124,
+    "previous_current_six_cell_macro_MSE": 0.3146,
+    "claim_boundary": "The hybrid is competitive and its temporal frame is used on both ETT datasets. It does not beat residual dyadic RGB on macro MSE, and Weather/96 shows no benefit from the previous frame."
+  }
+}

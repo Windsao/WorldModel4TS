@@ -130,6 +130,75 @@ def test_step_shift_video_is_exact_previous_then_current():
     torch.testing.assert_close(reversed_clip, clip.flip(1), rtol=0, atol=0)
 
 
+def test_step_shift_dyadic_rgb_combines_scale_and_temporal_order():
+    torch.manual_seed(53)
+    context = torch.randn(2, 600)
+    future_a = torch.randn(2, 192)
+    future_b = future_a + 10000
+    forward = CausalImageViews(
+        600, 192, 24, "step_shift_dyadic_rgb_residual", 2
+    )
+    repeat = CausalImageViews(
+        600, 192, 24, "step_shift_dyadic_rgb_residual_repeat", 2
+    )
+    reverse = CausalImageViews(
+        600, 192, 24, "step_shift_dyadic_rgb_residual_reverse", 2
+    )
+    residual_rgb = CausalImageViews(
+        600, 192, 24, "dyadic_rgb_residual", 2
+    )
+
+    clip, mean, scale = forward(context)
+    clip_a, mean_a, scale_a = forward(
+        torch.cat((context, future_a), dim=1)[:, :600]
+    )
+    clip_b, mean_b, scale_b = forward(
+        torch.cat((context, future_b), dim=1)[:, :600]
+    )
+    torch.testing.assert_close(clip, clip_a, rtol=0, atol=0)
+    torch.testing.assert_close(clip, clip_b, rtol=0, atol=0)
+    torch.testing.assert_close(mean, mean_a, rtol=0, atol=0)
+    torch.testing.assert_close(mean, mean_b, rtol=0, atol=0)
+    torch.testing.assert_close(scale, scale_a, rtol=0, atol=0)
+    torch.testing.assert_close(scale, scale_b, rtol=0, atol=0)
+    assert clip.shape == (2, 2, 3, 224, 224)
+    assert torch.mean((clip[:, 1] - clip[:, 0]) ** 2) > 0
+
+    shifted = torch.cat((context[:, :1], context[:, :-1]), dim=1)
+    for channel, (stride, renderer) in enumerate(
+        zip(forward.scales, forward.renderers[0])
+    ):
+        start = 599 % stride
+        current = context[:, start::stride]
+        previous = shifted[:, start::stride]
+        view_mean, view_scale = renderer.statistics(current)
+        expected_current = renderer.render_with_statistics(
+            current, view_mean, view_scale
+        )
+        expected_previous = renderer.render_with_statistics(
+            previous, view_mean, view_scale
+        )
+        torch.testing.assert_close(
+            clip[:, 0, channel:channel + 1], expected_previous,
+            rtol=0, atol=0,
+        )
+        torch.testing.assert_close(
+            clip[:, 1, channel:channel + 1], expected_current,
+            rtol=0, atol=0,
+        )
+
+    repeated, _, _ = repeat(context)
+    reversed_clip, _, _ = reverse(context)
+    static_residual_clip, _, _ = residual_rgb(context)
+    torch.testing.assert_close(
+        repeated, clip[:, 1:].expand_as(clip), rtol=0, atol=0
+    )
+    torch.testing.assert_close(
+        repeated, static_residual_clip, rtol=0, atol=0
+    )
+    torch.testing.assert_close(reversed_clip, clip.flip(1), rtol=0, atol=0)
+
+
 def test_locked_step_shift_results_are_internally_consistent():
     result_path = Path(__file__).parent / (
         "results_temporal_axis/step_shift_multiseed.json"
@@ -193,6 +262,82 @@ def test_locked_step_shift_results_are_internally_consistent():
     ) == 1
 
 
+def test_locked_multiscale_temporal_results_are_internally_consistent():
+    root = Path(__file__).parent
+    payload = json.loads(
+        (root / "results_temporal_axis/dyadic_previous_current_multiseed.json")
+        .read_text()
+    )
+    previous = json.loads(
+        (root / "results_temporal_axis/step_shift_multiseed.json").read_text()
+    )
+    baselines = json.loads(
+        (root / "results_benchmark_grid/benchmark_grid.json").read_text()
+    )["results"]
+    residual_wins = 0
+    previous_wins = 0
+    chronos_wins = 0
+    hybrid_means = []
+    residual_means = []
+    previous_means = []
+
+    for dataset, horizons in payload["results"].items():
+        for horizon, result in horizons.items():
+            assert round(statistics.mean(result["MSE_seeds"]), 4) == (
+                result["MSE_mean"]
+            )
+            assert round(statistics.stdev(result["MSE_seeds"]), 4) == (
+                result["MSE_std"]
+            )
+            assert round(statistics.mean(result["MAE_seeds"]), 4) == (
+                result["MAE_mean"]
+            )
+            assert round(statistics.stdev(result["MAE_seeds"]), 4) == (
+                result["MAE_std"]
+            )
+            forward = result["forward_validation_MSE"]
+            repeat = result["repeat_validation_MSE"]
+            reverse = result["reverse_validation_MSE"]
+            assert round(statistics.mean(
+                changed - base for base, changed in zip(forward, repeat)
+            ), 4) == result["repeat_minus_forward_mean"]
+            assert round(statistics.mean(
+                changed - base for base, changed in zip(forward, reverse)
+            ), 4) == result["reverse_minus_forward_mean"]
+
+            residual = baselines[dataset][horizon][
+                "residual_dyadic_rgb"
+            ]["MSE_mean"]
+            chronological = previous["results"][dataset][horizon][
+                "test"
+            ]["MSE_mean"]
+            chronos = baselines[dataset][horizon]["chronos"]["MSE"]
+            residual_wins += result["MSE_mean"] < residual
+            previous_wins += result["MSE_mean"] < chronological
+            chronos_wins += result["MSE_mean"] < chronos
+            hybrid_means.append(result["MSE_mean"])
+            residual_means.append(residual)
+            previous_means.append(chronological)
+
+    summary = payload["summary"]
+    assert residual_wins == summary[
+        "MSE_cells_better_than_residual_dyadic_rgb"
+    ] == 4
+    assert previous_wins == summary[
+        "MSE_cells_better_than_previous_current_grayscale"
+    ] == 4
+    assert chronos_wins == summary["MSE_cells_better_than_Chronos"] == 5
+    assert round(statistics.mean(hybrid_means), 4) == (
+        summary["six_cell_macro_MSE"]
+    )
+    assert round(statistics.mean(residual_means), 4) == (
+        summary["residual_dyadic_rgb_six_cell_macro_MSE"]
+    )
+    assert round(statistics.mean(previous_means), 4) == (
+        summary["previous_current_six_cell_macro_MSE"]
+    )
+
+
 if __name__ == "__main__":
     tests = (
         test_prefix_video_is_causal_and_latest_frame_is_full_context,
@@ -201,7 +346,9 @@ if __name__ == "__main__":
         test_dyadic_scale_video_is_coarse_to_fine_and_causal,
         test_residual_dyadic_ingest_starts_as_static_grayscale,
         test_step_shift_video_is_exact_previous_then_current,
+        test_step_shift_dyadic_rgb_combines_scale_and_temporal_order,
         test_locked_step_shift_results_are_internally_consistent,
+        test_locked_multiscale_temporal_results_are_internally_consistent,
     )
     for test in tests:
         test()

@@ -304,6 +304,13 @@ axis, not a broad accuracy or state-of-the-art claim. Full construction,
 limitations, seed scores, and reproduction instructions are in
 `pilot/PREVIOUS_CURRENT_VIDEO.md` and `pilot/results_temporal_axis/`.
 
+The tested **multiscale temporal hybrid** puts stride-1/2/4 views in RGB in
+both previous and current frames. It beats residual RGB in 4/6 cells and the
+grayscale previous/current model in 4/6, but its six-cell macro MSE is 0.3129
+versus 0.3124 for residual RGB. Same-checkpoint controls confirm temporal use
+on ETTh1/ETTm1, while Weather/96 prefers the repeated residual-RGB input. The
+combination works, but scale and temporal benefits are not uniformly additive.
+
 ## Diagnosed failure modes (why naive transfer fails)
 
 1. **Level-pathway blindness.** VideoMAE's `norm_pix_loss` training predicts

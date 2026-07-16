@@ -32,6 +32,12 @@ The following dataset-independent views are implemented:
     same capacity as the static model.  Repeat/reverse variants isolate whether
     the genuine one-step arrow of time contributes.
 
+``step_shift_dyadic_rgb_residual``
+    The same previous/current ordering, but each frame contains the aligned
+    stride-1/2/4 history views in RGB.  Previous views reuse their matching
+    current-view statistics so normalization cannot erase temporal change.
+    Its repeat control is exactly the residual-dyadic-RGB input.
+
 Only the pixel ingest MLP and final forecast MLP are trainable.
 """
 
@@ -78,12 +84,26 @@ class CausalImageViews(nn.Module):
             self.video_frames = video_frames
             self.input_channels = 1
         elif mode in {
-            "dyadic_rgb", "dyadic_rgb_residual", "dyadic_prefix_video"
+            "dyadic_rgb", "dyadic_rgb_residual", "dyadic_prefix_video",
+            "step_shift_dyadic_rgb_residual",
+            "step_shift_dyadic_rgb_residual_repeat",
+            "step_shift_dyadic_rgb_residual_reverse",
         }:
             self.scales = (1, 2, 4)
             if periodicity % self.scales[-1] or horizon % self.scales[-1]:
                 raise ValueError("periodicity and horizon must support dyadic scaling")
             if mode in {"dyadic_rgb", "dyadic_rgb_residual"}:
+                self.endpoints = (context,)
+                self.video_frames = 2
+            elif mode.startswith("step_shift_dyadic_rgb_residual"):
+                if video_frames != 2:
+                    raise ValueError(
+                        "step-shift dyadic RGB is defined for exactly two frames"
+                    )
+                if context < 2:
+                    raise ValueError(
+                        "context is too short for a previous/current pair"
+                    )
                 self.endpoints = (context,)
                 self.video_frames = 2
             else:
@@ -193,6 +213,34 @@ class CausalImageViews(nn.Module):
                 images = images[::-1]
             return torch.stack(images, dim=1), mean, scale
 
+        if self.mode.startswith("step_shift_dyadic_rgb_residual"):
+            shifted = torch.cat((x[:, :1], x[:, :-1]), dim=1)
+            previous_channels = []
+            current_channels = []
+            for stride, renderer in zip(self.scales, self.renderers[0]):
+                start = (self.context - 1) % stride
+                current = x[:, start::stride]
+                previous = shifted[:, start::stride]
+                view_mean, view_scale = renderer.statistics(current)
+                current_channels.append(
+                    renderer.render_with_statistics(
+                        current, view_mean, view_scale
+                    )
+                )
+                previous_channels.append(
+                    renderer.render_with_statistics(
+                        previous, view_mean, view_scale
+                    )
+                )
+            current_frame = torch.cat(current_channels, dim=1)
+            previous_frame = torch.cat(previous_channels, dim=1)
+            frames = [previous_frame, current_frame]
+            if self.mode == "step_shift_dyadic_rgb_residual_repeat":
+                frames = [current_frame, current_frame]
+            elif self.mode == "step_shift_dyadic_rgb_residual_reverse":
+                frames = frames[::-1]
+            return torch.stack(frames, dim=1), mean, scale
+
         frames = []
         for endpoint, group in zip(self.endpoints, self.renderers):
             images = []
@@ -259,7 +307,10 @@ class TemporalImageVideoMAEAdapter(nn.Module):
             raise ValueError("temporal view has more frames than the checkpoint")
         self.ingest_mlp = ChannelIngestMLP(
             self.views.input_channels, ingest_width,
-            repeat_first=mode == "dyadic_rgb_residual",
+            repeat_first=(
+                mode == "dyadic_rgb_residual"
+                or mode.startswith("step_shift_dyadic_rgb_residual")
+            ),
         )
         tubelets = self.views.video_frames // config.tubelet_size
         self.forecast_mlp = baseline.ForecastMLP(
@@ -330,6 +381,9 @@ def main():
             "dyadic_scale_video",
             "step_shift_video", "step_shift_video_repeat",
             "step_shift_video_reverse",
+            "step_shift_dyadic_rgb_residual",
+            "step_shift_dyadic_rgb_residual_repeat",
+            "step_shift_dyadic_rgb_residual_reverse",
         )
     )
     parser.add_argument("--video-frames", type=int, default=4)
@@ -429,6 +483,10 @@ def main():
         "step_shift_video": (
             "step_shift_video_repeat", "step_shift_video_reverse"
         ),
+        "step_shift_dyadic_rgb_residual": (
+            "step_shift_dyadic_rgb_residual_repeat",
+            "step_shift_dyadic_rgb_residual_reverse",
+        ),
     }
     if args.eval_controls and args.mode in control_modes:
         original_mode = model.views.mode
@@ -485,7 +543,7 @@ def main():
         payload["config"]["prefix_endpoints"] = model.views.endpoints
     if args.mode in {
         "dyadic_rgb", "dyadic_rgb_residual", "dyadic_prefix_video"
-    }:
+    } or args.mode.startswith("step_shift_dyadic_rgb_residual"):
         payload["config"]["dyadic_scales"] = model.views.scales
     if args.mode == "dyadic_scale_video":
         payload["config"]["dyadic_scales"] = model.views.scales
