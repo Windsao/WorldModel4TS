@@ -78,8 +78,10 @@ class ScrollVMAE(nn.Module):
         frames = torch.stack([grid[:, f * SCROLL:f * SCROLL + COLS]
                               for f in range(NF)], dim=1)   # [B, NF, 14, P]
         frames = frames.permute(0, 1, 3, 2)                 # [B, NF, P, 14]
+        # column-aligned rendering (P0-1): no cross-period pixel mixing
         img = F.interpolate(frames.reshape(B * NF, 1, self.P, COLS),
-                            size=(IMG, IMG), mode="bilinear", align_corners=False)
+                            size=(IMG, COLS), mode="bilinear",
+                            align_corners=False).repeat_interleave(PS, dim=-1)
         vid = img.view(B, NF, 1, IMG, IMG).repeat(1, 1, 3, 1, 1).to(x.device)
         return (vid - self.imn_mean.to(x.device)) / self.imn_std.to(x.device), mu, sd
 
@@ -140,10 +142,8 @@ def main():
     context, horizon = (NP - args.hp) * P, args.hp * P
     Xte, Yte = get_split_windows(data, args.dataset, context, horizon, "test",
                                  args.stride)
-    Xtr, Ytr = get_split_windows(data, args.dataset, context, horizon, "train", 1)
-    if len(Xtr) > args.ft_cap:
-        idx = np.random.default_rng(0).choice(len(Xtr), args.ft_cap, replace=False)
-        Xtr, Ytr = Xtr[idx], Ytr[idx]
+    Xtr, Ytr = get_split_windows(data, args.dataset, context, horizon, "train",
+                                 1, cap=args.ft_cap)
     print(f"dataset={args.dataset} P={P} context={context} horizon={horizon} "
           f"test={len(Xte)} train={len(Xtr)} scroll={SCROLL}", flush=True)
 

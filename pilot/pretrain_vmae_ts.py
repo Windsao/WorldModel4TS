@@ -62,15 +62,25 @@ def synth_series(rng, n_periods, P):
 
 
 # ---------------------------------------------------------------- rendering
-def to_gray(y):
-    mu, sd = y.mean(), y.std() + 1e-8
+def to_gray(y, ctx_len=None):
+    """P0-2 fix: normalization stats from CONTEXT ONLY (never from the target),
+    so visible pixel intensities cannot carry future information."""
+    ref = y[:ctx_len] if ctx_len else y
+    mu, sd = ref.mean(), ref.std() + 1e-8
     return np.clip((y - mu) / (3 * sd), -1, 1) * 0.5 + 0.5
+
+
+def _col_aligned(grid_tp, P):
+    """P0-1 fix: interpolate ONLY the phase axis; each logical period column
+    maps to exactly one 16px patch column with zero cross-column mixing."""
+    img = F.interpolate(grid_tp.unsqueeze(1), size=(IMG, COLS), mode="bilinear",
+                        align_corners=False)               # [T,1,224,14]
+    return img.repeat_interleave(PS, dim=-1)               # [T,1,224,224]
 
 
 def render_lc(g, P):                                       # g: [112*P] in [0,1]
     grid = torch.from_numpy(g).view(LC_STEPS, COLS, P).permute(0, 2, 1)
-    img = F.interpolate(grid.unsqueeze(1), size=(IMG, IMG), mode="bilinear",
-                        align_corners=False)               # [8,1,224,224]
+    img = _col_aligned(grid, P)                            # [8,1,224,224]
     vid = img.unsqueeze(1).expand(LC_STEPS, LC_DUP, 1, IMG, IMG)
     return vid.reshape(NF, 1, IMG, IMG).expand(NF, 3, IMG, IMG).contiguous()
 
@@ -78,8 +88,7 @@ def render_lc(g, P):                                       # g: [112*P] in [0,1]
 def render_scroll(g, P):                                   # g: [44*P]
     grid = torch.from_numpy(g).view((NF - 1) * SCROLL + COLS, P)
     frames = torch.stack([grid[f * SCROLL:f * SCROLL + COLS] for f in range(NF)])
-    img = F.interpolate(frames.permute(0, 2, 1).unsqueeze(1), size=(IMG, IMG),
-                        mode="bilinear", align_corners=False)
+    img = _col_aligned(frames.permute(0, 2, 1), P)
     return img.expand(NF, 3, IMG, IMG).contiguous()
 
 
@@ -109,32 +118,75 @@ IMN_MEAN = torch.tensor([0.485, 0.456, 0.406]).view(3, 1, 1)
 IMN_STD = torch.tensor([0.229, 0.224, 0.225]).view(3, 1, 1)
 
 
+REAL_DATASETS = {  # file, period, train fraction/border (train split ONLY)
+    "ETTh1": ("ETTh1.csv", 24, 8640), "ETTh2": ("ETTh2.csv", 24, 8640),
+    "ETTm1": ("ETTm1.csv", 96, 34560), "ETTm2": ("ETTm2.csv", 96, 34560),
+    "electricity": ("electricity.txt", 24, None),
+    "traffic": ("traffic.txt", 24, None), "solar": ("solar_AL.txt", 144, None),
+}
+
+
+def load_real_corpus(data_dir):
+    import pandas as pd
+    corpus = []
+    for name, (fn, P, b) in REAL_DATASETS.items():
+        path = os.path.join(data_dir, fn)
+        if fn.endswith(".csv"):
+            arr = pd.read_csv(path).iloc[:, 1:].values.astype(np.float32)
+        else:
+            arr = np.loadtxt(path, delimiter=",").astype(np.float32)
+        b = b or int(0.7 * len(arr))
+        tr = arr[:b]
+        tr = (tr - tr.mean(0)) / (tr.std(0) + 1e-8)        # train-only stats
+        corpus.append((tr, P))                             # train region only
+    return corpus
+
+
 class TSVideos(IterableDataset):
     """Yields whole batches (same mask count within a batch)."""
 
-    def __init__(self, batch, seed):
+    def __init__(self, batch, seed, data_mode="synth", data_dir=None,
+                 real_frac=0.8, forecast_only=False):
         self.batch, self.seed = batch, seed
+        self.data_mode, self.data_dir = data_mode, data_dir
+        self.real_frac, self.forecast_only = real_frac, forecast_only
+
+    def sample_series(self, rng, n_p):
+        if self.corpus and rng.random() < self.real_frac:
+            arr, P = self.corpus[rng.integers(len(self.corpus))]
+            need = n_p * P
+            if len(arr) > need + 1:
+                t = int(rng.integers(need, len(arr)))
+                c = int(rng.integers(arr.shape[1]))
+                return arr[t - need:t, c].copy(), P
+        P = int(rng.integers(16, 169))
+        return synth_series(rng, n_p, P), P
 
     def __iter__(self):
         wi = torch.utils.data.get_worker_info()
         rng = np.random.default_rng(self.seed + (wi.id if wi else 0) * 9973)
+        self.corpus = (load_real_corpus(self.data_dir)
+                       if self.data_mode == "real" else None)
         while True:
             scroll = rng.random() < 0.5
             n_p = (NF - 1) * SCROLL + COLS if scroll else LC_STEPS * COLS
-            if rng.random() < 0.5:                         # forecast mask
+            hp = 0
+            if self.forecast_only or rng.random() < 0.5:   # forecast mask
                 # scroll: future must stay inside the last tubelet -> hp <= 4
                 hp = int(rng.integers(1, 5 if scroll else 9))
                 mask = (forecast_mask_scroll(hp) if scroll
                         else forecast_mask_lc(hp))
-                # NOTE: do NOT blank the future region here. Masked tokens are
-                # never fed to the encoder; their pixels only become the
-                # reconstruction TARGET, which must be the true future.
+                # NOTE: do NOT blank the future region. Masked tokens are never
+                # fed to the encoder; their pixels are only the TARGET.
             else:                                          # native tube mask
                 mask = tube_mask(rng)
             vids = []
             for _ in range(self.batch):
-                P = int(rng.integers(16, 169))
-                g = to_gray(synth_series(rng, n_p, P))
+                y, P = self.sample_series(rng, n_p)
+                # P0-2: context-only stats for forecast masks; temporal-prefix
+                # stats for tube masks (no whole-sample statistic).
+                ctx_len = (n_p - hp) * P if hp else (n_p // 2) * P
+                g = to_gray(y, ctx_len=ctx_len)
                 vid = (render_scroll(g, P) if scroll
                        else render_lc(g, P))
                 vids.append((vid - IMN_MEAN) / IMN_STD)
@@ -150,6 +202,11 @@ def main():
     ap.add_argument("--warmup", type=int, default=1000)
     ap.add_argument("--save-every", type=int, default=5000)
     ap.add_argument("--out", required=True)
+    ap.add_argument("--data", choices=["synth", "real"], default="synth")
+    ap.add_argument("--data-dir", default=None)
+    ap.add_argument("--real-frac", type=float, default=0.8)
+    ap.add_argument("--forecast-only", action="store_true")
+    ap.add_argument("--init", default="MCG-NJU/videomae-base")
     args = ap.parse_args()
 
     dist.init_process_group("nccl")
@@ -158,7 +215,7 @@ def main():
     dev = f"cuda:{rank}"
 
     from transformers import VideoMAEForPreTraining
-    model = VideoMAEForPreTraining.from_pretrained("MCG-NJU/videomae-base")
+    model = VideoMAEForPreTraining.from_pretrained(args.init)
     model.config.norm_pix_loss = False                     # raw-pixel targets
     model = model.to(dev)
     model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[rank])
@@ -171,8 +228,11 @@ def main():
         p = (s - args.warmup) / max(1, args.steps - args.warmup)
         return args.lr * 0.5 * (1 + math.cos(math.pi * p))
 
-    dl = DataLoader(TSVideos(args.batch, seed=1234 + rank), batch_size=None,
-                    num_workers=6, prefetch_factor=4, persistent_workers=True)
+    dl = DataLoader(TSVideos(args.batch, seed=1234 + rank, data_mode=args.data,
+                             data_dir=args.data_dir, real_frac=args.real_frac,
+                             forecast_only=args.forecast_only),
+                    batch_size=None, num_workers=6, prefetch_factor=4,
+                    persistent_workers=True)
     model.train()
     it = iter(dl)
     for step in range(1, args.steps + 1):

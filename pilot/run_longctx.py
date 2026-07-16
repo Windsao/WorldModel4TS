@@ -35,7 +35,7 @@ IMN_STD = torch.tensor([0.229, 0.224, 0.225])
 
 
 # ---------------------------------------------------------------- data
-def get_split_windows(data, name, context, horizon, split, stride):
+def get_split_windows(data, name, context, horizon, split, stride, cap=None):
     cfg = rp.DATASETS[name]
     if cfg["kind"] == "ett":
         b_train, b_val, b_test = cfg["borders"]
@@ -46,14 +46,20 @@ def get_split_windows(data, name, context, horizon, split, stride):
               "test": (b_val, b_test - horizon)}[split]
     ts = np.arange(lo, hi + 1, stride)
     C = data.shape[1]
-    X = np.empty((len(ts) * C, context), dtype=np.float32)
-    Y = np.empty((len(ts) * C, horizon), dtype=np.float32)
-    k = 0
-    for t in ts:
-        for c in range(C):
-            X[k] = data[t - context:t, c]
-            Y[k] = data[t:t + horizon, c]
-            k += 1
+    n_total = len(ts) * C
+    # sample BEFORE materializing — long contexts otherwise allocate 10s of GB
+    if cap and n_total > cap:
+        picks = np.sort(np.random.default_rng(0).choice(n_total, cap,
+                                                        replace=False))
+        print(f"[info] {split} windows capped {cap}/{n_total}", flush=True)
+    else:
+        picks = np.arange(n_total)
+    X = np.empty((len(picks), context), dtype=np.float32)
+    Y = np.empty((len(picks), horizon), dtype=np.float32)
+    for k, p in enumerate(picks):
+        t, c = ts[p // C], p % C
+        X[k] = data[t - context:t, c]
+        Y[k] = data[t:t + horizon, c]
     return X, Y
 
 
@@ -113,9 +119,11 @@ class LCVMAE(nn.Module):
             grid = torch.full((B, NP, self.P), 0.5)
             grid[:, :self.cp] = c.view(B, self.cp, self.P)
             grid = grid.view(B, STEPS, COLS, self.P).permute(0, 1, 3, 2)
+            # column-aligned: phase-axis interpolation only, 1 period = 1 patch
+            # column, no cross-column mixing (P0-1 in the known-issues doc)
             img = F.interpolate(grid.reshape(B * STEPS, 1, self.P, COLS),
-                                size=(IMG, IMG), mode="bilinear",
-                                align_corners=False)
+                                size=(IMG, COLS), mode="bilinear",
+                                align_corners=False).repeat_interleave(PS, dim=-1)
             vids.append(img.view(B, STEPS, IMG, IMG))
         vid = torch.stack(vids, dim=2)                     # [B, STEPS, 3, H, W]
         vid = vid.unsqueeze(2).expand(B, STEPS, DUP, 3, IMG, IMG)
@@ -242,11 +250,8 @@ def main():
     context, horizon = (NP - args.hp) * P, args.hp * P
     Xte, Yte = get_split_windows(data, args.dataset, context, horizon, "test",
                                  args.stride)
-    Xtr, Ytr = get_split_windows(data, args.dataset, context, horizon, "train", 1)
-    if len(Xtr) > args.ft_cap:
-        idx = np.random.default_rng(0).choice(len(Xtr), args.ft_cap, replace=False)
-        Xtr, Ytr = Xtr[idx], Ytr[idx]
-        print(f"[info] train capped {args.ft_cap}", flush=True)
+    Xtr, Ytr = get_split_windows(data, args.dataset, context, horizon, "train",
+                                 1, cap=args.ft_cap)
     print(f"dataset={args.dataset} P={P} context={context} horizon={horizon} "
           f"test={len(Xte)} train={len(Xtr)} stride={args.stride}", flush=True)
 

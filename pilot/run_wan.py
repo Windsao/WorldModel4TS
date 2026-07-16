@@ -83,6 +83,12 @@ def wan_forecast(X, args):
     from diffusers.schedulers import FlowMatchEulerDiscreteScheduler
 
     pipe = WanPipeline.from_pretrained(MODEL, torch_dtype=DTYPE)
+    if os.environ.get("WAN_LORA"):
+        from peft import PeftModel
+        pipe.transformer = PeftModel.from_pretrained(
+            pipe.transformer, os.environ["WAN_LORA"],
+            torch_dtype=DTYPE).merge_and_unload()
+        print(f"[info] merged LoRA from {os.environ['WAN_LORA']}", flush=True)
     pipe.scheduler = FlowMatchEulerDiscreteScheduler(shift=args.shift)
     pipe.to(DEVICE)
 
