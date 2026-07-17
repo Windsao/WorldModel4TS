@@ -1,0 +1,42 @@
+{
+  "config": {
+    "dataset": "solar",
+    "data_dir": "/nyx-storage1/hanliu/wm4ts/data",
+    "out_dir": "pilot/results_wan_lora/puregen",
+    "subsample": 96,
+    "subsample_seed": 123,
+    "steps": 20,
+    "guidance": 1.0,
+    "shift": 3.0,
+    "height": 240,
+    "width": 416,
+    "fpp": 4,
+    "batch": 4,
+    "sdedit": 0.0,
+    "sdedit_init": "smean",
+    "prompt": "bands",
+    "save_probe": "",
+    "P": 144,
+    "context": 1728,
+    "horizon": 576,
+    "n": 96
+  },
+  "results": {
+    "naive": {
+      "MSE": 1.0708,
+      "MAE": 0.5406
+    },
+    "snaive": {
+      "MSE": 0.3771,
+      "MAE": 0.2632
+    },
+    "smean": {
+      "MSE": 0.188,
+      "MAE": 0.2101
+    },
+    "wan21_1.3b": {
+      "MSE": 0.6738,
+      "MAE": 0.6101
+    }
+  }
+}

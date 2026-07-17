@@ -116,7 +116,7 @@ class LCVMAE(nn.Module):
             chans.append(chans[0])
         vids = []
         for c in chans:
-            grid = torch.full((B, NP, self.P), 0.5)
+            grid = torch.full((B, NP, self.P), 0.5, device=x.device)
             grid[:, :self.cp] = c.view(B, self.cp, self.P)
             grid = grid.view(B, STEPS, COLS, self.P).permute(0, 1, 3, 2)
             # column-aligned: phase-axis interpolation only, 1 period = 1 patch

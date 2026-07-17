@@ -1,0 +1,21 @@
+{
+  "config": {
+    "dataset": "ETTm2",
+    "P": 96,
+    "context": 10656,
+    "horizon": 96,
+    "stride": 2,
+    "n_test": 39991,
+    "n_train": 100000
+  },
+  "results": {
+    "lcvmae_zs": {
+      "MSE": 0.9158,
+      "MAE": 0.7224
+    },
+    "lcvmae_zero": {
+      "MSE": 0.5837,
+      "MAE": 0.5609
+    }
+  }
+}

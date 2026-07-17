@@ -161,6 +161,36 @@ tell where it lands.
 Also tested: channel augmentation (R=raw, G=first difference, B=expanding mean)
 — no zero-shot gain with the Kinetics checkpoint (0.569 vs 0.566 grayscale).
 
+## Phase 7 — Fine-tuning campaign: how close can video get? (2026-07-16)
+
+Goal: drop zero-shot, push per-dataset FT to the best achievable numbers.
+Recipe upgrades tested (all VMAE-TS-v2-init unless noted): 3-epoch cosine
+full-FT (`ft3`), encoder+regression-head bypass (`head3`), Hankel
+delay-embedding rendering, R/G/B channel augmentation. Long-context protocol.
+
+| MSE | NLinear | VisionTS best | video best (config) |
+|---|---|---|---|
+| ETTh1 | 0.406 | **0.355** (zs) | 0.454 (Kinetics full-FT 1ep; ft3 0.470, head3 0.511, hankel 0.641, aug 0.496) |
+| ETTh2 | **0.297** | 0.325 (zs, short-ctx) | 0.350 (ft3) |
+| ETTm2 | 0.189 | **0.187** (LN-FT) | 0.273 (ft3 — best video number yet, prev 0.298) |
+| solar | 0.215 | **0.195** (LN-FT) | 0.205 (Phase-2 LN-FT) |
+| electricity | 0.166 | 0.149 (full-FT) | **0.158** (full-FT) — beats NLinear |
+| traffic | 0.348 | **0.292** (full-FT) | 0.306 (full-FT) — beats NLinear |
+
+**Verdict on "can video FT reach good results":** domain-split. On data-rich
+electricity/traffic, video FT beats the linear baseline and sits 5-6% behind the
+image model — a genuine positive cell. On ETT/solar, twelve-plus video variants
+(2 inits x 2 decode paths x 4 renderings x 2 recipes) all fail to beat NLinear;
+more epochs overfit (0.454 -> 0.470), head/Hankel/channel variants lose to the
+reconstruction path. Under matched full-FT, video beats image on all four ETT
+sets — image's edge lives in its LN-FT efficiency and zero-shot, consistent
+with the A8 architectural diagnosis.
+
+Wan2.1 LoRA (4k synthetic samples): level anchoring improves 4x (pure-gen MSE
+2.3-3.0 -> 0.67); the copy-machine pathology reverses direction (snaive-init
+0.377 -> 0.371 improved, vs 0.506 degraded zero-shot). Direction cured, dosage
+insufficient — scaling LoRA data is the obvious next lever.
+
 ## Diagnosed failure modes (why naive transfer fails)
 
 1. **Level-pathway blindness.** VideoMAE's `norm_pix_loss` training predicts

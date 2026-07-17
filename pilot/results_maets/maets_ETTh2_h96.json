@@ -1,0 +1,30 @@
+{
+  "config": {
+    "dataset": "ETTh2",
+    "hp": 4,
+    "data_dir": "/nyx-storage1/hanliu/wm4ts/data",
+    "out_dir": "pilot/results_maets",
+    "stride": 4,
+    "P": 24,
+    "context": 240,
+    "horizon": 96
+  },
+  "results": {
+    "maets_zs": {
+      "MSE": 0.3348,
+      "MAE": 0.3715
+    },
+    "maets_zero": {
+      "MSE": 0.4102,
+      "MAE": 0.4339
+    },
+    "naive": {
+      "MSE": 0.4231,
+      "MAE": 0.4156
+    },
+    "snaive": {
+      "MSE": 0.3902,
+      "MAE": 0.38
+    }
+  }
+}

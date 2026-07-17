@@ -72,7 +72,7 @@ class ScrollVMAE(nn.Module):
         sd = x.std(1, keepdim=True) + 1e-8
         z = ((x - mu) / (3 * sd)).clamp(-1, 1)
         g = (z + 1) / 2
-        grid = torch.full((B, NP, self.P), 0.5)
+        grid = torch.full((B, NP, self.P), 0.5, device=x.device)
         grid[:, :self.cp] = g.view(B, self.cp, self.P)
         # sliding windows: frame f = periods [f*s, f*s+14)
         frames = torch.stack([grid[:, f * SCROLL:f * SCROLL + COLS]

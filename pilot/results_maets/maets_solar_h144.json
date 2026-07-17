@@ -1,0 +1,30 @@
+{
+  "config": {
+    "dataset": "solar",
+    "hp": 1,
+    "data_dir": "/nyx-storage1/hanliu/wm4ts/data",
+    "out_dir": "pilot/results_maets",
+    "stride": 8,
+    "P": 144,
+    "context": 1872,
+    "horizon": 144
+  },
+  "results": {
+    "maets_zs": {
+      "MSE": 0.2169,
+      "MAE": 0.2308
+    },
+    "maets_zero": {
+      "MSE": 0.8046,
+      "MAE": 0.5968
+    },
+    "naive": {
+      "MSE": 1.412,
+      "MAE": 0.7581
+    },
+    "snaive": {
+      "MSE": 0.289,
+      "MAE": 0.2232
+    }
+  }
+}

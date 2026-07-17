@@ -1,0 +1,21 @@
+{
+  "config": {
+    "dataset": "solar",
+    "P": 144,
+    "context": 15984,
+    "horizon": 144,
+    "stride": 8,
+    "n_test": 83008,
+    "n_train": 100000
+  },
+  "results": {
+    "lcvmae_zs": {
+      "MSE": 0.7151,
+      "MAE": 0.8032
+    },
+    "lcvmae_zero": {
+      "MSE": 0.766,
+      "MAE": 0.6294
+    }
+  }
+}

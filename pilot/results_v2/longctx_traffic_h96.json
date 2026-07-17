@@ -1,0 +1,21 @@
+{
+  "config": {
+    "dataset": "traffic",
+    "P": 24,
+    "context": 2592,
+    "horizon": 96,
+    "stride": 8,
+    "n_test": 27328,
+    "n_train": 100000
+  },
+  "results": {
+    "lcvmae_zs": {
+      "MSE": 1.0161,
+      "MAE": 0.7861
+    },
+    "lcvmae_zero": {
+      "MSE": 1.298,
+      "MAE": 0.787
+    }
+  }
+}
