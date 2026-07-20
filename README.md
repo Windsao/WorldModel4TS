@@ -191,7 +191,47 @@ Wan2.1 LoRA (4k synthetic samples): level anchoring improves 4x (pure-gen MSE
 0.377 -> 0.371 improved, vs 0.506 degraded zero-shot). Direction cured, dosage
 insufficient — scaling LoRA data is the obvious next lever.
 
-## Diagnosed failure modes (why naive transfer fails)
+## Phase 8 — The design that works: period-frame video + regression head (2026-07-20)
+
+The wiring error in Phases 1-7: prediction was placed on a **within-frame spatial
+axis** (masked columns) and read out by **pixel reconstruction**. Both fight the
+model. Fix:
+
+1. **Frame = period index** — prediction lives on the temporal/frame axis, the
+   video model's actual competence. Context = 16 periods → 16 frames.
+2. **Regression head** on pooled spatiotemporal tokens → `[horizon]` (uni) or
+   `[M × horizon]` (field). No pixel decode (A8 bottleneck), no future frames
+   rendered (zero leakage surface).
+3. Channel-independent (`uni`) or multivariate-joint field (`field`).
+
+Code: `pilot/run_field.py`. VideoMAE-base, 3-epoch cosine, context-only norm,
+nearest-neighbor patch-aligned rendering. MSE on matched windows (stride 8).
+
+| Dataset (ch) | snaive | smean | field (joint) | **uni (indep)** | uni-rand | prior benefit |
+|---|---|---|---|---|---|---|
+| electricity (321) | 0.340 | 0.207 | 0.213 | **0.127** | 0.160 | **−21%** |
+| traffic (862) | 0.963 | 0.518 | 0.414 | **0.302** | 0.358 | **−16%** |
+| solar (137) | 0.289 | 0.200 | **0.177** | — | — | — |
+| ETTh1 (7) | 0.512 | 0.402 | 0.492 | 0.455 | 0.456 | ~0% |
+
+**Findings:**
+1. **First video design to beat seasonal baselines on every multivariate set**:
+   electricity −39%, traffic −42%, solar −11% vs smean. electricity 0.127 is in
+   the specialized-SOTA range (Chronos 0.145, VisionTS ~0.15).
+2. **The Kinetics video prior genuinely contributes**: pretrained beats random-init
+   by 16-21% on the multivariate fields, and by ~0% on 7-channel ETTh1 — the
+   benefit scales with field structure, matched-architecture ablation.
+3. Channel-independent `uni` beats multivariate-joint `field` (packing 112 channels
+   into 2px rows loses per-channel phase detail); the win is the frame-axis
+   prediction + head, not the joint layout.
+4. ETTh1 (non-field) still loses to smean — consistent throughout: video helps
+   where temporal-field structure exists.
+
+Open (in progress): stride-1 matched-literature protocol; head-to-head vs
+image-MAE under this same pipeline (does video *beat image*, not just baselines);
+multi-seed.
+
+## Diagnosed failure modes (early naive-transfer phases)
 
 1. **Level-pathway blindness.** VideoMAE's `norm_pix_loss` training predicts
    per-patch *normalized* pixels: the model can output shape but never absolute
