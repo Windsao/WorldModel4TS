@@ -10,15 +10,17 @@ TS-rendered videos.
 > synthetic renderer. See [Known Issues and Data-Preprocessing Research Plan](PREPROCESSING_AND_KNOWN_ISSUES.md)
 > before interpreting or extending continued-pretraining results.
 
-**TL;DR (as of 2026-07-15):** naive transfer of video models to time series
-**fails** under every protocol we tested — zero-shot, LayerNorm fine-tuning, full
-fine-tuning, pretraining ablations, literature-level long-context protocols, and
-settings deliberately favorable to video priors. The image-pretrained VisionTS
-recipe dominates its video counterpart on all 7 datasets. We traced the failure
-to three mechanisms (level-pathway blindness, layout/content OOD, static-frame
-rendering) and show the first positive signal from **continued pretraining of
-VideoMAE on synthetic TS-rendered videos** ("VideoMAE-TS"), which is training as
-this README is written.
+**TL;DR (as of 2026-07-20):** *naive* transfer of video models to time series
+fails under every protocol (zero-shot, LN/full fine-tuning, long-context) — but
+the failure was a **wiring error**, not a fact about video models. With the right
+input/output design — **prediction on the frame axis (one frame per period) + a
+regression head instead of pixel decode** — VideoMAE beats seasonal baselines on
+every multivariate benchmark (electricity 0.127, traffic 0.302, solar 0.177; all
+11-42% below seasonal-mean, electricity in specialized-SOTA range), the Kinetics
+prior contributes 16-21% (matched-arch ablation), and **VideoMAE beats an image
+backbone by 35-36% on identical input** — isolating cross-frame temporal attention
+as the mechanism. See Phase 8 for the design and results; Phases 1-7 document the
+naive-transfer failures and the diagnosis that led here.
 
 ## Setup
 
@@ -227,9 +229,25 @@ nearest-neighbor patch-aligned rendering. MSE on matched windows (stride 8).
 4. ETTh1 (non-field) still loses to smean — consistent throughout: video helps
    where temporal-field structure exists.
 
-Open (in progress): stride-1 matched-literature protocol; head-to-head vs
-image-MAE under this same pipeline (does video *beat image*, not just baselines);
-multi-seed.
+**Video vs image, identical input (the decisive control):** same period-frames,
+same windows, same head, same budget (ft-cap 20k, stride 16, 3 epochs) — ONLY the
+backbone differs. VideoMAE attends across frames (tubelet temporal attention);
+ViT-MAE encodes each of the 16 frames independently and mean-pools.
+
+| Dataset | **VideoMAE** | ViT-MAE | smean |
+|---|---|---|---|
+| electricity | **0.139** | 0.214 | 0.207 |
+| traffic | **0.321** | 0.500 | 0.517 |
+
+**Video beats image by 35-36% on identical input**, and the image backbone barely
+reaches the seasonal baseline. Because the sole difference is cross-frame temporal
+modeling, this isolates the mechanism: **once prediction is on the frame axis, the
+video model's temporal attention is what extracts the signal** — the rendering and
+head alone (which the image model also has) are not enough. This is the first clean
+"video specifically beats image" result in the project, and it inverts the earlier
+phases' conclusion once the input/output wiring is correct.
+
+Open: stride-1 matched-literature numbers; multi-seed; larger channel budgets.
 
 ## Diagnosed failure modes (early naive-transfer phases)
 

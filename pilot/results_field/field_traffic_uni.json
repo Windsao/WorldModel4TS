@@ -1,0 +1,35 @@
+{
+  "config": {
+    "dataset": "traffic",
+    "horizon_p": 4,
+    "data_dir": "/nyx-storage1/hanliu/wm4ts/data",
+    "out_dir": "pilot/results_field/h2h",
+    "mode": "uni",
+    "max_ch": 112,
+    "epochs": 3,
+    "lr": 5e-05,
+    "batch": 16,
+    "stride": 16,
+    "ft_cap": 20000,
+    "pretrained": 1,
+    "backbone": "image",
+    "M": 112,
+    "P": 24,
+    "context": 384,
+    "horizon": 96
+  },
+  "results": {
+    "snaive": {
+      "MSE": 0.9573,
+      "MAE": 0.4865
+    },
+    "smean": {
+      "MSE": 0.5171,
+      "MAE": 0.3838
+    },
+    "image_uni": {
+      "MSE": 0.5002,
+      "MAE": 0.385
+    }
+  }
+}

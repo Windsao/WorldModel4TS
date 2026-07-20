@@ -91,16 +91,24 @@ def windows(data, borders, split, context, horizon, stride, cap=None):
 
 # ---------------------------------------------------------------- model
 class FieldVMAE(nn.Module):
-    def __init__(self, M, P, horizon, mode="field", pretrained=True):
+    def __init__(self, M, P, horizon, mode="field", pretrained=True,
+                 backbone="video"):
         super().__init__()
         import transformers
         assert transformers.__version__ < "5"
-        from transformers import VideoMAEModel, VideoMAEConfig
-        name = os.environ.get("VMAE_CKPT", "MCG-NJU/videomae-base")
-        if pretrained:
-            self.enc = VideoMAEModel.from_pretrained(name)
-        else:
-            self.enc = VideoMAEModel(VideoMAEConfig.from_pretrained(name))
+        self.backbone = backbone
+        if backbone == "video":
+            from transformers import VideoMAEModel, VideoMAEConfig
+            name = os.environ.get("VMAE_CKPT", "MCG-NJU/videomae-base")
+            self.enc = (VideoMAEModel.from_pretrained(name) if pretrained
+                        else VideoMAEModel(VideoMAEConfig.from_pretrained(name)))
+        else:  # image control: ViT-MAE encoder applied per frame (same input)
+            from transformers import ViTMAEModel, ViTMAEConfig
+            name = "facebook/vit-mae-base"
+            cfg = ViTMAEConfig.from_pretrained(name)
+            cfg.mask_ratio = 0.0
+            self.enc = (ViTMAEModel.from_pretrained(name, config=cfg) if pretrained
+                        else ViTMAEModel(cfg))
         self.M, self.P, self.horizon, self.mode = M, P, horizon, mode
         d = self.enc.config.hidden_size
         out_dim = (M * horizon) if mode == "field" else horizon
@@ -137,8 +145,12 @@ class FieldVMAE(nn.Module):
 
     def forward(self, x):
         B = x.shape[0]
-        vid, mu, sd = self.render(x)
-        h = self.enc(pixel_values=vid).last_hidden_state.mean(1)   # [B, d]
+        vid, mu, sd = self.render(x)                       # [B, NF, 3, H, W]
+        if self.backbone == "video":
+            h = self.enc(pixel_values=vid).last_hidden_state.mean(1)   # [B, d]
+        else:  # image: encode each frame, mean-pool patch tokens, then over frames
+            f = self.enc(pixel_values=vid.reshape(B * NF, 3, IMG, IMG))
+            h = f.last_hidden_state.mean(1).view(B, NF, -1).mean(1)    # [B, d]
         out = self.head(h)
         if self.mode == "field":
             z = out.view(B, self.horizon, self.M)
@@ -197,6 +209,7 @@ def main():
     ap.add_argument("--stride", type=int, default=1)
     ap.add_argument("--ft-cap", type=int, default=40000)
     ap.add_argument("--pretrained", type=int, default=1)
+    ap.add_argument("--backbone", choices=["video", "image"], default="video")
     args = ap.parse_args()
 
     data, borders = load_mv(args.dataset, args.data_dir, args.max_ch)
@@ -228,16 +241,16 @@ def main():
         if len(Xtr) > args.ft_cap:
             k = np.random.default_rng(0).choice(len(Xtr), args.ft_cap, False)
             Xtr, Ytr = Xtr[k], Ytr[k]
-        model = FieldVMAE(1, P, horizon, "uni", bool(args.pretrained)).to(DEVICE)
+        model = FieldVMAE(1, P, horizon, "uni", bool(args.pretrained), args.backbone).to(DEVICE)
         pred = run(model, Xtr, Ytr, Xte_u, Yte_u, args.epochs, args.lr,
                    args.batch, "uni")
         mse = float(np.mean((pred - Yte_u) ** 2)); mae = float(np.mean(np.abs(pred - Yte_u)))
     else:
-        model = FieldVMAE(M, P, horizon, "field", bool(args.pretrained)).to(DEVICE)
+        model = FieldVMAE(M, P, horizon, "field", bool(args.pretrained), args.backbone).to(DEVICE)
         pred = run(model, Xtr, Ytr, Xte, Yte, args.epochs, args.lr,
                    args.batch, "field")
         mse = float(np.mean((pred - Yte) ** 2)); mae = float(np.mean(np.abs(pred - Yte)))
-    tag = f"vmae_{args.mode}" + ("" if args.pretrained else "_rand")
+    tag = f"{args.backbone}_{args.mode}" + ("" if args.pretrained else "_rand")
     results[tag] = {"MSE": round(mse, 4), "MAE": round(mae, 4)}
     print(f"[done] {tag:14s} MSE={mse:.4f} MAE={mae:.4f}", flush=True)
 
