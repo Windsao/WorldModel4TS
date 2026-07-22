@@ -36,7 +36,24 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-import run_pilot as rp
+# ---------------------------------------------------------------- dataset config
+# (inlined so this file is standalone — the positive-result design)
+DATASETS = {
+    "ETTh1":       dict(kind="ett",    file="ETTh1.csv",       P=24,  borders=(8640, 11520, 14400)),
+    "ETTh2":       dict(kind="ett",    file="ETTh2.csv",       P=24,  borders=(8640, 11520, 14400)),
+    "ETTm1":       dict(kind="ett",    file="ETTm1.csv",       P=96,  borders=(34560, 46080, 57600)),
+    "ETTm2":       dict(kind="ett",    file="ETTm2.csv",       P=96,  borders=(34560, 46080, 57600)),
+    "electricity": dict(kind="lstnet", file="electricity.txt", P=24),
+    "traffic":     dict(kind="lstnet", file="traffic.txt",     P=24),
+    "solar":       dict(kind="lstnet", file="solar_AL.txt",    P=144),
+}
+P = None
+
+
+def configure(period):
+    global P
+    P = period
+
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 IMG, PS, NF = 224, 16, 16
@@ -47,8 +64,8 @@ IMN_STD = torch.tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1)
 
 # ---------------------------------------------------------------- data
 def load_mv(name, data_dir, max_ch):
-    cfg = rp.DATASETS[name]
-    rp.configure(cfg["P"])
+    cfg = DATASETS[name]
+    configure(cfg["P"])
     path = os.path.join(data_dir, cfg["file"])
     if cfg["kind"] == "ett":
         data = __import__("pandas").read_csv(path).iloc[:, 1:].values.astype(np.float32)
@@ -197,8 +214,9 @@ def run(model, Xtr, Ytr, Xte, Yte, epochs, lr, batch, mode, seed=0):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--dataset", required=True, choices=list(rp.DATASETS))
+    ap.add_argument("--dataset", required=True, choices=list(DATASETS))
     ap.add_argument("--horizon-p", type=int, default=4)
+    ap.add_argument("--horizon-steps", type=int, default=0, help="if >0, horizon in raw steps (overrides horizon-p); head can output any length")
     ap.add_argument("--data-dir", default="pilot/data")
     ap.add_argument("--out-dir", default="pilot/results_field")
     ap.add_argument("--mode", choices=["field", "uni"], default="field")
@@ -215,8 +233,9 @@ def main():
     torch.manual_seed(args.seed)
 
     data, borders = load_mv(args.dataset, args.data_dir, args.max_ch)
-    P = rp.P
-    context, horizon = NF * P, args.horizon_p * P
+    P = P
+    context = NF * P
+    horizon = args.horizon_steps if args.horizon_steps > 0 else args.horizon_p * P
     M = data.shape[1]
     Xtr, Ytr = windows(data, borders, "train", context, horizon, 1, args.ft_cap)
     Xte, Yte = windows(data, borders, "test", context, horizon, args.stride)
@@ -224,10 +243,12 @@ def main():
           f"horizon={horizon} train={len(Xtr)} test={len(Xte)}", flush=True)
 
     results = {}
-    # baselines (on same windows)
+    reps = (horizon + P - 1) // P    # periods needed to cover horizon (then trim)
+    # baselines (on same windows); work for arbitrary horizon in steps
     def sm(X):  # seasonal mean over context periods
-        return np.tile(X.reshape(len(X), NF, P, M).mean(1), (1, args.horizon_p, 1))
-    for nm, fn in [("snaive", lambda X: np.tile(X[:, -P:], (1, args.horizon_p, 1))),
+        base = X.reshape(len(X), NF, P, M).mean(1)         # [N, P, M]
+        return np.tile(base, (1, reps, 1))[:, :horizon]
+    for nm, fn in [("snaive", lambda X: np.tile(X[:, -P:], (1, reps, 1))[:, :horizon]),
                    ("smean", sm)]:
         p = fn(Xte)
         results[nm] = {"MSE": round(float(np.mean((p - Yte) ** 2)), 4),
