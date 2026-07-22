@@ -46,31 +46,105 @@ high-channel benchmarks.
 (10-min, P=144) only the `field` mode beats the baseline and video ≈ image; small
 non-field ETT loses. Continued pretraining does not help once the wiring is correct.
 
-## Run
+## How to run (step by step)
 
+### Requirements
+- Python ≥ 3.9, one GPU (≈16 GB is enough for `uni` mode; ≈32 GB for the `image`
+  backbone).
+- **`transformers` must be < 5** (v5 silently breaks VideoMAE — see the warning at
+  the bottom). The code asserts this and will stop otherwise.
+
+### 1. Install
 ```bash
-pip install "transformers==4.46.3" torch torchvision pandas numpy   # transformers<5 required
-export HF_HOME=<hf-cache>
-
-# channel-independent (recommended), electricity, horizon 96
-python pilot/run_field.py --dataset electricity --mode uni --horizon-p 4 \
-    --stride 8 --max-ch 112 --epochs 3 --data-dir <data> --out-dir results
-
-# multivariate-joint field mode
-python pilot/run_field.py --dataset solar --mode field --horizon-p 1 --data-dir <data>
-
-# image-backbone control (same input)
-python pilot/run_field.py --dataset electricity --mode uni --backbone image --data-dir <data>
-
-# arbitrary horizon in raw steps (any dataset): --horizon-steps 336
+pip install "transformers==4.46.3" torch torchvision pandas numpy einops requests
 ```
 
-Key flags: `--mode {uni,field}` · `--backbone {video,image}` · `--horizon-p N` (periods)
-or `--horizon-steps N` · `--max-ch N` (channel cap; use large for full channels) ·
-`--stride N` (test window stride) · `--seed N` · `VMAE_CKPT=<dir>` env to swap backbone.
+### 2. Get the data
+Download the 7 benchmarks into one folder, e.g. `./data`:
+```bash
+mkdir -p data && cd data
+# ETT (4 files)
+for f in ETTh1 ETTh2 ETTm1 ETTm2; do
+  curl -sLO https://raw.githubusercontent.com/zhouhaoyi/ETDataset/main/ETT-small/$f.csv
+done
+# electricity / traffic / solar (LSTNet versions)
+base=https://raw.githubusercontent.com/laiguokun/multivariate-time-series-data/master
+curl -sL $base/electricity/electricity.txt.gz | gunzip > electricity.txt
+curl -sL $base/traffic/traffic.txt.gz          | gunzip > traffic.txt
+curl -sL $base/solar-energy/solar_AL.txt.gz    | gunzip > solar_AL.txt
+cd ..
+```
+The `--data-dir` you pass to the script is this `./data` folder. File names must match
+the table in `pilot/run_field.py` (`ETTh1.csv`, `electricity.txt`, `solar_AL.txt`, …).
 
-Data: ETT csvs from `zhouhaoyi/ETDataset`; electricity/traffic/solar from
-`laiguokun/multivariate-time-series-data` (gunzip into the data dir).
+### 3. Set the HuggingFace cache (so the VideoMAE checkpoint downloads somewhere sane)
+```bash
+export HF_HOME=$PWD/hf_cache        # first run downloads MCG-NJU/videomae-base (~350 MB)
+export CUDA_VISIBLE_DEVICES=0
+```
+
+### 4. Run — the main positive result (electricity, channel-independent, horizon 96)
+```bash
+python pilot/run_field.py \
+    --dataset electricity \
+    --mode uni \
+    --horizon-p 4 \          # 4 periods × 24 h = horizon 96
+    --stride 8 \
+    --max-ch 112 \           # subsample channels (use a big number for ALL channels)
+    --epochs 3 \
+    --data-dir ./data \
+    --out-dir ./results
+```
+
+### 5. What you should see
+The script prints the config, per-epoch train MSE, then the final metrics, and writes
+a JSON to `--out-dir`:
+```
+dataset=electricity mode=uni M=112 P=24 context=384 horizon=96 train=40000 test=...
+[done] snaive     {'MSE': 0.34, ...}
+[done] smean      {'MSE': 0.207, ...}
+[info] epoch 0 train MSE 0.19
+...
+[done] video_uni_s0   MSE=0.1379 MAE=0.2425     ← our method (≈0.13–0.14, beats smean 0.207)
+```
+`results/field_electricity_uni_video_h96_s0.json` holds the numbers.
+
+### 6. Other configurations
+```bash
+# multivariate-joint "field" mode (rows=variables, cols=phase) — better on solar
+python pilot/run_field.py --dataset solar --mode field --horizon-p 1 --data-dir ./data
+
+# image-backbone control (same input, ViT-MAE instead of VideoMAE) — should be ~35% worse
+python pilot/run_field.py --dataset electricity --mode uni --backbone image --data-dir ./data
+
+# random-init ablation (is the Kinetics prior helping?)
+python pilot/run_field.py --dataset electricity --mode uni --pretrained 0 --data-dir ./data
+
+# arbitrary horizon in raw steps, any dataset (head outputs any length)
+python pilot/run_field.py --dataset ETTm1 --mode uni --horizon-steps 336 --data-dir ./data
+
+# full-channel, matched-literature protocol (stride 1, all channels)
+python pilot/run_field.py --dataset electricity --mode uni --horizon-p 4 \
+    --stride 1 --max-ch 1000 --data-dir ./data
+```
+
+### All flags
+| flag | meaning | default |
+|---|---|---|
+| `--dataset` | ETTh1/ETTh2/ETTm1/ETTm2/electricity/traffic/solar | required |
+| `--mode` | `uni` (channel-independent, recommended) or `field` (joint) | `field` |
+| `--backbone` | `video` (VideoMAE) or `image` (ViT-MAE control) | `video` |
+| `--horizon-p` | horizon in periods (`4`→96 for hourly) | 4 |
+| `--horizon-steps` | horizon in raw steps; overrides `--horizon-p` if > 0 | 0 |
+| `--max-ch` | channel cap (large ⇒ all channels) | 112 |
+| `--stride` | test-window stride (1 = matched-literature) | 1 |
+| `--epochs` / `--lr` / `--batch` | full fine-tune schedule | 3 / 5e-5 / 16 |
+| `--seed` | run seed (for error bars) | 0 |
+| `--ft-cap` | max training windows | 40000 |
+| `VMAE_CKPT=<dir>` | env var to load a different VideoMAE checkpoint | HF default |
+
+Each run writes `field_<dataset>_<mode>_<backbone>_h<horizon>_s<seed>.json` with the
+model metric plus `snaive`/`smean` baselines on the same windows.
 
 ## Constraint
 
