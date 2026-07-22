@@ -161,14 +161,14 @@ class FieldVMAE(nn.Module):
 
 
 # ---------------------------------------------------------------- train / eval
-def run(model, Xtr, Ytr, Xte, Yte, epochs, lr, batch, mode):
+def run(model, Xtr, Ytr, Xte, Yte, epochs, lr, batch, mode, seed=0):
     params = list(model.parameters())
     opt = torch.optim.AdamW(params, lr=lr, weight_decay=1e-2)
     n_steps = epochs * ((len(Xtr) + batch - 1) // batch)
     si = 0
     model.train()
     for ep in range(epochs):
-        perm = np.random.default_rng(ep).permutation(len(Xtr))
+        perm = np.random.default_rng(1000 * seed + ep).permutation(len(Xtr))
         tot = 0.0
         for i in range(0, len(Xtr), batch):
             for pg in opt.param_groups:
@@ -210,7 +210,9 @@ def main():
     ap.add_argument("--ft-cap", type=int, default=40000)
     ap.add_argument("--pretrained", type=int, default=1)
     ap.add_argument("--backbone", choices=["video", "image"], default="video")
+    ap.add_argument("--seed", type=int, default=0)
     args = ap.parse_args()
+    torch.manual_seed(args.seed)
 
     data, borders = load_mv(args.dataset, args.data_dir, args.max_ch)
     P = rp.P
@@ -243,20 +245,20 @@ def main():
             Xtr, Ytr = Xtr[k], Ytr[k]
         model = FieldVMAE(1, P, horizon, "uni", bool(args.pretrained), args.backbone).to(DEVICE)
         pred = run(model, Xtr, Ytr, Xte_u, Yte_u, args.epochs, args.lr,
-                   args.batch, "uni")
+                   args.batch, "uni", args.seed)
         mse = float(np.mean((pred - Yte_u) ** 2)); mae = float(np.mean(np.abs(pred - Yte_u)))
     else:
         model = FieldVMAE(M, P, horizon, "field", bool(args.pretrained), args.backbone).to(DEVICE)
         pred = run(model, Xtr, Ytr, Xte, Yte, args.epochs, args.lr,
-                   args.batch, "field")
+                   args.batch, "field", args.seed)
         mse = float(np.mean((pred - Yte) ** 2)); mae = float(np.mean(np.abs(pred - Yte)))
-    tag = f"{args.backbone}_{args.mode}" + ("" if args.pretrained else "_rand")
+    tag = f"{args.backbone}_{args.mode}" + ("" if args.pretrained else "_rand") + f"_s{args.seed}"
     results[tag] = {"MSE": round(mse, 4), "MAE": round(mae, 4)}
     print(f"[done] {tag:14s} MSE={mse:.4f} MAE={mae:.4f}", flush=True)
 
     os.makedirs(args.out_dir, exist_ok=True)
     with open(os.path.join(args.out_dir,
-                           f"field_{args.dataset}_{args.mode}.json"), "w") as f:
+                           f"field_{args.dataset}_{args.mode}_{args.backbone}_h{horizon}_s{args.seed}.json"), "w") as f:
         json.dump({"config": vars(args) | {"M": M, "P": P, "context": context,
                                            "horizon": horizon}, "results": results},
                   f, indent=2)

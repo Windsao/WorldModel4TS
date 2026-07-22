@@ -247,7 +247,27 @@ head alone (which the image model also has) are not enough. This is the first cl
 "video specifically beats image" result in the project, and it inverts the earlier
 phases' conclusion once the input/output wiring is correct.
 
-Open: stride-1 matched-literature numbers; multi-seed; larger channel budgets.
+### Multi-seed + ablations (2026-07-22, uni mode, 20k-cap/3-epoch/stride-8)
+
+| Dataset | smean | VideoMAE (3 seeds) | +VMAE-TS-v2 init | ViT-MAE (image) |
+|---|---|---|---|---|
+| electricity | 0.207 | **0.138 ± 0.0006** | 0.142 | 0.214 |
+| traffic | 0.517 | **0.320 ± 0.0018** | 0.323 | 0.500 |
+| solar (P=144) | 0.200 | 0.218 (uni loses) | — | 0.208 |
+| ETTm1 (7ch) | 0.399 | 0.436 (loses) | — | — |
+
+**Consolidated findings:**
+1. **Robust positive on hourly high-channel fields**: electricity/traffic — VideoMAE
+   beats smean 33-38%, beats image 35-36%, multi-seed σ ≈ 0.001 (not a fluke).
+2. **Continued pretraining (VMAE-TS-v2) does NOT help** once the wiring is correct —
+   vanilla Kinetics init ties or slightly beats it (electricity 0.138 vs 0.142). The
+   Phase-6 CPT was designed for the old (wrong) pipeline; the fix makes it redundant.
+3. **The video advantage has a boundary**: on solar (10-min, P=144) the `uni` mode
+   loses to smean and image ≈ video; only the multivariate-joint `field` mode (0.177)
+   beat the baseline there. "Video beats image" holds clearly for hourly high-channel
+   data, not universally across all fields.
+
+Open: stride-1 matched-literature numbers; larger channel budgets; solar/P-length study.
 
 ## Diagnosed failure modes (early naive-transfer phases)
 
