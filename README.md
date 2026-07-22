@@ -255,6 +255,7 @@ phases' conclusion once the input/output wiring is correct.
 | traffic | 0.517 | **0.320 ± 0.0018** | 0.323 | 0.500 |
 | solar (P=144) | 0.200 | 0.218 (uni loses) | — | 0.208 |
 | ETTm1 (7ch) | 0.399 | 0.436 (loses) | — | — |
+| electricity h=192 | 0.211 | **0.157** (−26%) | — | — |
 
 **Consolidated findings:**
 1. **Robust positive on hourly high-channel fields**: electricity/traffic — VideoMAE
