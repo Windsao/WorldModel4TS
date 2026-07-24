@@ -37,6 +37,34 @@ naive-transfer failures and the diagnosis that led here.
 > produce garbage. Pinned: `transformers==4.46.3`. See the assert in
 > `pilot/run_pilot.py`.
 
+## Phase 9 (final) — Complete all-7-dataset results, full-channel matched protocol
+
+The Phase-8 design (period-frame video + regression head, full fine-tune, `uni`
+mode) run on all 7 datasets at h96 with **full channels**. Code: `pilot/run_field.py`
+(also on the clean branch `field-video-clean`).
+
+| Dataset | ch | context | **VideoMAE (ours)** | snaive | smean | vs smean |
+|---|---|---|---|---|---|---|
+| electricity | 321 | 384 | **0.141** | 0.321 | 0.207 | **−32%** |
+| traffic | 862 | 384 | **0.386** | 1.218 | 0.644 | **−40%** |
+| ETTm1 | 7 | 1536 | **0.335** | 0.423 | 0.376 | **−11%** |
+| ETTm2 | 7 | 1536 | **0.200** | 0.263 | 0.322 | **−38%** |
+| ETTh2 | 7 | 384 | 0.351 | 0.391 | 0.350 | tie |
+| ETTh1 | 7 | 384 | 0.462 | 0.512 | 0.402 | lose |
+| solar | 137 | 2304 | 0.224 (uni) / **0.177** (field) | 0.290 | 0.201 | field WIN |
+
+- **Beats seasonal baseline 5/7** (high-channel electricity/traffic + long-context
+  ETTm1/ETTm2); loses on short-context ETTh1 and solar-`uni`.
+- **vs literature (h96):** electricity 0.141 ties PatchTST (~0.140) and beats VisionTS
+  zero-shot (0.177); ETTm1 0.335 ≈ iTransformer (0.334); behind supervised SOTA on
+  ETT-hourly (short context).
+- **Frozen backbone / head-only fails** (electricity 0.301, traffic 0.607, ETTh1 0.496,
+  solar 0.226 — all lose to baseline): unlike VisionTS's frozen image MAE, Kinetics
+  video features need **full fine-tuning** to become useful. A real image-vs-video
+  transfer difference.
+
+---
+
 ## Phase 1 — Zero-shot, short context (12 periods -> 4 periods)
 
 Render each period as one frame (phase -> rows); forecast = reconstruction of 4
