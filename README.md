@@ -22,15 +22,36 @@ high-channel benchmarks.
 3. **Two modes:** `uni` (channel-independent — stronger) and `field`
    (multivariate-joint — rows = variables, cols = phase).
 
-## Results (test MSE, VideoMAE-base, full fine-tune, 3 epochs)
+## Complete results — all 7 datasets (test MSE, h96, VideoMAE-base, full FT, uni mode, full channels)
 
-| Dataset (ch) | smean | **VideoMAE (uni)** | ViT-MAE (image) | VideoMAE random-init |
-|---|---|---|---|---|
-| electricity (321) | 0.207 | **0.138 ± 0.0006** (3 seeds) | 0.214 | 0.160 |
-| traffic (862) | 0.517 | **0.320 ± 0.0018** (3 seeds) | 0.500 | 0.358 |
-| electricity h=192 | 0.211 | **0.157** | — | — |
-| solar (137) | 0.200 | 0.218 (uni) / **0.177** (field) | 0.208 | — |
-| ETTm1 (7) | 0.399 | 0.436 | — | — |
+| Dataset | ch | context | **VideoMAE (ours)** | snaive | smean | vs smean |
+|---|---|---|---|---|---|---|
+| electricity | 321 | 384 | **0.141** | 0.321 | 0.207 | **−32%** |
+| traffic | 862 | 384 | **0.386** | 1.218 | 0.644 | **−40%** |
+| ETTm1 | 7 | 1536 | **0.335** | 0.423 | 0.376 | **−11%** |
+| ETTm2 | 7 | 1536 | **0.200** | 0.263 | 0.322 | **−38%** |
+| ETTh2 | 7 | 384 | 0.351 | 0.391 | 0.350 | tie |
+| ETTh1 | 7 | 384 | 0.462 | 0.512 | 0.402 | lose |
+| solar | 137 | 2304 | 0.224 (uni) / **0.177** (field) | 0.290 | 0.201 | field WIN |
+
+**Beats the seasonal baseline on 5/7** (high-channel electricity/traffic + long-context
+ETTm1/ETTm2). Loses on short-context low-channel ETTh1 and solar-`uni` (solar's `field`
+mode wins). vs literature at h96: **electricity 0.141 ties PatchTST (~0.140)** and beats
+VisionTS zero-shot (0.177); ETTm1 0.335 ≈ iTransformer (0.334); behind supervised SOTA
+on ETT-hourly.
+
+### Multi-seed + backbone ablations (stride-8, 112-channel subsample)
+
+| Dataset | smean | **VideoMAE (uni)** | ViT-MAE (image) | random-init | **frozen (head-only)** |
+|---|---|---|---|---|---|
+| electricity | 0.207 | **0.138 ± 0.0006** (3 seeds) | 0.214 | 0.160 | 0.301 ✗ |
+| traffic | 0.517 | **0.320 ± 0.0018** (3 seeds) | 0.500 | 0.358 | 0.607 ✗ |
+| ETTh1 | 0.402 | 0.455 | — | 0.456 | 0.496 ✗ |
+| solar | 0.200 | 0.177 (field) | 0.208 | — | 0.226 ✗ |
+
+**Frozen backbone fails** (loses to baseline everywhere): unlike VisionTS's frozen image
+MAE, the Kinetics video features are not directly usable — the win **requires full
+fine-tuning** to adapt them. This is a real difference from image-model transfer.
 
 **Three pieces of evidence the result is real:**
 1. **Beats baselines** on all high-channel datasets (electricity −33%, traffic −38%),

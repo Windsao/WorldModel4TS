@@ -1,0 +1,36 @@
+{
+  "config": {
+    "dataset": "ETTm1",
+    "horizon_p": 1,
+    "data_dir": "/nyx-storage1/hanliu/wm4ts/data",
+    "out_dir": "pilot/results_field/matched",
+    "mode": "uni",
+    "max_ch": 1000,
+    "epochs": 3,
+    "lr": 5e-05,
+    "batch": 16,
+    "stride": 1,
+    "ft_cap": 40000,
+    "pretrained": 1,
+    "backbone": "video",
+    "seed": 0,
+    "M": 7,
+    "P": 96,
+    "context": 1536,
+    "horizon": 96
+  },
+  "results": {
+    "snaive": {
+      "MSE": 0.4227,
+      "MAE": 0.3865
+    },
+    "smean": {
+      "MSE": 0.3761,
+      "MAE": 0.3945
+    },
+    "video_uni_s0": {
+      "MSE": 0.3345,
+      "MAE": 0.3643
+    }
+  }
+}
