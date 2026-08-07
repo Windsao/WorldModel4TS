@@ -1,0 +1,29 @@
+{
+  "dataset": "solar",
+  "M": 112,
+  "P": 144,
+  "n": 1500,
+  "results": {
+    "uni_barcode": {
+      "partic_ratio": 7.49,
+      "feat_dim": 768,
+      "probe_mse": 0.2638,
+      "const_mse": 1.0177,
+      "skill_ratio": 0.2592
+    },
+    "vts_2d": {
+      "partic_ratio": 7.36,
+      "feat_dim": 768,
+      "probe_mse": 0.226,
+      "const_mse": 1.0177,
+      "skill_ratio": 0.2221
+    },
+    "field_2d": {
+      "partic_ratio": 5.23,
+      "feat_dim": 768,
+      "probe_mse": 0.1777,
+      "const_mse": 1.0216,
+      "skill_ratio": 0.174
+    }
+  }
+}

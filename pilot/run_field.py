@@ -109,11 +109,12 @@ def windows(data, borders, split, context, horizon, stride, cap=None):
 # ---------------------------------------------------------------- model
 class FieldVMAE(nn.Module):
     def __init__(self, M, P, horizon, mode="field", pretrained=True,
-                 backbone="video"):
+                 backbone="video", render_mode="period"):
         super().__init__()
         import transformers
         assert transformers.__version__ < "5"
         self.backbone = backbone
+        self.render_mode = render_mode   # "period" (per-frame) or "vts" (single 2D static clip)
         if backbone == "video":
             from transformers import VideoMAEModel, VideoMAEConfig
             name = os.environ.get("VMAE_CKPT", "MCG-NJU/videomae-base")
@@ -144,7 +145,25 @@ class FieldVMAE(nn.Module):
         mu = x.mean(1, keepdim=True)                       # [B,1,M] context stats
         sd = x.std(1, keepdim=True) + 1e-8
         g = (((x - mu) / (3 * sd)).clamp(-1, 1) + 1) / 2   # [B, L, M] in [0,1]
-        g = g.view(B, NF, self.P, M)                       # [B, NF, P, M]
+        G = L // self.P
+        if self.render_mode == "vts":
+            # VisionTS-style: whole lookback -> ONE 2D image [n_periods x phase],
+            # replicated to a static 16-frame clip. uni task only (M==1). Both spatial
+            # axes carry signal (non-degenerate), unlike the period-per-frame barcode.
+            assert self.mode == "uni" and M == 1, "vts render is uni-only"
+            g2 = g[:, :G * self.P].view(B, G, self.P)              # [B, n_periods, phase]
+            img1 = F.interpolate(g2.unsqueeze(1), size=(IMG, IMG), mode="nearest")
+            vid = img1.unsqueeze(1).expand(B, NF, 1, IMG, IMG)     # static clip x16
+            vid = vid.expand(B, NF, 3, IMG, IMG)
+            vid = (vid - self.imn_mean.unsqueeze(1)) / self.imn_std.unsqueeze(1)
+            return vid.contiguous(), mu, sd
+        g = g[:, :G * self.P].view(B, G, self.P, M)        # [B, G, P, M]
+        if G != NF:
+            # temporal resize: resample the G period-frames to NF=16 (VisionTS-style,
+            # applied on the frame axis) so context is decoupled from the 16-frame req.
+            g = g.permute(0, 2, 3, 1).reshape(B, self.P * M, G)   # [B, P*M, G]
+            g = F.interpolate(g, size=NF, mode="linear", align_corners=False)
+            g = g.reshape(B, self.P, M, NF).permute(0, 3, 1, 2)   # [B, NF, P, M]
         if self.mode == "field":
             # frame image: rows = M variables, cols = P phase
             fr = g.permute(0, 1, 3, 2)                     # [B, NF, M, P]
@@ -178,8 +197,25 @@ class FieldVMAE(nn.Module):
 
 
 # ---------------------------------------------------------------- train / eval
+def apply_tune(model, tune):
+    """full: everything trainable (default). frozen: head only.
+    ln: head + encoder LayerNorm affine params only (parameter-efficient)."""
+    if tune == "full":
+        return
+    for p in model.enc.parameters():
+        p.requires_grad_(False)
+    if tune == "ln":
+        for m in model.enc.modules():
+            if isinstance(m, nn.LayerNorm):
+                for p in m.parameters():
+                    p.requires_grad_(True)
+    n = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    tot = sum(p.numel() for p in model.parameters())
+    print(f"[info] tune={tune} trainable={n}/{tot} ({100*n/tot:.2f}%)", flush=True)
+
+
 def run(model, Xtr, Ytr, Xte, Yte, epochs, lr, batch, mode, seed=0):
-    params = list(model.parameters())
+    params = [p for p in model.parameters() if p.requires_grad]
     opt = torch.optim.AdamW(params, lr=lr, weight_decay=1e-2)
     n_steps = epochs * ((len(Xtr) + batch - 1) // batch)
     si = 0
@@ -205,9 +241,10 @@ def run(model, Xtr, Ytr, Xte, Yte, epochs, lr, batch, mode, seed=0):
         print(f"[info] epoch {ep} train MSE {tot/len(Xtr):.4f}", flush=True)
     model.eval()
     preds = []
+    eb = max(batch, 256)   # eval throughput: uni mode iterates millions of series
     with torch.no_grad():
-        for i in range(0, len(Xte), batch):
-            xb = torch.from_numpy(Xte[i:i + batch]).to(DEVICE)
+        for i in range(0, len(Xte), eb):
+            xb = torch.from_numpy(Xte[i:i + eb]).to(DEVICE)
             preds.append(model(xb).cpu().numpy())
     return np.concatenate(preds)
 
@@ -217,6 +254,7 @@ def main():
     ap.add_argument("--dataset", required=True, choices=list(DATASETS))
     ap.add_argument("--horizon-p", type=int, default=4)
     ap.add_argument("--horizon-steps", type=int, default=0, help="if >0, horizon in raw steps (overrides horizon-p); head can output any length")
+    ap.add_argument("--context-steps", type=int, default=0, help="if >0, lookback in raw steps (must be a multiple of P); the G=context/P period-frames are temporally resampled to 16 frames (VisionTS-style resize). default 0 => 16*P (one period per frame)")
     ap.add_argument("--data-dir", default="pilot/data")
     ap.add_argument("--out-dir", default="pilot/results_field")
     ap.add_argument("--mode", choices=["field", "uni"], default="field")
@@ -228,13 +266,21 @@ def main():
     ap.add_argument("--ft-cap", type=int, default=40000)
     ap.add_argument("--pretrained", type=int, default=1)
     ap.add_argument("--backbone", choices=["video", "image"], default="video")
+    ap.add_argument("--tune", choices=["full", "frozen", "ln"], default="full",
+                    help="full: fine-tune all; frozen: head only; ln: head + encoder LayerNorm affines only")
+    ap.add_argument("--render", choices=["period", "vts"], default="period",
+                    help="period: period-per-frame (barcode for uni); vts: VisionTS-style single 2D static clip (uni only)")
     ap.add_argument("--seed", type=int, default=0)
     args = ap.parse_args()
     torch.manual_seed(args.seed)
 
     data, borders = load_mv(args.dataset, args.data_dir, args.max_ch)
-    P = P
-    context = NF * P
+    if args.context_steps > 0:
+        assert args.context_steps % P == 0, f"--context-steps must be a multiple of P={P}"
+        context = args.context_steps
+    else:
+        context = NF * P
+    G = context // P                                   # periods in context (resampled to NF=16)
     horizon = args.horizon_steps if args.horizon_steps > 0 else args.horizon_p * P
     M = data.shape[1]
     Xtr, Ytr = windows(data, borders, "train", context, horizon, 1, args.ft_cap)
@@ -246,7 +292,7 @@ def main():
     reps = (horizon + P - 1) // P    # periods needed to cover horizon (then trim)
     # baselines (on same windows); work for arbitrary horizon in steps
     def sm(X):  # seasonal mean over context periods
-        base = X.reshape(len(X), NF, P, M).mean(1)         # [N, P, M]
+        base = X.reshape(len(X), G, P, M).mean(1)          # [N, P, M]
         return np.tile(base, (1, reps, 1))[:, :horizon]
     for nm, fn in [("snaive", lambda X: np.tile(X[:, -P:], (1, reps, 1))[:, :horizon]),
                    ("smean", sm)]:
@@ -264,22 +310,29 @@ def main():
         if len(Xtr) > args.ft_cap:
             k = np.random.default_rng(0).choice(len(Xtr), args.ft_cap, False)
             Xtr, Ytr = Xtr[k], Ytr[k]
-        model = FieldVMAE(1, P, horizon, "uni", bool(args.pretrained), args.backbone).to(DEVICE)
+        model = FieldVMAE(1, P, horizon, "uni", bool(args.pretrained), args.backbone, args.render).to(DEVICE)
+        apply_tune(model, args.tune)
         pred = run(model, Xtr, Ytr, Xte_u, Yte_u, args.epochs, args.lr,
                    args.batch, "uni", args.seed)
         mse = float(np.mean((pred - Yte_u) ** 2)); mae = float(np.mean(np.abs(pred - Yte_u)))
     else:
         model = FieldVMAE(M, P, horizon, "field", bool(args.pretrained), args.backbone).to(DEVICE)
+        apply_tune(model, args.tune)
         pred = run(model, Xtr, Ytr, Xte, Yte, args.epochs, args.lr,
                    args.batch, "field", args.seed)
         mse = float(np.mean((pred - Yte) ** 2)); mae = float(np.mean(np.abs(pred - Yte)))
-    tag = f"{args.backbone}_{args.mode}" + ("" if args.pretrained else "_rand") + f"_s{args.seed}"
+    tag = f"{args.backbone}_{args.mode}" + ("" if args.pretrained else "_rand") + \
+          ("" if args.tune == "full" else f"_{args.tune}") + \
+          ("" if args.render == "period" else f"_{args.render}") + f"_s{args.seed}"
     results[tag] = {"MSE": round(mse, 4), "MAE": round(mae, 4)}
     print(f"[done] {tag:14s} MSE={mse:.4f} MAE={mae:.4f}", flush=True)
 
     os.makedirs(args.out_dir, exist_ok=True)
     with open(os.path.join(args.out_dir,
-                           f"field_{args.dataset}_{args.mode}_{args.backbone}_h{horizon}_s{args.seed}.json"), "w") as f:
+                           f"field_{args.dataset}_{args.mode}_{args.backbone}"
+                           + ("" if args.tune == "full" else f"_{args.tune}")
+                           + ("" if args.render == "period" else f"_{args.render}")
+                           + f"_L{context}_h{horizon}_s{args.seed}.json"), "w") as f:
         json.dump({"config": vars(args) | {"M": M, "P": P, "context": context,
                                            "horizon": horizon}, "results": results},
                   f, indent=2)
