@@ -109,12 +109,13 @@ def windows(data, borders, split, context, horizon, stride, cap=None):
 # ---------------------------------------------------------------- model
 class FieldVMAE(nn.Module):
     def __init__(self, M, P, horizon, mode="field", pretrained=True,
-                 backbone="video", render_mode="period"):
+                 backbone="video", render_mode="period", adapter=False, context=None):
         super().__init__()
         import transformers
         assert transformers.__version__ < "5"
         self.backbone = backbone
         self.render_mode = render_mode   # "period" (per-frame) or "vts" (single 2D static clip)
+        self.adapter = adapter           # frozen-backbone: linear residual + cross-attn readout
         if backbone == "video":
             from transformers import VideoMAEModel, VideoMAEConfig
             name = os.environ.get("VMAE_CKPT", "MCG-NJU/videomae-base")
@@ -132,6 +133,18 @@ class FieldVMAE(nn.Module):
         out_dim = (M * horizon) if mode == "field" else horizon
         self.head = nn.Sequential(nn.LayerNorm(d), nn.Linear(d, d),
                                   nn.GELU(), nn.Linear(d, out_dim))
+        if adapter:
+            # residual decomposition (frozen backbone): a linear/NLinear pathway on the
+            # normalized context carries level/trend/seasonal; the frozen VideoMAE tokens
+            # are read out by learned cross-attention and add the residual structure.
+            assert mode == "uni", "adapter path is uni-only"
+            ctx = context if context else NF * P
+            self.lin = nn.Linear(ctx, horizon)                       # NLinear residual (normalized)
+            self.q = nn.Parameter(torch.randn(8, d) * 0.02)          # learned readout queries
+            self.xattn = nn.MultiheadAttention(d, 8, batch_first=True)
+            self.xnorm = nn.LayerNorm(d)
+            self.xhead = nn.Linear(8 * d, horizon)
+            nn.init.zeros_(self.xhead.weight); nn.init.zeros_(self.xhead.bias)  # warm start = pure linear
         self.register_buffer("imn_mean", IMN_MEAN)
         self.register_buffer("imn_std", IMN_STD)
 
@@ -179,7 +192,24 @@ class FieldVMAE(nn.Module):
         vid = (vid - self.imn_mean.unsqueeze(1)) / self.imn_std.unsqueeze(1)
         return vid.contiguous(), mu, sd
 
+    def _forward_adapter(self, x):
+        """frozen backbone: forecast = NLinear(norm context) + xattn-readout(frozen tokens)."""
+        B, L, _ = x.shape
+        mu = x.mean(1, keepdim=True); sd = x.std(1, keepdim=True) + 1e-8
+        z = (x - mu) / sd                                       # [B, L, 1] normalized
+        vid, _, _ = self.render(x)                             # frozen-backbone input
+        tokens = self.enc(pixel_values=vid).last_hidden_state  # [B, N, d] (frozen)
+        q = self.q.unsqueeze(0).expand(B, -1, -1)              # [B, 8, d]
+        r, _ = self.xattn(q, tokens, tokens)                   # [B, 8, d]
+        r = self.xnorm(r).reshape(B, -1)                       # [B, 8*d]
+        vmae_out = self.xhead(r)                                # [B, horizon] normalized residual
+        lin_out = self.lin(z[..., 0])                          # [B, horizon] NLinear
+        z_hat = lin_out + vmae_out
+        return z_hat.unsqueeze(-1) * sd + mu                    # [B, horizon, 1]
+
     def forward(self, x):
+        if self.adapter:
+            return self._forward_adapter(x)
         B = x.shape[0]
         vid, mu, sd = self.render(x)                       # [B, NF, 3, H, W]
         if self.backbone == "video":
@@ -266,7 +296,7 @@ def main():
     ap.add_argument("--ft-cap", type=int, default=40000)
     ap.add_argument("--pretrained", type=int, default=1)
     ap.add_argument("--backbone", choices=["video", "image"], default="video")
-    ap.add_argument("--tune", choices=["full", "frozen", "ln"], default="full",
+    ap.add_argument("--tune", choices=["full", "frozen", "ln", "adapter"], default="full",
                     help="full: fine-tune all; frozen: head only; ln: head + encoder LayerNorm affines only")
     ap.add_argument("--render", choices=["period", "vts"], default="period",
                     help="period: period-per-frame (barcode for uni); vts: VisionTS-style single 2D static clip (uni only)")
@@ -310,7 +340,8 @@ def main():
         if len(Xtr) > args.ft_cap:
             k = np.random.default_rng(0).choice(len(Xtr), args.ft_cap, False)
             Xtr, Ytr = Xtr[k], Ytr[k]
-        model = FieldVMAE(1, P, horizon, "uni", bool(args.pretrained), args.backbone, args.render).to(DEVICE)
+        model = FieldVMAE(1, P, horizon, "uni", bool(args.pretrained), args.backbone, args.render,
+                          adapter=(args.tune == "adapter"), context=context).to(DEVICE)
         apply_tune(model, args.tune)
         pred = run(model, Xtr, Ytr, Xte_u, Yte_u, args.epochs, args.lr,
                    args.batch, "uni", args.seed)
