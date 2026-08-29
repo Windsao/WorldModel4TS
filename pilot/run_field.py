@@ -109,7 +109,8 @@ def windows(data, borders, split, context, horizon, stride, cap=None):
 # ---------------------------------------------------------------- model
 class FieldVMAE(nn.Module):
     def __init__(self, M, P, horizon, mode="field", pretrained=True,
-                 backbone="video", render_mode="period", adapter=False, context=None):
+                 backbone="video", render_mode="period", adapter=False, context=None,
+                 fusion="add"):
         super().__init__()
         import transformers
         assert transformers.__version__ < "5"
@@ -134,17 +135,26 @@ class FieldVMAE(nn.Module):
         self.head = nn.Sequential(nn.LayerNorm(d), nn.Linear(d, d),
                                   nn.GELU(), nn.Linear(d, out_dim))
         if adapter:
-            # residual decomposition (frozen backbone): a linear/NLinear pathway on the
-            # normalized context carries level/trend/seasonal; the frozen VideoMAE tokens
-            # are read out by learned cross-attention and add the residual structure.
-            assert mode == "uni", "adapter path is uni-only"
+            # residual decomposition (frozen backbone): a per-channel NLinear pathway on the
+            # normalized context carries level/trend/seasonal; the frozen VideoMAE tokens add
+            # the residual structure. uni: cross-attn readout. field (A2): the video sees the
+            # MULTIVARIATE field video (rows=vars, cols=phase, frames=time = genuine cross-channel
+            # motion) and adds a per-channel correction NLinear (channel-independent) cannot.
             ctx = context if context else NF * P
-            self.lin = nn.Linear(ctx, horizon)                       # NLinear residual (normalized)
-            self.q = nn.Parameter(torch.randn(8, d) * 0.02)          # learned readout queries
-            self.xattn = nn.MultiheadAttention(d, 8, batch_first=True)
-            self.xnorm = nn.LayerNorm(d)
-            self.xhead = nn.Linear(8 * d, horizon)
-            nn.init.zeros_(self.xhead.weight); nn.init.zeros_(self.xhead.bias)  # warm start = pure linear
+            self.lin = nn.Linear(ctx, horizon)                       # per-channel NLinear (uni & field)
+            self.fusion = fusion
+            if mode == "uni":
+                self.q = nn.Parameter(torch.randn(8, d) * 0.02)      # learned readout queries
+                self.xattn = nn.MultiheadAttention(d, 8, batch_first=True)
+                self.xnorm = nn.LayerNorm(d)
+                self.xhead = nn.Linear(8 * d, horizon)
+                nn.init.zeros_(self.xhead.weight); nn.init.zeros_(self.xhead.bias)  # warm start = pure linear
+                if fusion == "film":
+                    self.film_g = nn.Linear(8 * d, horizon); nn.init.zeros_(self.film_g.weight); nn.init.zeros_(self.film_g.bias)
+                    self.film_b = nn.Linear(8 * d, horizon); nn.init.zeros_(self.film_b.weight); nn.init.zeros_(self.film_b.bias)
+            else:  # field adapter (A2): pooled field tokens -> per-channel correction
+                self.vhead_field = nn.Linear(d, M * horizon)
+                nn.init.zeros_(self.vhead_field.weight); nn.init.zeros_(self.vhead_field.bias)  # warm start = pure NLinear
         self.register_buffer("imn_mean", IMN_MEAN)
         self.register_buffer("imn_std", IMN_STD)
 
@@ -192,19 +202,42 @@ class FieldVMAE(nn.Module):
         vid = (vid - self.imn_mean.unsqueeze(1)) / self.imn_std.unsqueeze(1)
         return vid.contiguous(), mu, sd
 
+    def _forward_adapter_field(self, x):
+        """A2: per-channel NLinear + frozen VideoMAE on the multivariate field video."""
+        B, L, M = x.shape
+        mu = x.mean(1, keepdim=True); sd = x.std(1, keepdim=True) + 1e-8
+        z = (x - mu) / sd                                          # [B, L, M]
+        lin_out = self.lin(z.permute(0, 2, 1)).permute(0, 2, 1)   # per-channel NLinear -> [B, horizon, M]
+        if getattr(self, "no_vbranch", False):
+            return lin_out * sd + mu
+        vid, _, _ = self.render(x)                                # field render (evolving multivariate field)
+        h = self.enc(pixel_values=vid).last_hidden_state.mean(1)  # [B, d] frozen
+        vid_out = self.vhead_field(h).view(B, self.horizon, M)    # zero-init: per-channel correction
+        return (lin_out + vid_out) * sd + mu
+
     def _forward_adapter(self, x):
-        """frozen backbone: forecast = NLinear(norm context) + xattn-readout(frozen tokens)."""
+        """frozen backbone: forecast = NLinear(norm context) + xattn-readout(frozen tokens).
+        no_vbranch=True ablates the video branch -> pure NLinear+RevIN (isolates its share)."""
+        if self.mode == "field":
+            return self._forward_adapter_field(x)
         B, L, _ = x.shape
         mu = x.mean(1, keepdim=True); sd = x.std(1, keepdim=True) + 1e-8
         z = (x - mu) / sd                                       # [B, L, 1] normalized
+        lin_out = self.lin(z[..., 0])                          # [B, horizon] NLinear
+        if getattr(self, "no_vbranch", False):
+            return lin_out.unsqueeze(-1) * sd + mu             # NLinear-only ablation
         vid, _, _ = self.render(x)                             # frozen-backbone input
         tokens = self.enc(pixel_values=vid).last_hidden_state  # [B, N, d] (frozen)
         q = self.q.unsqueeze(0).expand(B, -1, -1)              # [B, 8, d]
         r, _ = self.xattn(q, tokens, tokens)                   # [B, 8, d]
         r = self.xnorm(r).reshape(B, -1)                       # [B, 8*d]
-        vmae_out = self.xhead(r)                                # [B, horizon] normalized residual
-        lin_out = self.lin(z[..., 0])                          # [B, horizon] NLinear
-        z_hat = lin_out + vmae_out
+        if getattr(self, "fusion", "add") == "film":
+            gamma = 1 + self.film_g(r)                         # [B, horizon] video scales NLinear
+            beta = self.film_b(r)                              # [B, horizon] video shifts NLinear
+            z_hat = gamma * lin_out + beta                     # video in the main path
+        else:
+            vmae_out = self.xhead(r)                            # [B, horizon] normalized residual
+            z_hat = lin_out + vmae_out
         return z_hat.unsqueeze(-1) * sd + mu                    # [B, horizon, 1]
 
     def forward(self, x):
@@ -227,9 +260,45 @@ class FieldVMAE(nn.Module):
 
 
 # ---------------------------------------------------------------- train / eval
-def apply_tune(model, tune):
+class LoRAWeight(nn.Module):
+    """LoRA as a *weight parametrization*: W_eff = W0 + (alpha/r) * B @ A.
+
+    Registered via torch.nn.utils.parametrize so it applies whether the caller does
+    `self.query(x)` or `F.linear(x, self.query.weight)` -- VideoMAESelfAttention does
+    the latter (it splices in q_bias/v_bias by hand), so wrapping the nn.Linear module
+    would be silently bypassed. B is zero-init => W_eff == W0 at step 0.
+    """
+
+    def __init__(self, w, r, alpha):
+        super().__init__()
+        out_f, in_f = w.shape
+        self.A = nn.Parameter(torch.empty(r, in_f, device=w.device, dtype=w.dtype))
+        self.B = nn.Parameter(torch.zeros(out_f, r, device=w.device, dtype=w.dtype))
+        nn.init.kaiming_uniform_(self.A, a=math.sqrt(5))
+        self.scale = alpha / r
+
+    def forward(self, W):
+        return W + (self.B @ self.A) * self.scale
+
+
+def inject_lora(enc, r, alpha, targets=("query", "value")):
+    """Attach LoRA to every attention query/value projection in the frozen encoder."""
+    from torch.nn.utils import parametrize
+    n = 0
+    for m in list(enc.modules()):
+        for name in targets:
+            sub = getattr(m, name, None)
+            if isinstance(sub, nn.Linear):
+                parametrize.register_parametrization(sub, "weight", LoRAWeight(sub.weight, r, alpha))
+                n += 1
+    return n
+
+
+def apply_tune(model, tune, lora_r=8, lora_alpha=16):
     """full: everything trainable (default). frozen: head only.
-    ln: head + encoder LayerNorm affine params only (parameter-efficient)."""
+    ln: head + encoder LayerNorm affine params only.
+    lora: head + rank-r LoRA on every attention query/value projection.
+    adapter: head unused; NLinear + cross-attn readout on the frozen backbone."""
     if tune == "full":
         return
     for p in model.enc.parameters():
@@ -239,6 +308,9 @@ def apply_tune(model, tune):
             if isinstance(m, nn.LayerNorm):
                 for p in m.parameters():
                     p.requires_grad_(True)
+    elif tune == "lora":
+        n = inject_lora(model.enc, lora_r, lora_alpha)
+        print(f"[info] lora r={lora_r} alpha={lora_alpha} injected into {n} projections", flush=True)
     n = sum(p.numel() for p in model.parameters() if p.requires_grad)
     tot = sum(p.numel() for p in model.parameters())
     print(f"[info] tune={tune} trainable={n}/{tot} ({100*n/tot:.2f}%)", flush=True)
@@ -296,8 +368,12 @@ def main():
     ap.add_argument("--ft-cap", type=int, default=40000)
     ap.add_argument("--pretrained", type=int, default=1)
     ap.add_argument("--backbone", choices=["video", "image"], default="video")
-    ap.add_argument("--tune", choices=["full", "frozen", "ln", "adapter"], default="full",
+    ap.add_argument("--lora-r", type=int, default=8, help="LoRA rank (--tune lora)")
+    ap.add_argument("--lora-alpha", type=int, default=16, help="LoRA scaling alpha (--tune lora)")
+    ap.add_argument("--tune", choices=["full", "frozen", "ln", "lora", "adapter"], default="full",
                     help="full: fine-tune all; frozen: head only; ln: head + encoder LayerNorm affines only")
+    ap.add_argument("--no-vbranch", action="store_true", help="adapter ablation: disable the video branch (pure NLinear+RevIN) to isolate the frozen-backbone contribution")
+    ap.add_argument("--fusion", choices=["add", "film"], default="add", help="adapter fusion: add=video residual (default); film=video modulates NLinear (gamma*lin+beta), putting video in the main path")
     ap.add_argument("--render", choices=["period", "vts"], default="period",
                     help="period: period-per-frame (barcode for uni); vts: VisionTS-style single 2D static clip (uni only)")
     ap.add_argument("--seed", type=int, default=0)
@@ -341,19 +417,26 @@ def main():
             k = np.random.default_rng(0).choice(len(Xtr), args.ft_cap, False)
             Xtr, Ytr = Xtr[k], Ytr[k]
         model = FieldVMAE(1, P, horizon, "uni", bool(args.pretrained), args.backbone, args.render,
-                          adapter=(args.tune == "adapter"), context=context).to(DEVICE)
-        apply_tune(model, args.tune)
+                          adapter=(args.tune == "adapter"), context=context,
+                          fusion=args.fusion).to(DEVICE)
+        model.no_vbranch = args.no_vbranch
+        apply_tune(model, args.tune, args.lora_r, args.lora_alpha)
         pred = run(model, Xtr, Ytr, Xte_u, Yte_u, args.epochs, args.lr,
                    args.batch, "uni", args.seed)
         mse = float(np.mean((pred - Yte_u) ** 2)); mae = float(np.mean(np.abs(pred - Yte_u)))
     else:
-        model = FieldVMAE(M, P, horizon, "field", bool(args.pretrained), args.backbone).to(DEVICE)
-        apply_tune(model, args.tune)
+        model = FieldVMAE(M, P, horizon, "field", bool(args.pretrained), args.backbone, args.render,
+                          adapter=(args.tune == "adapter"), context=context, fusion=args.fusion).to(DEVICE)
+        model.no_vbranch = args.no_vbranch
+        apply_tune(model, args.tune, args.lora_r, args.lora_alpha)
         pred = run(model, Xtr, Ytr, Xte, Yte, args.epochs, args.lr,
                    args.batch, "field", args.seed)
         mse = float(np.mean((pred - Yte) ** 2)); mae = float(np.mean(np.abs(pred - Yte)))
     tag = f"{args.backbone}_{args.mode}" + ("" if args.pretrained else "_rand") + \
+          ("_nlin" if args.no_vbranch else "") + \
+          ("_film" if args.fusion=="film" else "") + \
           ("" if args.tune == "full" else f"_{args.tune}") + \
+          (f"r{args.lora_r}" if args.tune == "lora" else "") + \
           ("" if args.render == "period" else f"_{args.render}") + f"_s{args.seed}"
     results[tag] = {"MSE": round(mse, 4), "MAE": round(mae, 4)}
     print(f"[done] {tag:14s} MSE={mse:.4f} MAE={mae:.4f}", flush=True)
@@ -361,7 +444,11 @@ def main():
     os.makedirs(args.out_dir, exist_ok=True)
     with open(os.path.join(args.out_dir,
                            f"field_{args.dataset}_{args.mode}_{args.backbone}"
+                           + ("" if args.pretrained else "_rand")
                            + ("" if args.tune == "full" else f"_{args.tune}")
+                           + (f"r{args.lora_r}" if args.tune == "lora" else "")
+                           + ("_nlin" if args.no_vbranch else "")
+                           + ("_film" if args.fusion=="film" else "")
                            + ("" if args.render == "period" else f"_{args.render}")
                            + f"_L{context}_h{horizon}_s{args.seed}.json"), "w") as f:
         json.dump({"config": vars(args) | {"M": M, "P": P, "context": context,

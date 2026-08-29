@@ -1,0 +1,41 @@
+{
+  "config": {
+    "dataset": "ETTh1",
+    "horizon_p": 4,
+    "horizon_steps": 336,
+    "context_steps": 0,
+    "data_dir": "/nyx-storage1/hanliu/wm4ts/data",
+    "out_dir": "pilot/results_field/ablation",
+    "mode": "uni",
+    "max_ch": 112,
+    "epochs": 3,
+    "lr": 5e-05,
+    "batch": 16,
+    "stride": 8,
+    "ft_cap": 40000,
+    "pretrained": 1,
+    "backbone": "video",
+    "tune": "adapter",
+    "no_vbranch": true,
+    "render": "period",
+    "seed": 0,
+    "M": 7,
+    "P": 24,
+    "context": 384,
+    "horizon": 336
+  },
+  "results": {
+    "snaive": {
+      "MSE": 0.65,
+      "MAE": 0.501
+    },
+    "smean": {
+      "MSE": 0.4159,
+      "MAE": 0.4195
+    },
+    "video_uni_nlin_adapter_s0": {
+      "MSE": 0.4499,
+      "MAE": 0.4489
+    }
+  }
+}

@@ -1,270 +1,286 @@
-# Video Foundation Models for Time Series Forecasting
+# Video Foundation Models for Time Series Forecasting — a negative result
 
-VideoMAE (a Kinetics-pretrained **video** model) becomes a competitive time-series
-forecaster when the series is fed as a **period-per-frame video** and read out with a
-**regression head** — beating seasonal baselines and an image-backbone control on
-high-channel benchmarks.
+**Question:** does the temporal-dynamics prior of a video foundation model (VideoMAE /
+Kinetics-400, Wan2.1-VACE) transfer to time-series forecasting?
 
-> This branch contains only the working design (`pilot/run_field.py`) and its
-> results. The exploratory phases that failed (zero-shot, pixel-reconstruction,
-> Wan diffusion, continued pretraining) live on `master`.
+**Answer: no.** Across 101 runs spanning discriminative and generative backbones, four
+fine-tuning regimes, seven standard benchmarks, a genuinely spatiotemporal benchmark, and two
+model scales, the pretrained *video* prior contributes at most **~2% MSE** over an
+identically-shaped randomly-initialized backbone — high-channel datasets only, and it is
+**actively harmful** on the small ETT sets. Generative video-editing models are **1.7–2.2x
+worse than a trivial seasonal-mean baseline**.
+
+> **Read [`PROGRESS.md`](PROGRESS.md) for the full record** — all 101 runs, per-file code
+> pointers, reproduction commands, and the config-matching audit.
+
+### What we thought we had, and what it actually was
+
+An earlier version of this README claimed VideoMAE "becomes a competitive time-series
+forecaster." That claim did not survive its own ablations. The corrections:
+
+| Earlier claim | Status |
+|---|---|
+| "Beats seasonal baselines on 5/7 datasets" | **Holds** for the raw numbers, but see below for what is doing the work. |
+| "The Kinetics prior contributes 16–21%" | **Regime-dependent.** True under 1-epoch full-FT; only **2.2%** under a frozen backbone, vs a 1.2% seed-noise floor. And image pretraining helps *more* on the same datasets. |
+| "Video beats image by 35%; cross-frame temporal attention is the mechanism" | **Withdrawn.** The image control ran at `--stride 16` vs video's `--stride 8` — half the training windows. On the one matched comparison we have (solar), **image beats video** (0.208 vs 0.218). `master`'s own controlled study reached the same verdict: *"LN-FT: image beats video on all 7 datasets."* |
+| "The win requires full fine-tuning to adapt the features" | **Holds**, and is itself the problem — see §Frozen transfer. |
+| "A frozen-backbone adapter matches/beats full-FT at 4% params" (commit `48791c3`) | **Half true.** It beats full-FT on the 7-channel ETT sets and **loses** to it on the high-channel sets. The original comparison used different channel counts. See `PROGRESS.md` §7. |
+
+**The decisive ablation:** delete the video branch from the adapter (`--no-vbranch`), leaving a
+per-channel NLinear on RevIN-normalized context. It costs at most **6.9%** — and on ETT it
+*improves* the forecast by up to 14.4%. 98.8% of the trainable parameters live in the video
+branch. The linear layer is doing the work.
 
 ## The design
 
-1. **Frame = period.** A window of 16 periods → 16 frames; each frame renders one
-   period's within-period waveform. Prediction lives on the **frame (temporal)
-   axis** — the video model's actual competence — not on within-frame masked
-   columns.
-2. **Regression head, not pixel reconstruction.** The pooled spatiotemporal tokens
-   go through an MLP head that outputs the forecast directly. No future frames are
-   rendered → no causal-leakage surface. Context-only normalization; nearest-neighbor
-   patch-aligned rendering (one period → one 16px patch column, no cross-cell mixing).
-3. **Two modes:** `uni` (channel-independent — stronger) and `field`
-   (multivariate-joint — rows = variables, cols = phase).
+1. **Frame = period.** A window of 16 periods -> 16 frames; each frame renders one period's
+   within-period waveform. Prediction lives on the frame (temporal) axis, not on within-frame
+   masked columns.
+2. **Regression head, not pixel reconstruction.** Pooled spatiotemporal tokens go through an
+   MLP head that outputs the forecast directly. No future frames are rendered, so there is no
+   causal-leakage surface. Context-only normalization; nearest-neighbour patch-aligned
+   rendering (one period -> one 16px patch column, no cross-cell mixing).
+3. **Two modes:** `uni` (channel-independent) and `field` (multivariate-joint — rows =
+   variables, cols = phase).
+4. **Four tuning regimes** (`--tune`): `full`, `frozen` (head only), `ln` (LayerNorm affine),
+   `lora` (rank-r on attention q/v), `adapter` (frozen backbone + NLinear + cross-attn readout).
 
-## Complete results — all 7 datasets (test MSE, h96, VideoMAE-base, full FT, uni mode, full channels)
+## Headline table — all 7 datasets (test MSE, h96, VideoMAE-base, **full FT**, uni, all channels)
 
-| Dataset | ch | context | **VideoMAE (ours)** | snaive | smean | vs smean |
+| Dataset | ch | context | VideoMAE | snaive | smean | vs smean |
 |---|---|---|---|---|---|---|
-| electricity | 321 | 384 | **0.141** | 0.321 | 0.207 | **−32%** |
-| traffic | 862 | 384 | **0.386** | 1.218 | 0.644 | **−40%** |
-| ETTm1 | 7 | 1536 | **0.335** | 0.423 | 0.376 | **−11%** |
-| ETTm2 | 7 | 1536 | **0.200** | 0.263 | 0.322 | **−38%** |
+| electricity | 321 | 384 | **0.141** | 0.321 | 0.207 | −32% |
+| traffic | 862 | 384 | **0.386** | 1.218 | 0.644 | −40% |
+| ETTm1 | 7 | 1536 | **0.335** | 0.423 | 0.376 | −11% |
+| ETTm2 | 7 | 1536 | **0.200** | 0.263 | 0.322 | −38% |
 | ETTh2 | 7 | 384 | 0.351 | 0.391 | 0.350 | tie |
 | ETTh1 | 7 | 384 | 0.462 | 0.512 | 0.402 | lose |
-| solar | 137 | 2304 | 0.224 (uni) / **0.177** (field) | 0.290 | 0.201 | field WIN |
+| solar | 137 | 2304 | 0.224 | 0.290 | 0.201 | lose |
 
-**Beats the seasonal baseline on 5/7** (high-channel electricity/traffic + long-context
-ETTm1/ETTm2). Loses on short-context low-channel ETTh1 and solar-`uni` (solar's `field`
-mode wins). vs literature at h96: **electricity 0.141 ties PatchTST (~0.140)** and beats
-VisionTS zero-shot (0.177); ETTm1 0.335 ≈ iTransformer (0.334); behind supervised SOTA
-on ETT-hourly.
+> ⚠️ These numbers are real, but they are **not evidence that video pretraining works**. At a
+> matched 112-channel config, a pure NLinear+RevIN control with **no video model at all** gets
+> electricity 0.154 and traffic 0.390 — i.e. the entire video pipeline buys ~7% over a linear
+> layer, of which ~2% is attributable to Kinetics pretraining.
 
-### Multi-seed + backbone ablations (stride-8, 112-channel subsample)
+## Ablations that decide the question
 
-| Dataset | smean | **VideoMAE (uni)** | ViT-MAE (image) | random-init | **frozen (head-only)** |
-|---|---|---|---|---|---|
-| electricity | 0.207 | **0.138 ± 0.0006** (3 seeds) | 0.214 | 0.160 | 0.301 ✗ |
-| traffic | 0.517 | **0.320 ± 0.0018** (3 seeds) | 0.500 | 0.358 | 0.607 ✗ |
-| ETTh1 | 0.402 | 0.455 | — | 0.456 | 0.496 ✗ |
-| solar | 0.200 | 0.177 (field) | 0.208 | — | 0.226 ✗ |
+All comparisons below are **exactly config-matched** — same dataset, channels, context,
+horizon, stride, epochs, cap, seed. Only the named flag differs. (h=96, 112-channel,
+stride 8, cap 40000, 3 epochs.)
 
-**Frozen backbone fails** (loses to baseline everywhere): unlike VisionTS's frozen image
-MAE, the Kinetics video features are not directly usable — the win **requires full
-fine-tuning** to adapt them. This is a real difference from image-model transfer.
+### 1. Is the video branch doing anything? (`--no-vbranch`)
 
-**Three pieces of evidence the result is real:**
-1. **Beats baselines** on all high-channel datasets (electricity −33%, traffic −38%),
-   multi-seed σ ≈ 0.001. electricity 0.138 is in specialized-SOTA range.
-2. **The Kinetics prior contributes**: pretrained beats random-init 16–21% on the
-   fields, ~0% on 7-channel ETTm/ETTh (the benefit scales with field structure).
-3. **Video beats image on identical input**: same period-frames, same head, only the
-   backbone differs — VideoMAE beats ViT-MAE 35% (electricity 0.139 vs 0.214,
-   traffic 0.321 vs 0.500). Since ViT-MAE encodes the 16 frames independently while
-   VideoMAE attends across them, **cross-frame temporal attention is the mechanism.**
-
-**Boundaries (honest):** the win is clearest on hourly high-channel data; on solar
-(10-min, P=144) only the `field` mode beats the baseline and video ≈ image; small
-non-field ETT loses. Continued pretraining does not help once the wiring is correct.
-
-## Comparison with published methods (horizon sweep)
-
-> ⚠️ **These are two different regimes — read carefully.** VisionTS is *zero-shot*
-> (a frozen ImageNet MAE, **no time-series training**) but uses a **long, per-dataset-
-> tuned context** (1728–4032 steps). We **full-fine-tune** but with a **short, fixed
-> context** (16 periods, e.g. 384). So the tables below compare *our fine-tuned short-
-> context model* against *their zero-shot long-context model* — not the same setting.
-> Two asymmetries pull opposite ways: we get fine-tuning (helps us) but a much shorter
-> lookback (hurts us). In the **same (frozen) regime our video model fails** — see
-> *Frozen transfer* below. Our horizon-sweep rows are mostly `—` (only h96 is complete;
-> electricity also has h192).
-
-### vs VisionTS — both are "a vision model for TS" (test MSE)
-
-| Dataset | H | **Ours** (ctx) | VisionTS 0-shot (ctx) |
+| | with video | pure NLinear+RevIN | video contribution |
 |---|---|---|---|
-| electricity | 96 | **0.141** (384) | 0.177 (2880) |
-|  | 192 | **0.157** | 0.188 |
-|  | 336 / 720 | — | 0.207 / 0.256 |
-| ETTm1 | 96 | **0.335** (1536) | 0.341 (2304) |
-|  | 192 / 336 / 720 | — | 0.360 / 0.377 / 0.416 |
-| ETTm2 | 96 | **0.200** (1536) | 0.228 (4032) |
-|  | 192 / 336 / 720 | — | 0.262 / 0.293 / 0.343 |
-| ETTh1 | 96 | 0.462 (384) | **0.353** (2880) |
-| ETTh2 | 96 | 0.351 (384) | **0.271** (1728) |
+| electricity | 0.1438 | 0.1544 | −6.9% |
+| traffic | 0.3661 | 0.3896 | −6.0% |
+| ETTh1 h96 | 0.3935 | 0.4026 | −2.3% |
+| ETTh1 h336 | 0.4823 | 0.4499 | **+7.2% worse** |
+| ETTh2 h96 | 0.2988 | 0.2918 | **+2.4% worse** |
+| ETTh2 h336 | 0.4270 | 0.3733 | **+14.4% worse** |
 
-At h96 we beat VisionTS zero-shot on electricity/ETTm1/ETTm2 **with a much shorter
-context**, and lose on the small ETT-hourly sets.
+### 2. What is Kinetics pretraining worth? (`--pretrained 0`)
 
-### vs supervised SOTA (iTransformer paper, lookback 96)
+electricity, h96, identical config:
 
-| Dataset | H | **Ours** | iTransformer | PatchTST | DLinear | TimesNet |
-|---|---|---|---|---|---|---|
-| traffic | 96 | **0.386** | 0.395 | 0.481 | 0.625 | 0.620 |
-| electricity | 96 | **0.141** | 0.148 | 0.205 | 0.212 | 0.192 |
-|  | 192 | **0.157** | 0.162 | 0.227 | 0.235 | 0.210 |
-| solar | 96 | — (we ran h144=0.177) | 0.203 | 0.270 | 0.330 | 0.301 |
+```
+pure NLinear + RevIN                   0.1544
+  + randomly-initialised VideoMAE      0.1470   (−4.8%)
+  + Kinetics-400 pretrained weights    0.1438   (−2.2%)
+```
 
-At h96 we beat iTransformer on traffic (0.386 vs 0.395) and edge it on electricity;
-solar must be re-run at h96 to be directly comparable (ours is h144).
+**Only 30% of the video branch's gain comes from pretraining**; the rest is the generic
+capacity effect of adding 3M parameters. Seed-noise floor is 1.2% (4 seeds).
 
-*Sources: [VisionTS (arXiv:2408.17253)](https://arxiv.org/abs/2408.17253),
-[iTransformer (arXiv:2310.06625)](https://arxiv.org/abs/2310.06625). VisionTS-paper
-context lengths are the tuned per-dataset look-backs.*
+### 3. Does the temporal axis matter? (`--render vts`)
 
-## Frozen transfer: is the frozen failure numerical, or representational?
+| | period-per-frame video | one static 2D image x16 |
+|---|---|---|
+| electricity | 0.1438 | **0.1421** |
+| traffic | 0.3661 | 0.3657 |
+
+Replacing the video with a **single static image replicated 16 times** is as good or better.
+The motion prior — the only reason to prefer a video model over an image model — contributes
+nothing. Consistent with the solar image-vs-video control (ViT-MAE 0.208 beats VideoMAE 0.218)
+and with `master`'s LN-FT study (image wins 7/7).
+
+### 4. Giving video a fair fight does not help
+
+- **Multivariate field render** (rows = variables, so frames show a real cross-channel field
+  evolving — structure a channel-independent linear model provably cannot capture): video
+  contributes **0.3–0.4%**, below the noise floor, on electricity / solar / traffic.
+- **Genuinely spatiotemporal data** (METR-LA, 207 sensors with real coordinates): the largest
+  video contribution in the project (MSE −11.6% vs NLinear at h=12) — but it **loses to
+  seasonal-naive on MAE at both horizons** and sits far from that benchmark's SOTA
+  (DCRNN MAE 2.77/3.15 vs our 3.86/5.32).
+- **Generative video-editing models**, rendering context and inpainting the future:
+
+  | Model | MSE | smean | |
+  |---|---|---|---|
+  | Wan2.1 RePaint | — | — | degenerates to a copy machine |
+  | Wan2.1-VACE-1.3B | 0.548 | 0.323 | **1.70x worse** |
+  | Wan2.1-VACE-14B | 0.634 | 0.290 | **2.19x worse** |
+
+  A 10x larger model is *worse*, so this is not a scale problem.
+
+### 5. Context length matters far more than the backbone
+
+electricity h96, full-FT, identical config, varying `--context-steps`:
+
+| Lookback | MSE |
+|---|---|
+| L = 96 | 0.1679 |
+| L = 384 | **0.1275** |
+
+**−24% from a 4x longer lookback**, vs −6.9% from the entire video branch and −2.2% from
+Kinetics pretraining. The single most important design variable has nothing to do with video.
+
+## Frozen transfer: representational, not a numerical artifact
 
 VisionTS shows a *frozen* image MAE works zero-shot. Our frozen *video* MAE does not.
-A natural worry: maybe that is just a numerical / input-rendering artifact (TS values
-have a different range/structure than natural video), which normalization or a better
-input should fix. We tested this directly and it is **not** the explanation.
 
-**Parameter-efficient middle ground (`--tune ln`, stride-8, 112ch, h96):**
+| Dataset (h96, 112ch) | frozen (0%) | LN-only (0.81%) | adapter (3.3%) | full-FT (100%) | smean |
+|---|---|---|---|---|---|
+| electricity | 0.301 ✗ | 0.251 ✗ | 0.144 | **0.128** | 0.207 |
+| traffic | 0.607 ✗ | 0.530 ✗ | 0.366 | **0.323** | 0.517 |
+| ETTh1 | 0.496 ✗ | 0.438 ✗ | **0.394** | 0.462 | 0.402 |
 
-| Dataset | frozen (0%) | **LN-only (0.81%)** | full-FT (100%) | smean |
-|---|---|---|---|---|
-| electricity | 0.301 ✗ | 0.251 ✗ | **0.128** ✓ | 0.207 |
-| traffic | 0.607 ✗ | 0.530 ✗ | **0.320** ✓ | 0.517 |
-| ETTh1 | 0.496 ✗ | 0.438 ✗ | 0.462 ✗ | 0.402 |
-| solar | 0.226 ✗ | 0.213 ✗ | **0.177** (field) ✓ | 0.201 |
+Frozen and LN-only **lose to a seasonal mean everywhere**. A no-train probe
+(`pilot/probe_frozen.py`) of the frozen pooled features shows why — participation ratio (of 768
+dims) and ridge linear-probe skill (probe/const MSE, lower = more informative):
 
-Tuning every encoder LayerNorm recovers only **~28% of the frozen→full gap**
-(elec 0.301→0.251 vs full 0.128; traffic 0.607→0.530 vs 0.320) and still loses the
-baseline everywhere. About a quarter of the deficit is adaptable statistics; the rest
-is not reachable by any affine renormalization.
-
-**Input structure enriches features but does not rescue the forecast.** A no-train
-probe (`pilot/probe_frozen.py`) of frozen pooled features — participation ratio (PR, of
-768 dims) and a ridge linear-probe skill = probe/const MSE (lower = more informative):
-
-| electricity, frozen | PR | probe skill | | solar, frozen | PR | probe skill |
+| electricity | PR | skill | | solar | PR | skill |
 |---|---|---|---|---|---|---|
 | uni barcode | 4.88 | 0.621 | | uni barcode | 7.49 | 0.259 |
 | VisionTS 2D | 5.86 | 0.518 | | VisionTS 2D | 7.36 | 0.222 |
 | field 2D | 13.07 | 0.214 | | field 2D | 5.23 | 0.174 |
 
-The period-per-frame **barcode collapses frozen features to ~5 effective dims**; 2D
-renderings lift the rank and linear informativeness. **But training the frozen model on
-those richer inputs does not help the forecast** — holding the univariate task fixed and
-only changing the rendering, `frozen+vts` electricity is 0.302 vs `frozen+barcode` 0.301
-(and `frozen+field` 0.305). Three renderings, frozen stays at ~0.30, all lose smean 0.207.
+**Only 5–13 of 768 dimensions carry variance.** Richer 2D renderings lift the rank but do not
+rescue the forecast: holding the task fixed and changing only the rendering, frozen electricity
+is 0.302 (`vts`) / 0.301 (barcode) / 0.305 (field) — three renderings, all stuck at ~0.30, all
+losing to smean 0.207. The failure is representational, not a normalization artifact.
 
-**Conclusion:** the frozen failure is **representational, not a numerical/input artifact**
-— Kinetics video features require full fine-tuning regardless of how the series is
-rendered or normalized. The one untested confound is VisionTS's use of the pretrained MAE
-*decoder* (inpainting) instead of our fresh regression head; that remains future work.
+## Comparison with published methods
 
-**Context is a large lever (`--context-steps`, electricity, full-FT):** temporally
-resampling the period-frames to 16 lets us vary lookback. L=384→**0.128** (reproduces the
-native run, so the resampling is lossless); L=96 (matched to the supervised protocol)→
-**0.168** — context is worth ~31%, which is why the strong numbers need the long lookback.
+> ⚠️ **Not a like-for-like comparison — do not cite these as wins.** Three mismatches:
+> (1) VisionTS is *zero-shot* with a long tuned context (1728–4032); we full-fine-tune with a
+> short fixed context (384–2304). (2) iTransformer/PatchTST numbers are at **lookback 96**;
+> ours use 384–1536, and §5 above shows lookback alone is worth 24%. (3) We subsample channels
+> and use stride-8 test windows in most runs. We did **not** re-run any baseline ourselves.
 
-## How to run (step by step)
+### vs VisionTS (test MSE)
+
+| Dataset | H | Ours (ctx) | VisionTS 0-shot (ctx) |
+|---|---|---|---|
+| electricity | 96 | 0.141 (384) | 0.177 (2880) |
+|  | 192 | 0.157 | 0.188 |
+| ETTm1 | 96 | 0.335 (1536) | 0.341 (2304) |
+| ETTm2 | 96 | 0.200 (1536) | 0.228 (4032) |
+| ETTh1 | 96 | 0.462 (384) | **0.353** (2880) |
+| ETTh2 | 96 | 0.351 (384) | **0.271** (1728) |
+
+### vs supervised methods (iTransformer paper, **their** lookback 96)
+
+| Dataset | H | Ours (ctx 384) | iTransformer | PatchTST | DLinear | TimesNet |
+|---|---|---|---|---|---|---|
+| traffic | 96 | 0.386 | 0.395 | 0.481 | 0.625 | 0.620 |
+| electricity | 96 | 0.141 | 0.148 | 0.205 | 0.212 | 0.192 |
+|  | 192 | 0.157 | 0.162 | 0.227 | 0.235 | 0.210 |
+
+*Sources: [VisionTS (arXiv:2408.17253)](https://arxiv.org/abs/2408.17253),
+[iTransformer (arXiv:2310.06625)](https://arxiv.org/abs/2310.06625).*
+
+## How to run
 
 ### Requirements
-- Python ≥ 3.9, one GPU (≈16 GB is enough for `uni` mode; ≈32 GB for the `image`
-  backbone).
-- **`transformers` must be < 5** (v5 silently breaks VideoMAE — see the warning at
-  the bottom). The code asserts this and will stop otherwise.
+- Python >= 3.9, one GPU (~16 GB for `uni` mode; ~32 GB for the `image` backbone).
+- **`transformers` must be < 5** — v5 silently re-initializes VideoMAE's attention biases
+  (`q_bias`/`v_bias` rename), producing garbage. The code asserts this.
 
-### 1. Install
 ```bash
 pip install "transformers==4.46.3" torch torchvision pandas numpy einops requests
 ```
 
-### 2. Get the data
-Download the 7 benchmarks into one folder, e.g. `./data`:
+### Data
 ```bash
 mkdir -p data && cd data
-# ETT (4 files)
 for f in ETTh1 ETTh2 ETTm1 ETTm2; do
   curl -sLO https://raw.githubusercontent.com/zhouhaoyi/ETDataset/main/ETT-small/$f.csv
 done
-# electricity / traffic / solar (LSTNet versions)
 base=https://raw.githubusercontent.com/laiguokun/multivariate-time-series-data/master
 curl -sL $base/electricity/electricity.txt.gz | gunzip > electricity.txt
 curl -sL $base/traffic/traffic.txt.gz          | gunzip > traffic.txt
 curl -sL $base/solar-energy/solar_AL.txt.gz    | gunzip > solar_AL.txt
 cd ..
-```
-The `--data-dir` you pass to the script is this `./data` folder. File names must match
-the table in `pilot/run_field.py` (`ETTh1.csv`, `electricity.txt`, `solar_AL.txt`, …).
-
-### 3. Set the HuggingFace cache (so the VideoMAE checkpoint downloads somewhere sane)
-```bash
-export HF_HOME=$PWD/hf_cache        # first run downloads MCG-NJU/videomae-base (~350 MB)
+export HF_HOME=$PWD/hf_cache        # first run pulls MCG-NJU/videomae-base (~350 MB)
 export CUDA_VISIBLE_DEVICES=0
 ```
 
-### 4. Run — the main positive result (electricity, channel-independent, horizon 96)
+### The main run
 ```bash
-python pilot/run_field.py \
-    --dataset electricity \
-    --mode uni \
-    --horizon-p 4 \          # 4 periods × 24 h = horizon 96
-    --stride 8 \
-    --max-ch 112 \           # subsample channels (use a big number for ALL channels)
-    --epochs 3 \
-    --data-dir ./data \
-    --out-dir ./results
+python pilot/run_field.py --dataset electricity --mode uni \
+    --horizon-steps 96 --stride 8 --max-ch 112 --epochs 3 \
+    --data-dir ./data --out-dir ./results
 ```
+Prints the config, per-epoch train MSE, then final metrics, and writes a JSON to `--out-dir`
+containing the model metric plus `snaive`/`smean` baselines on the same windows.
 
-### 5. What you should see
-The script prints the config, per-epoch train MSE, then the final metrics, and writes
-a JSON to `--out-dir`:
-```
-dataset=electricity mode=uni M=112 P=24 context=384 horizon=96 train=40000 test=...
-[done] snaive     {'MSE': 0.34, ...}
-[done] smean      {'MSE': 0.207, ...}
-[info] epoch 0 train MSE 0.19
-...
-[done] video_uni_s0   MSE=0.1379 MAE=0.2425     ← our method (≈0.13–0.14, beats smean 0.207)
-```
-`results/field_electricity_uni_video_h96_s0.json` holds the numbers.
-
-### 6. Other configurations
+### The ablations that matter
 ```bash
-# multivariate-joint "field" mode (rows=variables, cols=phase) — better on solar
-python pilot/run_field.py --dataset solar --mode field --horizon-p 1 --data-dir ./data
-
-# image-backbone control (same input, ViT-MAE instead of VideoMAE) — should be ~35% worse
-python pilot/run_field.py --dataset electricity --mode uni --backbone image --data-dir ./data
-
-# random-init ablation (is the Kinetics prior helping?)
-python pilot/run_field.py --dataset electricity --mode uni --pretrained 0 --data-dir ./data
-
-# arbitrary horizon in raw steps, any dataset (head outputs any length)
-python pilot/run_field.py --dataset ETTm1 --mode uni --horizon-steps 336 --data-dir ./data
-
-# full-channel, matched-literature protocol (stride 1, all channels)
-python pilot/run_field.py --dataset electricity --mode uni --horizon-p 4 \
-    --stride 1 --max-ch 1000 --data-dir ./data
+# frozen-backbone adapter
+python pilot/run_field.py --dataset electricity --mode uni --tune adapter ...
+# ... minus the video branch  <- the decisive control
+python pilot/run_field.py --dataset electricity --mode uni --tune adapter --no-vbranch ...
+# is the Kinetics prior helping?
+python pilot/run_field.py --dataset electricity --mode uni --tune adapter --pretrained 0 ...
+# does the temporal axis matter? (static 2D image x16)
+python pilot/run_field.py --dataset electricity --mode uni --tune adapter --render vts ...
+# LoRA on attention q/v
+python pilot/run_field.py --dataset electricity --mode uni --tune lora --lora-r 8 --lr 5e-4 ...
+# image-backbone control (use the SAME --stride as the video run)
+python pilot/run_field.py --dataset electricity --mode uni --backbone image --stride 8 ...
+# no-train frozen-feature diagnostic
+python pilot/probe_frozen.py --dataset electricity --n 1500
 ```
 
 ### All flags
 | flag | meaning | default |
 |---|---|---|
 | `--dataset` | ETTh1/ETTh2/ETTm1/ETTm2/electricity/traffic/solar | required |
-| `--mode` | `uni` (channel-independent, recommended) or `field` (joint) | `field` |
+| `--mode` | `uni` (channel-independent) or `field` (joint) | `field` |
 | `--backbone` | `video` (VideoMAE) or `image` (ViT-MAE control) | `video` |
-| `--horizon-p` | horizon in periods (`4`→96 for hourly) | 4 |
-| `--horizon-steps` | horizon in raw steps; overrides `--horizon-p` if > 0 | 0 |
-| `--max-ch` | channel cap (large ⇒ all channels) | 112 |
+| `--tune` | `full` / `frozen` / `ln` / `lora` / `adapter` | `full` |
+| `--lora-r`, `--lora-alpha` | LoRA rank / scaling (`--tune lora`) | 8 / 16 |
+| `--no-vbranch` | adapter ablation: delete the video branch | off |
+| `--fusion` | `add` (residual) or `film` (video modulates NLinear) | `add` |
+| `--render` | `period` (video) or `vts` (static 2D image x16) | `period` |
+| `--pretrained` | 0 = random-init backbone | 1 |
+| `--horizon-p` / `--horizon-steps` | horizon in periods / raw steps | 4 / 0 |
+| `--context-steps` | lookback in raw steps (multiple of P); resampled to 16 frames | 0 (= 16*P) |
+| `--max-ch` | channel cap (large => all channels) | 112 |
 | `--stride` | test-window stride (1 = matched-literature) | 1 |
-| `--epochs` / `--lr` / `--batch` | full fine-tune schedule | 3 / 5e-5 / 16 |
-| `--seed` | run seed (for error bars) | 0 |
+| `--epochs` / `--lr` / `--batch` | schedule | 3 / 5e-5 / 16 |
 | `--ft-cap` | max training windows | 40000 |
-| `VMAE_CKPT=<dir>` | env var to load a different VideoMAE checkpoint | HF default |
+| `--seed` | run seed | 0 |
+| `VMAE_CKPT=<dir>` | env var for a different VideoMAE checkpoint | HF default |
 
-Each run writes `field_<dataset>_<mode>_<backbone>_h<horizon>_s<seed>.json` with the
-model metric plus `snaive`/`smean` baselines on the same windows.
+Other entry points: `pilot/run_stvid.py` (METR-LA spatiotemporal),
+`pilot/run_vace_ts.py` (generative Wan-VACE), `pilot/probe_frozen.py` (frozen-feature probe).
 
 ## Constraint
 
-VideoMAE requires exactly 16 frames, and we map one period per frame, so **context is
-fixed at 16 periods** (dataset-dependent lookback: 384 steps hourly, 1536 for 15-min,
-2304 for 10-min — comparable to VisionTS's tuned 1728–4032). The horizon is free (the
-head outputs any length via `--horizon-steps`).
+VideoMAE requires exactly 16 frames. By default we map one period per frame, fixing context at
+16 periods; `--context-steps` decouples this by temporally resampling G period-frames to 16.
 
-⚠️ **transformers < 5 required** — v5 silently re-initializes VideoMAE's attention
-biases (`q_bias`/`v_bias` rename), producing garbage. The code asserts this.
+⚠️ **transformers < 5 required** (see above). Anyone adding LoRA should note that
+`VideoMAESelfAttention.forward` calls `F.linear(x, self.query.weight)` directly rather than
+`self.query(x)` — wrapping the `nn.Linear` module is **silently bypassed**. We attach LoRA as a
+weight *parametrization* instead (`run_field.py:263`).
+
+## Verdict
+
+The apparent competitiveness is a strong linear baseline (NLinear + RevIN) plus a generic
+parameter-count bump. Video pretraining, video architecture, video-scale generative models, and
+even genuinely spatiotemporal data all fail to add meaningful signal. This is a negative result
+in the spirit of *"Are Transformers Effective for Time Series Forecasting?"* (Zeng et al., AAAI
+2023). Full record and caveats: [`PROGRESS.md`](PROGRESS.md).

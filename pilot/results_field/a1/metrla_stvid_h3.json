@@ -1,0 +1,26 @@
+{
+  "config": {
+    "data_dir": "/nyx-storage1/hanliu/wm4ts/data/stgcn",
+    "out_dir": "pilot/results_field/a1",
+    "horizon": 3,
+    "ctx": 16,
+    "gh": 32,
+    "epochs": 3,
+    "lr": 5e-05,
+    "batch": 16,
+    "stride": 2,
+    "ft_cap": 40000,
+    "no_vbranch": false,
+    "N": 207
+  },
+  "results": {
+    "snaive": {
+      "MSE": 53.43666076660156,
+      "MAE": 3.5040078163146973
+    },
+    "stvid": {
+      "MSE": 55.7339,
+      "MAE": 3.8583
+    }
+  }
+}
