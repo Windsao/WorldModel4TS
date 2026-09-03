@@ -23,6 +23,9 @@ import torch
 import torch.nn.functional as F
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+TFNEW = os.environ.get("TFNEW", "")
+if TFNEW and os.path.isdir(TFNEW):
+    sys.path.insert(0, TFNEW)
 sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(HERE, "..", "third_party", "VisionTS"))
 import zeroshot_loop as ZL
@@ -35,7 +38,7 @@ IM_MEAN = torch.tensor([0.485, 0.456, 0.406]).view(1, 1, 3, 1, 1)
 IM_STD = torch.tensor([0.229, 0.224, 0.225]).view(1, 1, 3, 1, 1)
 
 
-def motion_embed(model, win, P, renderer, batch=8):
+def motion_embed(model, win, P, renderer, batch=8, size=224, kind="videomae"):
     """win [N,L] -> (F [N,D] L2-normalised descriptor, mu, sd), per-temporal-position tokens."""
     N, L = win.shape
     G = L // P
@@ -46,11 +49,18 @@ def motion_embed(model, win, P, renderer, batch=8):
     m_, s_ = IM_MEAN.to(DEV), IM_STD.to(DEV)
     out = []
     for i in range(0, N, batch):
-        v = (fn(z[i:i + batch]) - m_) / s_
-        h = model(pixel_values=v).last_hidden_state
+        v = fn(z[i:i + batch])
+        if size != v.shape[-1]:
+            b_, T_ = v.shape[:2]
+            v = F.interpolate(v.reshape(b_ * T_, 3, v.shape[-2], v.shape[-1]), size=(size, size),
+                              mode="bilinear", align_corners=False).reshape(b_, T_, 3, size, size)
+        v = (v - m_) / s_
+        h = (model(pixel_values_videos=v) if kind == "vjepa2"
+             else model(pixel_values=v)).last_hidden_state
         b, n, d = h.shape
-        t = n // (14 * 14)
-        out.append(h.view(b, t, 14 * 14, d).mean(2).reshape(b, -1))
+        g = size // 16
+        t = max(1, n // (g * g))
+        out.append(h[:, :t * g * g].view(b, t, g * g, d).mean(2).reshape(b, -1))
         del v, h
     return F.normalize(torch.cat(out), dim=-1), mu, sd
 
@@ -67,7 +77,9 @@ def main():
     ap.add_argument("--dataset", required=True, choices=list(HORIZON))
     ap.add_argument("--data-dir", default="pilot/data")
     ap.add_argument("--root", default=ZL.ROOT)
-    ap.add_argument("--ckpt", default="MCG-NJU/videomae-base")
+    ap.add_argument("--backbone", default="videomae", choices=["videomae", "vjepa2"])
+    ap.add_argument("--ckpt", default=None)
+    ap.add_argument("--size", type=int, default=None)
     ap.add_argument("--renderer", default="period_line")
     ap.add_argument("--max-ch", type=int, default=96)
     ap.add_argument("--n-origins", type=int, default=120)
@@ -91,10 +103,18 @@ def main():
                                             min_ctx_periods=8)
     print(f"[ZL-100] {a.dataset} renderer={a.renderer} M={M} origins={len(origins)} "
           f"donors/origin={M*len(lags)} blend={np.mean((blend-fut)**2):.4f}", flush=True)
-    from transformers import VideoMAEModel, VideoMAEConfig
-    mp = VideoMAEModel.from_pretrained(a.ckpt).to(DEV).eval()
+    if a.backbone == "vjepa2":
+        from transformers import VJEPA2Model as MC, VJEPA2Config as CC
+        ckpt = a.ckpt or "facebook/vjepa2-vitl-fpc64-256"
+        size = a.size or 256
+    else:
+        from transformers import VideoMAEModel as MC, VideoMAEConfig as CC
+        ckpt = a.ckpt or "MCG-NJU/videomae-base"
+        size = a.size or 224
+    print(f"  backbone={a.backbone} ckpt={ckpt} size={size}", flush=True)
+    mp = MC.from_pretrained(ckpt).to(DEV).eval()
     torch.manual_seed(a.seed)
-    mr = VideoMAEModel(VideoMAEConfig.from_pretrained(a.ckpt)).to(DEV).eval()
+    mr = MC(CC.from_pretrained(ckpt)).to(DEV).eval()
     Y = {"blend": blend}
     for nm in ("pt", "rand", "rawL2"):
         preds = []
@@ -113,8 +133,9 @@ def main():
                     fd = F.normalize((dd - dmu) / dsd, dim=-1)
                 else:
                     model = mp if nm == "pt" else mr
-                    fq, qmu, qsd = motion_embed(model, q, P, a.renderer)
-                    fd, dmu, dsd = motion_embed(model, D, P, a.renderer)
+                    bs = 4 if a.backbone == "vjepa2" else 8
+                    fq, qmu, qsd = motion_embed(model, q, P, a.renderer, bs, size, a.backbone)
+                    fd, dmu, dsd = motion_embed(model, D, P, a.renderer, bs, size, a.backbone)
                 preds.append(retrieve(fq, fd, Df, dmu, dsd, qmu, qsd, a.k))
         Y[nm] = np.concatenate(preds)
         print(f"  {nm:6s} alone={np.mean((Y[nm]-fut)**2):.4f} "
@@ -149,10 +170,10 @@ def main():
     res["backbone_positive"] = bool(crit)
     print(f"\n  BACKBONE-POSITIVE (both preregistered conditions): {crit}", flush=True)
     d = os.path.join(a.root, "zl100"); os.makedirs(d, exist_ok=True)
-    json.dump({"status": "complete", "candidate_id": "ZL-100", "dataset": a.dataset,
+    json.dump({"status": "complete", "candidate_id": "ZL-100", "backbone": a.backbone, "dataset": a.dataset,
                "manifest": man, "results": res, "wall_clock_s": round(time.time() - t0, 1)},
-              open(os.path.join(d, f"{a.dataset}_{a.renderer}.json"), "w"), indent=2, default=float)
-    np.savez_compressed(os.path.join(d, f"{a.dataset}_{a.renderer}_per_pair.npz"),
+              open(os.path.join(d, f"{a.dataset}_{a.backbone}_{a.renderer}.json"), "w"), indent=2, default=float)
+    np.savez_compressed(os.path.join(d, f"{a.dataset}_{a.backbone}_{a.renderer}_per_pair.npz"),
                         origins=ori, **err)
     print("[done]", a.dataset, flush=True)
 

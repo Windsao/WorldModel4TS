@@ -1,0 +1,67 @@
+{
+  "status": "complete",
+  "candidate_id": "ZL-100",
+  "dataset": "electricity",
+  "manifest": {
+    "dataset": "electricity",
+    "data_path": "/nyx-storage1/hanliu/wm4ts/data/electricity.txt",
+    "data_sha1": "ab17f324161ee718",
+    "P": 24,
+    "context": 384,
+    "horizon": 96,
+    "borders": [
+      18412,
+      21043,
+      26304
+    ],
+    "max_ch": 96,
+    "M": 96,
+    "stride": 8,
+    "n_windows": 646,
+    "n_pairs": 2000,
+    "pairs_sha1": "dffdb5d142132e93",
+    "seed": 0
+  },
+  "results": {
+    "renderer": "period_line",
+    "n_origins": 120,
+    "M": 96,
+    "blend_mse": 0.2119567289428665,
+    "pt_mse": 0.268880158662796,
+    "rand_mse": 0.4091240465641022,
+    "rawL2_mse": 0.2070692628622055,
+    "A_no_video_mse": 0.18258631584569046,
+    "B_plus_pretrained_mse": 0.19133927552509342,
+    "C_plus_random_mse": 0.21445364680756873,
+    "pt_over_rand": 0.6572093743227764,
+    "pt_over_rawL2": 1.298503481135791,
+    "B_over_A": 1.047938749620209,
+    "B_over_C": 0.8922174016317099,
+    "boot_pt_vs_rand": {
+      "lo": 0.6249254941940308,
+      "hi": 0.6870610117912292,
+      "p_better": 1.0,
+      "n_origins": 120,
+      "block": 13,
+      "seed": 20260902
+    },
+    "boot_B_vs_A": {
+      "lo": 1.04010385491126,
+      "hi": 1.0554294768705177,
+      "p_better": 0.0,
+      "n_origins": 120,
+      "block": 13,
+      "seed": 20260902
+    },
+    "boot_B_vs_C": {
+      "lo": 0.8736174518683218,
+      "hi": 0.9092581162598132,
+      "p_better": 1.0,
+      "n_origins": 120,
+      "block": 13,
+      "seed": 20260902
+    },
+    "backbone_positive": false
+  },
+  "wall_clock_s": 7190.7
+}
