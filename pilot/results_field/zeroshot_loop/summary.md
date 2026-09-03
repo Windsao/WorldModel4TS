@@ -26,7 +26,7 @@ layer. If pretrained still loses to raw L2 on both datasets, KILL F2 and move to
 token kernel), which is the top-ranked open hypothesis because the supervised cross-attention
 readout already showed that structured tokens carry information mean pooling discards.
 
-**NO QUALIFIED POSITIVE RESULT YET — LOOP STATE SAVED FOR RESUMPTION**
+*(superseded by the section below — a qualified positive was reached on 2026-09-03.)*
 
 ## Update — Family 3 (token kernel) is the first mechanism to work
 
@@ -52,7 +52,7 @@ column tokens recovers a 40% better neighbour geometry.
   the safety shrinkage (rho ~ 0.47) halves the video contribution.
 - Nothing has been run on the six-dataset benchmark.
 
-**NO QUALIFIED POSITIVE RESULT YET — LOOP STATE SAVED FOR RESUMPTION**
+*(superseded by the section below — a qualified positive was reached on 2026-09-03.)*
 
 ## Update — all four families closed
 
@@ -77,7 +77,7 @@ that its decode path de-normalized masked cubes using statistics from a video co
 future. Zero logits — containing no model output at all — also "beat" the prior 2.3x, which is
 the signature. Those forecast numbers were voided; only the leak-free native metrics were kept.
 
-**NO QUALIFIED POSITIVE RESULT YET — LOOP STATE SAVED FOR RESUMPTION**
+*(superseded by the section below — a qualified positive was reached on 2026-09-03.)*
 
 ## POSITIVE RESULT — ZL-051 (metric-positive, strict zero-shot)
 
@@ -90,7 +90,7 @@ paired CI excluding 1, 2 ties, 0 losses; **zero trained parameters**; leak audit
 | verdict | tie | wins | wins | tie | wins | wins |
 
 The method: four context-only priors combined by evidence-scaled weights
- over dense pseudo-origins. No temperature, no tuned constant.
+`w_p ∝ (L_min/L_p)^n_origins` over dense pseudo-origins. No temperature, no tuned constant.
 
 ### The three corrections that produced it
 1. argmin prior selection lost to a fixed smean on 5 of 6 datasets — selection is the
