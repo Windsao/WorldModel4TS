@@ -1,0 +1,89 @@
+{
+  "status": "complete",
+  "candidate_id": "ZL-080",
+  "dataset": "electricity",
+  "manifest": {
+    "dataset": "electricity",
+    "data_path": "/nyx-storage1/hanliu/wm4ts/data/electricity.txt",
+    "data_sha1": "ab17f324161ee718",
+    "P": 24,
+    "context": 384,
+    "horizon": 96,
+    "borders": [
+      18412,
+      21043,
+      26304
+    ],
+    "max_ch": 64,
+    "M": 64,
+    "stride": 8,
+    "n_windows": 646,
+    "n_pairs": 2000,
+    "pairs_sha1": "d8b19e95d20cedec",
+    "seed": 0
+  },
+  "results": {
+    "blend_mse": 0.1877987843373925,
+    "n_origins": 12,
+    "M": 64,
+    "renderers": {
+      "static_matrix": {
+        "pt_mse": 0.29480301446890744,
+        "pt_half_blend": 0.20540203218235129,
+        "rand_mse": 0.25869476535327207,
+        "rand_half_blend": 0.18490613640070713,
+        "pt_over_rand": 1.1395785843069772,
+        "pt_over_blend": 1.5697812715298254,
+        "pthalf_over_blend": 1.0937346208446879
+      },
+      "period_dot": {
+        "pt_mse": 0.30102186252857427,
+        "pt_half_blend": 0.20605836041964076,
+        "rand_mse": 0.3898697494853783,
+        "rand_half_blend": 0.23168922511271253,
+        "pt_over_rand": 0.7721087951191858,
+        "pt_over_blend": 1.6028956928058133,
+        "pthalf_over_blend": 1.0972294690121305
+      },
+      "period_line": {
+        "pt_mse": 0.2895254525995821,
+        "pt_half_blend": 0.2046733197183529,
+        "rand_mse": 0.39790540737259433,
+        "rand_half_blend": 0.2343412206404633,
+        "pt_over_rand": 0.7276238202223616,
+        "pt_over_blend": 1.5416790562362277,
+        "pthalf_over_blend": 1.0898543376651695
+      },
+      "period_bar": {
+        "pt_mse": 0.2797138819013248,
+        "pt_half_blend": 0.19762887390458653,
+        "rand_mse": 0.27753632353684715,
+        "rand_half_blend": 0.19604465165862778,
+        "pt_over_rand": 1.0078460301582417,
+        "pt_over_blend": 1.4894339326435733,
+        "pthalf_over_blend": 1.05234373375673
+      },
+      "scroll": {
+        "pt_mse": 0.2904885349429745,
+        "pt_half_blend": 0.20607287684631373,
+        "rand_mse": 0.39027003002190974,
+        "rand_half_blend": 0.23274650075546705,
+        "pt_over_rand": 0.7443270366588653,
+        "pt_over_blend": 1.5468073234227826,
+        "pthalf_over_blend": 1.0973067667791216
+      },
+      "growing_matrix": {
+        "pt_mse": 0.29658384158566775,
+        "pt_half_blend": 0.20338043352541635,
+        "rand_mse": 0.25632864686305123,
+        "rand_half_blend": 0.18628033351826442,
+        "pt_over_rand": 1.1570452433438845,
+        "pt_over_blend": 1.579263905419302,
+        "pthalf_over_blend": 1.0829699150769283
+      }
+    },
+    "best_renderer_by_pt_over_rand": "period_line",
+    "best_pt_over_rand": 0.7276238202223616
+  },
+  "wall_clock_s": 5481.2
+}

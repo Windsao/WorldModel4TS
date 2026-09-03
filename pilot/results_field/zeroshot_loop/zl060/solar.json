@@ -1,0 +1,85 @@
+{
+  "status": "complete",
+  "candidate_id": "ZL-060",
+  "hypothesis": "H-A cross-channel",
+  "dataset": "solar",
+  "manifest": {
+    "dataset": "solar",
+    "data_path": "/nyx-storage1/hanliu/wm4ts/data/solar_AL.txt",
+    "data_sha1": "af053c7c7fc143bf",
+    "P": 144,
+    "context": 2304,
+    "horizon": 144,
+    "borders": [
+      36792,
+      42048,
+      52560
+    ],
+    "max_ch": 112,
+    "M": 112,
+    "stride": 8,
+    "n_windows": 1297,
+    "n_pairs": 2000,
+    "pairs_sha1": "57ce1b29dd0806b1",
+    "seed": 0
+  },
+  "results": {
+    "blend_mse": 0.20510270765122432,
+    "smean_mse": 0.17994850873947144,
+    "n_origins": 60,
+    "n_donors_per_origin": 448,
+    "lags": [
+      144,
+      288,
+      432,
+      576
+    ],
+    "pt_mse": 0.24772129952907562,
+    "pt_half_blend_mse": 0.20632798971658098,
+    "rand_mse": 0.23645538091659546,
+    "rand_half_blend_mse": 0.2013486055480294,
+    "rawL2_mse": 0.2320651113986969,
+    "rawL2_half_blend_mse": 0.19892927962331386,
+    "A_blend_rawL2_mse": 0.19892927962331386,
+    "B_plus_pretrained_mse": 0.20601456496782436,
+    "C_plus_random_mse": 0.20452196579818066,
+    "B_over_A": 1.0356171065311601,
+    "B_over_C": 1.00729798955246,
+    "pt_over_rand": 1.0476450084105042,
+    "pt_over_rawL2": 1.06746463540347,
+    "pt_half_over_blend": 1.005973992637095,
+    "boot_pt_vs_rand": {
+      "lo": 1.0036550760269165,
+      "hi": 1.0974159240722656,
+      "p_better": 0.0168,
+      "n_origins": 60,
+      "block": 20,
+      "seed": 20260902
+    },
+    "boot_pthalf_vs_blend": {
+      "lo": 0.9541520781279597,
+      "hi": 1.062426351566803,
+      "p_better": 0.427,
+      "n_origins": 60,
+      "block": 20,
+      "seed": 20260902
+    },
+    "boot_B_vs_A": {
+      "lo": 1.0040039378022796,
+      "hi": 1.0718077960506087,
+      "p_better": 0.01,
+      "n_origins": 60,
+      "block": 20,
+      "seed": 20260902
+    },
+    "boot_B_vs_C": {
+      "lo": 0.9910861768988612,
+      "hi": 1.02516813257139,
+      "p_better": 0.2188,
+      "n_origins": 60,
+      "block": 20,
+      "seed": 20260902
+    }
+  },
+  "wall_clock_s": 3767.3
+}
