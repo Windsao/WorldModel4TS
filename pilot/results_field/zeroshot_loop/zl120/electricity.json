@@ -1,0 +1,82 @@
+{
+  "status": "complete",
+  "candidate_id": "ZL-120",
+  "dataset": "electricity",
+  "manifest": {
+    "dataset": "electricity",
+    "data_path": "/nyx-storage1/hanliu/wm4ts/data/electricity.txt",
+    "data_sha1": "ab17f324161ee718",
+    "P": 24,
+    "context": 384,
+    "horizon": 96,
+    "borders": [
+      18412,
+      21043,
+      26304
+    ],
+    "max_ch": 24,
+    "M": 24,
+    "stride": 8,
+    "n_windows": 646,
+    "n_pairs": 2000,
+    "pairs_sha1": "2647c0263ae13ec4",
+    "seed": 0
+  },
+  "results": {
+    "blend_mse": 0.14982387182967863,
+    "renderer": "period_line",
+    "n_origins": 16,
+    "M": 24,
+    "predictor_pt_mse": 0.26718565570115277,
+    "predictor_pt_half_blend": 0.17907269289587055,
+    "predictor_rand_mse": 0.4013399888854636,
+    "predictor_rand_half_blend": 0.21009487956031805,
+    "encoder_pt_mse": 0.2684613036274617,
+    "encoder_pt_half_blend": 0.1791170825094592,
+    "raw_mse": 0.21124103036917422,
+    "raw_half_blend": 0.16013054998812187,
+    "pt_over_rand": 0.6657339490219688,
+    "pt_over_raw": 1.2648378737511705,
+    "predictor_over_encoder": 0.9952482986967869,
+    "pt_over_blend": 1.7833316709695786,
+    "boot_pt_vs_rand": {
+      "lo": 0.6104772557439196,
+      "hi": 0.7243171256885718,
+      "p_better": 1.0,
+      "n_origins": 16,
+      "block": 2,
+      "seed": 20260902
+    },
+    "boot_pt_vs_blend": {
+      "lo": 1.617854913540542,
+      "hi": 1.9719980880636154,
+      "p_better": 0.0,
+      "n_origins": 16,
+      "block": 2,
+      "seed": 20260902
+    },
+    "A_no_video_mse": 0.16013054998812187,
+    "B_plus_predictor_mse": 0.17446115193332967,
+    "C_plus_random_mse": 0.19081107461773986,
+    "B_over_A": 1.0894932412726417,
+    "B_over_C": 0.9143135548229331,
+    "boot_B_vs_A": {
+      "lo": 1.0372590423928372,
+      "hi": 1.1435044772295184,
+      "p_better": 0.0002,
+      "n_origins": 16,
+      "block": 2,
+      "seed": 20260902
+    },
+    "boot_B_vs_C": {
+      "lo": 0.8642401134424567,
+      "hi": 0.9601484028344685,
+      "p_better": 1.0,
+      "n_origins": 16,
+      "block": 2,
+      "seed": 20260902
+    },
+    "backbone_positive": false
+  },
+  "wall_clock_s": 1219.8
+}
