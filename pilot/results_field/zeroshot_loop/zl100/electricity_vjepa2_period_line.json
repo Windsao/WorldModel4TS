@@ -1,0 +1,68 @@
+{
+  "status": "complete",
+  "candidate_id": "ZL-100",
+  "backbone": "vjepa2",
+  "dataset": "electricity",
+  "manifest": {
+    "dataset": "electricity",
+    "data_path": "/nyx-storage1/hanliu/wm4ts/data/electricity.txt",
+    "data_sha1": "ab17f324161ee718",
+    "P": 24,
+    "context": 384,
+    "horizon": 96,
+    "borders": [
+      18412,
+      21043,
+      26304
+    ],
+    "max_ch": 48,
+    "M": 48,
+    "stride": 8,
+    "n_windows": 646,
+    "n_pairs": 2000,
+    "pairs_sha1": "0636012de2f53384",
+    "seed": 0
+  },
+  "results": {
+    "renderer": "period_line",
+    "n_origins": 40,
+    "M": 48,
+    "blend_mse": 0.2168065494672665,
+    "pt_mse": 0.30160537362098694,
+    "rand_mse": 0.43115463852882385,
+    "rawL2_mse": 0.29127582907676697,
+    "A_no_video_mse": 0.21322558996015867,
+    "B_plus_pretrained_mse": 0.2148972848551948,
+    "C_plus_random_mse": 0.23327411229889827,
+    "pt_over_rand": 0.6995294649968699,
+    "pt_over_rawL2": 1.0354631023691896,
+    "B_over_A": 1.0078400294042966,
+    "B_over_C": 0.9212221739369136,
+    "boot_pt_vs_rand": {
+      "lo": 0.5507828593254089,
+      "hi": 0.9112876057624817,
+      "p_better": 0.9932,
+      "n_origins": 40,
+      "block": 5,
+      "seed": 20260902
+    },
+    "boot_B_vs_A": {
+      "lo": 0.9702255549669845,
+      "hi": 1.0441866336186678,
+      "p_better": 0.3202,
+      "n_origins": 40,
+      "block": 5,
+      "seed": 20260902
+    },
+    "boot_B_vs_C": {
+      "lo": 0.8689002235214911,
+      "hi": 0.976398545247166,
+      "p_better": 0.9982,
+      "n_origins": 40,
+      "block": 5,
+      "seed": 20260902
+    },
+    "backbone_positive": false
+  },
+  "wall_clock_s": 4401.2
+}

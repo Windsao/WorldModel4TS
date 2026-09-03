@@ -120,9 +120,12 @@ def main():
     mr = VJEPA2Model(VJEPA2Config.from_pretrained(a.ckpt)).to(DEV).eval()
     res = {"blend_mse": mb, "renderer": a.renderer, "n_origins": len(origins), "M": M}
     err, ori = {"blend": ((blend - fut) ** 2).mean(1)}, np.repeat(np.array(origins), M)
+    YP = {}
     blk = max(1, int(np.ceil((L + H) / max(1, step))))
+    # "raw" is the video-free control: the same ridge on the period vectors themselves. It is
+    # what the backbone has to beat before it can be credited with anything.
     for nm, model, mode in (("predictor_pt", mp, "predictor"), ("predictor_rand", mr, "predictor"),
-                            ("encoder_pt", mp, "encoder")):
+                            ("encoder_pt", mp, "encoder"), ("raw", None, "raw")):
         preds = []
         for t in origins:
             tw, ty = [], []
@@ -135,25 +138,56 @@ def main():
             W, Y = np.concatenate(tw), np.concatenate(ty)
             Wm = W[:, -(L // P) * P:].mean(1, keepdims=True)
             Ws = W[:, -(L // P) * P:].std(1, keepdims=True) + 1e-6
-            with torch.no_grad():
-                Xtr = rollout_feats(model, W, P, a.renderer, a.size, reps, mode=mode)
-                Q = np.stack([series[c, t - L:t] for c in range(M)])
-                Xte = rollout_feats(model, Q, P, a.renderer, a.size, reps, mode=mode)
+            Q = np.stack([series[c, t - L:t] for c in range(M)])
+            if mode == "raw":
+                G_ = L // P
+                def rawf(X):
+                    m_ = X.mean(1, keepdims=True); s_ = X.std(1, keepdims=True) + 1e-6
+                    Z = ((X - m_) / (3 * s_)).clip(-1, 1)
+                    return np.concatenate([Z, Z[:, -2 * P:]], 1).astype(np.float64)
+                Xtr, Xte = rawf(W), rawf(Q)
+            else:
+                with torch.no_grad():
+                    Xtr = rollout_feats(model, W, P, a.renderer, a.size, reps, mode=mode)
+                    Xte = rollout_feats(model, Q, P, a.renderer, a.size, reps, mode=mode)
             Qm = Q.mean(1, keepdims=True); Qs = Q.std(1, keepdims=True) + 1e-6
             zp, _ = ridge_fit_predict(Xtr, (Y - Wm) / (3 * Ws), Xte, seed=a.seed)
             preds.append(zp * 3 * Qs + Qm)
         y = np.concatenate(preds)
+        YP[nm] = y
         res[f"{nm}_mse"] = float(np.mean((y - fut) ** 2))
         err[nm] = ((y - fut) ** 2).mean(1)
         res[f"{nm}_half_blend"] = float(np.mean((0.5 * y + 0.5 * blend - fut) ** 2))
         print(f"  {nm:16s} = {res[f'{nm}_mse']:.4f}  (/blend {res[f'{nm}_mse']/mb:.4f}, "
               f"half-blend {res[f'{nm}_half_blend']:.4f})", flush=True)
+    # ---- the decisive ensemble test, identical in form to ZL-100
+    YA = None
+    ens = {}
     res["pt_over_rand"] = res["predictor_pt_mse"] / res["predictor_rand_mse"]
+    res["pt_over_raw"] = res["predictor_pt_mse"] / res["raw_mse"]
     res["predictor_over_encoder"] = res["predictor_pt_mse"] / res["encoder_pt_mse"]
     res["pt_over_blend"] = res["predictor_pt_mse"] / mb
     res["boot_pt_vs_rand"] = ZL.paired_bootstrap(err["predictor_pt"], err["predictor_rand"], ori, blk)
     res["boot_pt_vs_blend"] = ZL.paired_bootstrap(err["predictor_pt"], err["blend"], ori, blk)
-    for k_ in ("pt_over_rand", "predictor_over_encoder", "pt_over_blend"):
+    ens = {"A_no_video": (blend + YP["raw"]) / 2,
+           "B_plus_predictor": (blend + YP["raw"] + YP["predictor_pt"]) / 3,
+           "C_plus_random": (blend + YP["raw"] + YP["predictor_rand"]) / 3}
+    for k_, v_ in ens.items():
+        res[f"{k_}_mse"] = float(np.mean((v_ - fut) ** 2)); err[k_] = ((v_ - fut) ** 2).mean(1)
+    res["B_over_A"] = res["B_plus_predictor_mse"] / res["A_no_video_mse"]
+    res["B_over_C"] = res["B_plus_predictor_mse"] / res["C_plus_random_mse"]
+    res["boot_B_vs_A"] = ZL.paired_bootstrap(err["B_plus_predictor"], err["A_no_video"], ori, blk)
+    res["boot_B_vs_C"] = ZL.paired_bootstrap(err["B_plus_predictor"], err["C_plus_random"], ori, blk)
+    print(f"  A(no video)={res['A_no_video_mse']:.4f} B(+predictor)={res['B_plus_predictor_mse']:.4f} "
+          f"C(+random)={res['C_plus_random_mse']:.4f}", flush=True)
+    print(f"  B/A={res['B_over_A']:.4f} CI=[{res['boot_B_vs_A']['lo']:.4f},{res['boot_B_vs_A']['hi']:.4f}]"
+          f"  B/C={res['B_over_C']:.4f} CI=[{res['boot_B_vs_C']['lo']:.4f},{res['boot_B_vs_C']['hi']:.4f}]",
+          flush=True)
+    crit = (res["boot_pt_vs_rand"]["hi"] < 1 and res["boot_B_vs_A"]["hi"] < 1
+            and res["boot_B_vs_C"]["hi"] < 1)
+    res["backbone_positive"] = bool(crit)
+    print(f"  BACKBONE-POSITIVE (both preregistered conditions): {crit}", flush=True)
+    for k_ in ("pt_over_rand", "pt_over_raw", "predictor_over_encoder", "pt_over_blend"):
         print(f"  {k_:24s} = {res[k_]:.4f}", flush=True)
     print(f"  boot pt vs rand  CI=[{res['boot_pt_vs_rand']['lo']:.4f},"
           f"{res['boot_pt_vs_rand']['hi']:.4f}]")
