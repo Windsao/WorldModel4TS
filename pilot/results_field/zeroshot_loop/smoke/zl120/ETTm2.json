@@ -1,0 +1,57 @@
+{
+  "status": "complete",
+  "candidate_id": "ZL-120",
+  "dataset": "ETTm2",
+  "manifest": {
+    "dataset": "ETTm2",
+    "data_path": "/nyx-storage1/hanliu/wm4ts/data/ETTm2.csv",
+    "data_sha1": "7010eb61daf7f0dc",
+    "P": 96,
+    "context": 1536,
+    "horizon": 96,
+    "borders": [
+      34560,
+      46080,
+      57600
+    ],
+    "max_ch": 12,
+    "M": 7,
+    "stride": 8,
+    "n_windows": 1429,
+    "n_pairs": 2000,
+    "pairs_sha1": "61eeac383f9016da",
+    "seed": 0
+  },
+  "results": {
+    "blend_mse": 0.09721191144075181,
+    "renderer": "period_line",
+    "n_origins": 2,
+    "M": 7,
+    "predictor_pt_mse": 0.11386370866983953,
+    "predictor_pt_half_blend": 0.09889731483089707,
+    "predictor_rand_mse": 0.11938635229147547,
+    "predictor_rand_half_blend": 0.10053938110259757,
+    "encoder_pt_mse": 0.13144977341973776,
+    "encoder_pt_half_blend": 0.10693799800301737,
+    "pt_over_rand": 0.9537414158684344,
+    "predictor_over_encoder": 0.8662145677973636,
+    "pt_over_blend": 1.1712937949917441,
+    "boot_pt_vs_rand": {
+      "lo": 0.9455468482519771,
+      "hi": 0.9687778118997982,
+      "p_better": 1.0,
+      "n_origins": 2,
+      "block": 1,
+      "seed": 20260902
+    },
+    "boot_pt_vs_blend": {
+      "lo": 1.0710394247175767,
+      "hi": 1.407194060586402,
+      "p_better": 0.0,
+      "n_origins": 2,
+      "block": 1,
+      "seed": 20260902
+    }
+  },
+  "wall_clock_s": 97.9
+}

@@ -1,0 +1,50 @@
+{
+  "status": "complete",
+  "candidate_id": "ZL-110",
+  "dataset": "ETTm2",
+  "manifest": {
+    "dataset": "ETTm2",
+    "data_path": "/nyx-storage1/hanliu/wm4ts/data/ETTm2.csv",
+    "data_sha1": "7010eb61daf7f0dc",
+    "P": 96,
+    "context": 1536,
+    "horizon": 96,
+    "borders": [
+      34560,
+      46080,
+      57600
+    ],
+    "max_ch": 16,
+    "M": 7,
+    "stride": 8,
+    "n_windows": 1429,
+    "n_pairs": 2000,
+    "pairs_sha1": "61eeac383f9016da",
+    "seed": 0
+  },
+  "results": {
+    "blend_mse": 0.13084055395544386,
+    "backbone": "facebook/vjepa2-vitl-fpc64-256",
+    "n_origins": 2,
+    "M": 7,
+    "renderers": {
+      "static_matrix": {
+        "pt_mse": 0.13190949603621357,
+        "pt_half_blend": 0.1283883771079969,
+        "rand_mse": 0.12553247002100226,
+        "rand_half_blend": 0.12272162469857152,
+        "pt_over_rand": 1.0507998131012988,
+        "pt_over_blend": 1.008169807054881,
+        "boot_pt_vs_rand": {
+          "lo": 0.9599647941918469,
+          "hi": 1.0825360913137292,
+          "p_better": 0.2586,
+          "n_origins": 2,
+          "block": 1,
+          "seed": 20260902
+        }
+      }
+    }
+  },
+  "wall_clock_s": 141.8
+}

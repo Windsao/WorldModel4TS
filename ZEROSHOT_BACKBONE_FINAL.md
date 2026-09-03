@@ -58,7 +58,9 @@ model is worth half a percent over just reading its features.
 
 > **A correction.** A 2-origin, 7-channel smoke test put this ratio at 0.8662 and I reported a
 > 13.4% gain from the rollout. At 16 origins and 24 channels it is 0.9952. The smoke-test figure
-> was noise; the claim is withdrawn.
+> was noise; the claim is withdrawn. Both runs are kept so the withdrawal is checkable:
+> `pilot/results_field/zeroshot_loop/smoke/zl120/ETTm2.json` (the smoke test) against
+> `pilot/results_field/zeroshot_loop/zl120/electricity.json` (at scale).
 
 ## 3. Preprocessing does not rescue it
 
