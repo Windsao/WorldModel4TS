@@ -1,0 +1,28 @@
+ETTh2 G2 vc=4 mc=10 audit_n=252
+/nyx-storage1/hanliu/miniconda3/envs/wm4ts/lib/python3.10/site-packages/transformers/utils/hub.py:128: FutureWarning: Using `TRANSFORMERS_CACHE` is deprecated and will be removed in v5 of Transformers. Use `HF_HOME` instead.
+  warnings.warn(
+{
+  "native_model": 1.327184,
+  "native_zero": 0.850695,
+  "raw_oracle": 0.005361,
+  "raw_oracle_zero": 0.001773,
+  "ts_model_oracle_mse": 0.166961,
+  "ts_model_oracle_mae": 0.166358,
+  "ts_zero_oracle_mse": 0.163171,
+  "ts_zero_oracle_mae": 0.162679,
+  "raw_context_global": 0.052306,
+  "ts_model_context_global_mse": 0.727002,
+  "ts_model_context_global_mae": 0.557149,
+  "ts_zero_context_global_mse": 0.70279,
+  "ts_zero_context_global_mae": 0.541113,
+  "raw_nearest_visible_left": 0.060061,
+  "ts_model_nearest_visible_left_mse": 0.855372,
+  "ts_model_nearest_visible_left_mae": 0.588544,
+  "ts_zero_nearest_visible_left_mse": 0.830114,
+  "ts_zero_nearest_visible_left_mae": 0.577283,
+  "raw_nearest_visible_physical": 0.063858,
+  "ts_model_nearest_visible_physical_mse": 0.968312,
+  "ts_model_nearest_visible_physical_mae": 0.621731,
+  "ts_zero_nearest_visible_physical_mse": 0.929868,
+  "ts_zer
+[done] ETTh2 G2

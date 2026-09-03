@@ -1,0 +1,158 @@
+dataset=solar M=112 P=144 ctx=2304 h=144 train=34345 test=1297
+[done] snaive   {'MSE': 0.289, 'MAE': 0.2235}
+[done] smean    {'MSE': 0.2005, 'MAE': 0.2205}
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+E0000 00:00:1788216476.338325    4405 cuda_dnn.cc:8579] Unable to register cuDNN factory: Attempting to register factory for plugin cuDNN when one has already been registered
+E0000 00:00:1788216476.344166    4405 cuda_blas.cc:1407] Unable to register cuBLAS factory: Attempting to register factory for plugin cuBLAS when one has already been registered
+W0000 00:00:1788216476.358876    4405 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
+W0000 00:00:1788216476.359014    4405 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
+W0000 00:00:1788216476.359120    4405 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
+W0000 00:00:1788216476.359209    4405 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
+[info] renderer=period_matrix readout=xattn pretrained=0 trainable=3254928/89482128
+[info] ep0 step 0 loss 1.4316
+[info] ep0 step 100 loss 1.3551
+[info] ep0 step 200 loss 1.0655
+[info] ep0 step 300 loss 0.9790
+[info] ep0 step 400 loss 0.4098
+[info] ep0 step 500 loss 0.3466
+[info] ep0 step 600 loss 0.2030
+[info] ep0 step 700 loss 0.3105
+[info] ep0 step 800 loss 0.2043
+[info] ep0 step 900 loss 0.2263
+[info] ep0 step 1000 loss 0.2016
+[info] ep0 step 1100 loss 0.2683
+[info] ep0 step 1200 loss 0.1506
+[info] ep0 step 1300 loss 0.1696
+[info] ep0 step 1400 loss 0.2270
+[info] ep0 step 1500 loss 0.1797
+[info] ep0 step 1600 loss 0.1687
+[info] ep0 step 1700 loss 0.2591
+[info] ep0 step 1800 loss 0.1932
+[info] ep0 step 1900 loss 0.1783
+[info] ep0 step 2000 loss 0.2781
+[info] ep0 step 2100 loss 0.1310
+[info] ep0 step 2200 loss 0.2375
+[info] ep0 step 2300 loss 0.1843
+[info] ep0 step 2400 loss 0.1260
+[info] epoch 0 train MSE 0.3373
+[info] ep1 step 0 loss 0.2124
+[info] ep1 step 100 loss 0.1963
+[info] ep1 step 200 loss 0.1972
+[info] ep1 step 300 loss 0.2263
+[info] ep1 step 400 loss 0.2022
+[info] ep1 step 500 loss 0.2916
+[info] ep1 step 600 loss 0.2315
+[info] ep1 step 700 loss 0.1247
+[info] ep1 step 800 loss 0.2103
+[info] ep1 step 900 loss 0.1380
+[info] ep1 step 1000 loss 0.1289
+[info] ep1 step 1100 loss 0.2833
+[info] ep1 step 1200 loss 0.1688
+[info] ep1 step 1300 loss 0.1850
+[info] ep1 step 1400 loss 0.1481
+[info] ep1 step 1500 loss 0.2847
+[info] ep1 step 1600 loss 0.1762
+[info] ep1 step 1700 loss 0.1503
+[info] ep1 step 1800 loss 0.1528
+[info] ep1 step 1900 loss 0.1665
+[info] ep1 step 2000 loss 0.2320
+[info] ep1 step 2100 loss 0.2066
+[info] ep1 step 2200 loss 0.2002
+[info] ep1 step 2300 loss 0.2180
+[info] ep1 step 2400 loss 0.2799
+[info] epoch 1 train MSE 0.1915
+[info] ep2 step 0 loss 0.2173
+[info] ep2 step 100 loss 0.1961
+[info] ep2 step 200 loss 0.1575
+[info] ep2 step 300 loss 0.1799
+[info] ep2 step 400 loss 0.1676
+[info] ep2 step 500 loss 0.2394
+[info] ep2 step 600 loss 0.2080
+[info] ep2 step 700 loss 0.1933
+[info] ep2 step 800 loss 0.1562
+[info] ep2 step 900 loss 0.1827
+[info] ep2 step 1000 loss 0.1604
+[info] ep2 step 1100 loss 0.2844
+[info] ep2 step 1200 loss 0.1329
+[info] ep2 step 1300 loss 0.1575
+[info] ep2 step 1400 loss 0.1147
+[info] ep2 step 1500 loss 0.1593
+[info] ep2 step 1600 loss 0.2487
+[info] ep2 step 1700 loss 0.2208
+[info] ep2 step 1800 loss 0.1229
+[info] ep2 step 1900 loss 0.1404
+[info] ep2 step 2000 loss 0.1742
+[info] ep2 step 2100 loss 0.1624
+[info] ep2 step 2200 loss 0.1727
+[info] ep2 step 2300 loss 0.1406
+[info] ep2 step 2400 loss 0.1829
+[info] epoch 2 train MSE 0.1730
+[info] ep3 step 0 loss 0.2113
+[info] ep3 step 100 loss 0.2247
+[info] ep3 step 200 loss 0.2146
+[info] ep3 step 300 loss 0.2182
+[info] ep3 step 400 loss 0.1505
+[info] ep3 step 500 loss 0.2124
+[info] ep3 step 600 loss 0.1090
+[info] ep3 step 700 loss 0.2115
+[info] ep3 step 800 loss 0.1596
+[info] ep3 step 900 loss 0.1039
+[info] ep3 step 1000 loss 0.2103
+[info] ep3 step 1100 loss 0.1407
+[info] ep3 step 1200 loss 0.1478
+[info] ep3 step 1300 loss 0.1817
+[info] ep3 step 1400 loss 0.2058
+[info] ep3 step 1500 loss 0.1529
+[info] ep3 step 1600 loss 0.1347
+[info] ep3 step 1700 loss 0.1733
+[info] ep3 step 1800 loss 0.1119
+[info] ep3 step 1900 loss 0.1252
+[info] ep3 step 2000 loss 0.1954
+[info] ep3 step 2100 loss 0.0962
+[info] ep3 step 2200 loss 0.1244
+[info] ep3 step 2300 loss 0.1546
+[info] ep3 step 2400 loss 0.1659
+[info] epoch 3 train MSE 0.1660
+[info] ep4 step 0 loss 0.1940
+[info] ep4 step 100 loss 0.1912
+[info] ep4 step 200 loss 0.1945
+[info] ep4 step 300 loss 0.2417
+[info] ep4 step 400 loss 0.1884
+[info] ep4 step 500 loss 0.2035
+[info] ep4 step 600 loss 0.1237
+[info] ep4 step 700 loss 0.1658
+[info] ep4 step 800 loss 0.1559
+[info] ep4 step 900 loss 0.1813
+[info] ep4 step 1000 loss 0.1798
+[info] ep4 step 1100 loss 0.2679
+[info] ep4 step 1200 loss 0.1674
+[info] ep4 step 1300 loss 0.1437
+[info] ep4 step 1400 loss 0.1144
+[info] ep4 step 1500 loss 0.1170
+[info] ep4 step 1600 loss 0.1723
+[info] ep4 step 1700 loss 0.2513
+[info] ep4 step 1800 loss 0.2127
+[info] ep4 step 1900 loss 0.1391
+[info] ep4 step 2000 loss 0.1679
+[info] ep4 step 2100 loss 0.1625
+[info] ep4 step 2200 loss 0.1869
+[info] ep4 step 2300 loss 0.2071
+[info] ep4 step 2400 loss 0.1970
+[info] epoch 4 train MSE 0.1622
+[done] model_rand  MSE=0.1846 MAE=0.2573  (smean 0.2005)
+fatal: not a git repository (or any parent up to mount point /lambda/nfs)
+Stopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not set).
+{
+  "snaive": {
+    "MSE": 0.289,
+    "MAE": 0.2235
+  },
+  "smean": {
+    "MSE": 0.2005,
+    "MAE": 0.2205
+  },
+  "model_rand": {
+    "MSE": 0.1846,
+    "MAE": 0.2573
+  }
+}

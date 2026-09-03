@@ -1,0 +1,37 @@
+dataset=electricity M=112 P=24 ctx=384 h=96 windows=5500
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+E0000 00:00:1788083677.651609    4434 cuda_dnn.cc:8579] Unable to register cuDNN factory: Attempting to register factory for plugin cuDNN when one has already been registered
+E0000 00:00:1788083677.657784    4434 cuda_blas.cc:1407] Unable to register cuBLAS factory: Attempting to register factory for plugin cuBLAS when one has already been registered
+W0000 00:00:1788083677.673196    4434 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
+W0000 00:00:1788083677.673434    4434 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
+W0000 00:00:1788083677.673526    4434 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
+W0000 00:00:1788083677.673611    4434 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
+[uni_barcode ] PR= 114.11/768  probe=1.0489 const=1.0494  skill=0.9995  lam=1e+06
+[vts_2d      ] PR= 124.47/768  probe=1.0623 const=1.0494  skill=1.0123  lam=1e+06
+[field_2d    ] PR= 129.16/768  probe=0.9964 const=0.9875  skill=1.0090  lam=1e+06
+{
+  "uni_barcode": {
+    "partic_ratio": 114.11,
+    "feat_dim": 768,
+    "probe_mse": 1.0489,
+    "const_mse": 1.0494,
+    "skill_ratio": 0.9995,
+    "ridge_lam": 1000000.0
+  },
+  "vts_2d": {
+    "partic_ratio": 124.47,
+    "feat_dim": 768,
+    "probe_mse": 1.0623,
+    "const_mse": 1.0494,
+    "skill_ratio": 1.0123,
+    "ridge_lam": 1000000.0
+  },
+  "field_2d": {
+    "partic_ratio": 129.16,
+    "feat_dim": 768,
+    "probe_mse": 0.9964,
+    "const_mse": 0.9875,
+    "skill_ratio": 1.009,
+    "ridge_lam": 1000000.0
+  }
+}

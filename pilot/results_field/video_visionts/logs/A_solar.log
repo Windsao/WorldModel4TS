@@ -1,0 +1,14 @@
+solar: P=144 L=2304 H=144 windows=1297 pairs=2000
+[ok] mirrored forward matches official (max|d|=0.00e+00)
+{
+  "visionts_pretrained": 0.2728644013404846,
+  "visionts_zeroed": 0.735597550868988,
+  "visionts_random": 1.275054693222046,
+  "smean": 0.19733230769634247,
+  "snaive": 0.28514984250068665,
+  "visionts_pretrained_mae": 0.22412246465682983,
+  "smean_mae": 0.21858727931976318
+}
+/nyx-storage1/hanliu/miniconda3/envs/wm4ts/lib/python3.10/site-packages/transformers/utils/hub.py:128: FutureWarning: Using `TRANSFORMERS_CACHE` is deprecated and will be removed in v5 of Transformers. Use `HF_HOME` instead.
+  warnings.warn(
+[done] solar

@@ -1,0 +1,63 @@
+{
+  "status": "complete",
+  "candidate_id": "ZL-052",
+  "stage": "E",
+  "dataset": "ETTh2",
+  "manifest": {
+    "dataset": "ETTh2",
+    "split": "audit",
+    "P": 24,
+    "L": 384,
+    "H": 96,
+    "M": 7,
+    "stride": 8,
+    "seed": 0,
+    "n": 1008,
+    "n_origins": 144,
+    "pairs_sha1": "ae85cfa7eb0ed2a8",
+    "range": [
+      7488,
+      8640
+    ]
+  },
+  "results": {
+    "smean_mse": 0.676815927028656,
+    "pt_mse": 0.4097373324790671,
+    "pt_kernel_only_mse": 0.5181437546836426,
+    "pt_weight_mean": {
+      "smean": 0.3384122340750965,
+      "snaive": 0.11955793512262806,
+      "last": 0.15368832284775685,
+      "recent_mean": 0.2338269304464536,
+      "kernel": 0.15451457750806494
+    },
+    "blend_mse": 0.39630912461470047,
+    "n_pseudo_origins": 5,
+    "rand_mse": 0.40491190609498473,
+    "rand_kernel_only_mse": 0.514429788087241,
+    "rand_weight_mean": {
+      "smean": 0.32740074817819004,
+      "snaive": 0.11974359562760624,
+      "last": 0.1540362451699451,
+      "recent_mean": 0.2335611618855895,
+      "kernel": 0.16525824913866907
+    },
+    "boot_pt_vs_rand": {
+      "lo": 0.994627439051994,
+      "hi": 1.035332151148705,
+      "p_better": 0.1234,
+      "n_origins": 144,
+      "block": 60,
+      "seed": 20260902
+    },
+    "boot_pt_vs_blend": {
+      "lo": 1.0143247345586355,
+      "hi": 1.0543604093673877,
+      "p_better": 0.0,
+      "n_origins": 144,
+      "block": 60,
+      "seed": 20260902
+    }
+  },
+  "wall_clock_s": 747.5
+}

@@ -1,0 +1,64 @@
+{
+  "status": "complete",
+  "candidate_id": "ZL-040",
+  "dataset": "ETTh2",
+  "split": "audit",
+  "manifest": {
+    "dataset": "ETTh2",
+    "split": "audit",
+    "P": 24,
+    "L": 384,
+    "H": 96,
+    "M": 7,
+    "stride": 8,
+    "seed": 0,
+    "n": 1008,
+    "n_origins": 144,
+    "pairs_sha1": "ae85cfa7eb0ed2a8",
+    "range": [
+      7488,
+      8640
+    ]
+  },
+  "checkpoint": "MCG-NJU/videomae-base",
+  "ctx_frames": 12,
+  "future_frames": 4,
+  "masked_tubelets": 2,
+  "config_hash": "47da07c1d5d382de",
+  "results": {
+    "native_pt": 0.9827549774927703,
+    "native_rand": 1.0432437903371905,
+    "native_zero": 0.8913245982470686,
+    "native_pt_over_zero": 1.1025780949224493,
+    "native_pt_over_rand": 0.9420185258664522,
+    "ts_pt_mse": 0.21754461526870728,
+    "ts_rand_mse": 0.21343038976192474,
+    "ts_zero_mse": 0.21347807347774506,
+    "base_ts_mse": 0.49366453289985657,
+    "boot_pt_vs_rand": {
+      "lo": 1.0081359148025513,
+      "hi": 1.046861171722412,
+      "p_better": 0.0,
+      "n_origins": 144,
+      "block": 60,
+      "seed": 20260902
+    },
+    "boot_pt_vs_zero": {
+      "lo": 1.0080114603042603,
+      "hi": 1.0459814071655273,
+      "p_better": 0.0,
+      "n_origins": 144,
+      "block": 60,
+      "seed": 20260902
+    },
+    "boot_pt_vs_base": {
+      "lo": 0.32869255542755127,
+      "hi": 0.5622822642326355,
+      "p_better": 1.0,
+      "n_origins": 144,
+      "block": 60,
+      "seed": 20260902
+    }
+  },
+  "wall_clock_s": 56.6
+}

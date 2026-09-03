@@ -1,0 +1,20 @@
+/nyx-storage1/hanliu/miniconda3/envs/wm4ts/lib/python3.10/site-packages/transformers/utils/hub.py:128: FutureWarning: Using `TRANSFORMERS_CACHE` is deprecated and will be removed in v5 of Transformers. Use `HF_HOME` instead.
+  warnings.warn(
+L1 layout=G0 params=308838 backbone=pretrained
+pool: {'ETTh2': (966, 147), 'ETTm2': (1500, 512)}
+[info] step 50 loss 1.93895 R_val 1.0441 best 1.0441
+[info] step 100 loss 1.70164 R_val 1.0098 best 1.0098
+[info] step 150 loss 1.99505 R_val 1.0410 best 1.0098
+[info] step 200 loss 2.44036 R_val 1.0153 best 1.0098
+[info] step 250 loss 0.53550 R_val 1.0202 best 1.0098
+[info] step 300 loss 0.41674 R_val 1.0010 best 1.0010
+[info] step 350 loss 1.01205 R_val 1.0257 best 1.0010
+[info] step 400 loss 1.24861 R_val 1.0092 best 1.0010
+[info] step 450 loss 0.59733 R_val 1.0491 best 1.0010
+[info] step 500 loss 2.00922 R_val 1.0441 best 1.0010
+[info] step 550 loss 1.91130 R_val 1.0177 best 1.0010
+[info] step 600 loss 2.10951 R_val 0.9992 best 0.9992
+[audit] ETTh2 {'lens_mse': 0.49834, 'L0_mse': 0.486136, 'ratio': 1.025106}
+[audit] ETTm2 {'lens_mse': 0.332051, 'L0_mse': 0.317959, 'ratio': 1.044319}
+[audit] aggregate ratio vs L0 = 1.0347
+[done]

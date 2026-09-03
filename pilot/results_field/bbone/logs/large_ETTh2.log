@@ -1,0 +1,11 @@
+dataset=ETTh2 mode=uni M=7 P=24 context=384 horizon=96 train=8161 test=349
+[done] snaive     {'MSE': 0.3899, 'MAE': 0.3798}
+[done] smean      {'MSE': 0.3496, 'MAE': 0.3936}
+/nyx-storage1/hanliu/miniconda3/envs/wm4ts/lib/python3.10/site-packages/transformers/utils/hub.py:128: FutureWarning: Using `TRANSFORMERS_CACHE` is deprecated and will be removed in v5 of Transformers. Use `HF_HOME` instead.
+  warnings.warn(
+[info] tune=adapter trainable=6182176/310042912 (1.99%)
+[info] ep0 step 0 loss 0.3855
+[info] ep0 step 200 loss 0.5917
+[info] ep0 step 400 loss 0.9249
+[info] ep0 step 600 loss 0.1744
+[info] ep0 step 800 loss 0.6020

@@ -1,0 +1,158 @@
+dataset=traffic M=112 P=24 ctx=384 h=96 train=11801 test=427
+[done] snaive   {'MSE': 0.9626, 'MAE': 0.4874}
+[done] smean    {'MSE': 0.5175, 'MAE': 0.384}
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+E0000 00:00:1788195888.126077    2690 cuda_dnn.cc:8579] Unable to register cuDNN factory: Attempting to register factory for plugin cuDNN when one has already been registered
+E0000 00:00:1788195888.132138    2690 cuda_blas.cc:1407] Unable to register cuBLAS factory: Attempting to register factory for plugin cuBLAS when one has already been registered
+W0000 00:00:1788195888.147519    2690 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
+W0000 00:00:1788195888.147660    2690 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
+W0000 00:00:1788195888.147767    2690 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
+W0000 00:00:1788195888.147869    2690 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
+[info] renderer=period_matrix readout=xattn pretrained=1 trainable=2959968/89187168
+[info] ep0 step 0 loss 1.1839
+[info] ep0 step 100 loss 0.7714
+[info] ep0 step 200 loss 0.7006
+[info] ep0 step 300 loss 0.7471
+[info] ep0 step 400 loss 0.5444
+[info] ep0 step 500 loss 0.6254
+[info] ep0 step 600 loss 0.4065
+[info] ep0 step 700 loss 0.5332
+[info] ep0 step 800 loss 0.4155
+[info] ep0 step 900 loss 0.4112
+[info] ep0 step 1000 loss 0.3113
+[info] ep0 step 1100 loss 0.3265
+[info] ep0 step 1200 loss 0.3002
+[info] ep0 step 1300 loss 0.3350
+[info] ep0 step 1400 loss 0.3167
+[info] ep0 step 1500 loss 0.3573
+[info] ep0 step 1600 loss 0.2545
+[info] ep0 step 1700 loss 0.2655
+[info] ep0 step 1800 loss 0.4187
+[info] ep0 step 1900 loss 0.2641
+[info] ep0 step 2000 loss 0.2166
+[info] ep0 step 2100 loss 0.2829
+[info] ep0 step 2200 loss 0.3911
+[info] ep0 step 2300 loss 0.2434
+[info] ep0 step 2400 loss 0.3222
+[info] epoch 0 train MSE 0.4108
+[info] ep1 step 0 loss 0.2969
+[info] ep1 step 100 loss 0.2119
+[info] ep1 step 200 loss 0.2445
+[info] ep1 step 300 loss 0.1869
+[info] ep1 step 400 loss 0.3203
+[info] ep1 step 500 loss 0.2142
+[info] ep1 step 600 loss 0.1982
+[info] ep1 step 700 loss 0.3583
+[info] ep1 step 800 loss 0.3061
+[info] ep1 step 900 loss 0.3152
+[info] ep1 step 1000 loss 0.2757
+[info] ep1 step 1100 loss 0.2651
+[info] ep1 step 1200 loss 0.3616
+[info] ep1 step 1300 loss 0.3254
+[info] ep1 step 1400 loss 0.3240
+[info] ep1 step 1500 loss 0.2136
+[info] ep1 step 1600 loss 0.5106
+[info] ep1 step 1700 loss 0.2243
+[info] ep1 step 1800 loss 0.2081
+[info] ep1 step 1900 loss 0.2332
+[info] ep1 step 2000 loss 0.1429
+[info] ep1 step 2100 loss 0.2737
+[info] ep1 step 2200 loss 0.2055
+[info] ep1 step 2300 loss 0.2578
+[info] ep1 step 2400 loss 0.3610
+[info] epoch 1 train MSE 0.2860
+[info] ep2 step 0 loss 0.1864
+[info] ep2 step 100 loss 0.3129
+[info] ep2 step 200 loss 0.3456
+[info] ep2 step 300 loss 0.4020
+[info] ep2 step 400 loss 0.2297
+[info] ep2 step 500 loss 0.2231
+[info] ep2 step 600 loss 0.2867
+[info] ep2 step 700 loss 0.1495
+[info] ep2 step 800 loss 0.2577
+[info] ep2 step 900 loss 0.3714
+[info] ep2 step 1000 loss 0.2884
+[info] ep2 step 1100 loss 0.2941
+[info] ep2 step 1200 loss 0.2269
+[info] ep2 step 1300 loss 0.2228
+[info] ep2 step 1400 loss 0.1910
+[info] ep2 step 1500 loss 0.2684
+[info] ep2 step 1600 loss 0.1776
+[info] ep2 step 1700 loss 0.3834
+[info] ep2 step 1800 loss 0.2790
+[info] ep2 step 1900 loss 0.3786
+[info] ep2 step 2000 loss 0.3116
+[info] ep2 step 2100 loss 0.2745
+[info] ep2 step 2200 loss 0.2096
+[info] ep2 step 2300 loss 0.3800
+[info] ep2 step 2400 loss 0.1779
+[info] epoch 2 train MSE 0.2656
+[info] ep3 step 0 loss 0.2052
+[info] ep3 step 100 loss 0.2201
+[info] ep3 step 200 loss 0.1859
+[info] ep3 step 300 loss 0.3615
+[info] ep3 step 400 loss 0.1756
+[info] ep3 step 500 loss 0.2626
+[info] ep3 step 600 loss 0.2396
+[info] ep3 step 700 loss 0.1624
+[info] ep3 step 800 loss 0.2837
+[info] ep3 step 900 loss 0.2002
+[info] ep3 step 1000 loss 0.1951
+[info] ep3 step 1100 loss 0.2158
+[info] ep3 step 1200 loss 0.2353
+[info] ep3 step 1300 loss 0.2030
+[info] ep3 step 1400 loss 0.2697
+[info] ep3 step 1500 loss 0.2496
+[info] ep3 step 1600 loss 0.2612
+[info] ep3 step 1700 loss 0.2139
+[info] ep3 step 1800 loss 0.2312
+[info] ep3 step 1900 loss 0.1643
+[info] ep3 step 2000 loss 0.2568
+[info] ep3 step 2100 loss 0.2394
+[info] ep3 step 2200 loss 0.1895
+[info] ep3 step 2300 loss 0.4440
+[info] ep3 step 2400 loss 0.2713
+[info] epoch 3 train MSE 0.2531
+[info] ep4 step 0 loss 0.1604
+[info] ep4 step 100 loss 0.3349
+[info] ep4 step 200 loss 0.2423
+[info] ep4 step 300 loss 0.3959
+[info] ep4 step 400 loss 0.1317
+[info] ep4 step 500 loss 0.2743
+[info] ep4 step 600 loss 0.2439
+[info] ep4 step 700 loss 0.2473
+[info] ep4 step 800 loss 0.2254
+[info] ep4 step 900 loss 0.2708
+[info] ep4 step 1000 loss 0.2867
+[info] ep4 step 1100 loss 0.3884
+[info] ep4 step 1200 loss 0.1790
+[info] ep4 step 1300 loss 0.1576
+[info] ep4 step 1400 loss 0.2612
+[info] ep4 step 1500 loss 0.1447
+[info] ep4 step 1600 loss 0.1730
+[info] ep4 step 1700 loss 0.3051
+[info] ep4 step 1800 loss 0.1946
+[info] ep4 step 1900 loss 0.1864
+[info] ep4 step 2000 loss 0.2617
+[info] ep4 step 2100 loss 0.1774
+[info] ep4 step 2200 loss 0.1556
+[info] ep4 step 2300 loss 0.2056
+[info] ep4 step 2400 loss 0.2244
+[info] epoch 4 train MSE 0.2465
+[done] model_pt    MSE=0.3358 MAE=0.3017  (smean 0.5175)
+fatal: not a git repository (or any parent up to mount point /lambda/nfs)
+Stopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not set).
+{
+  "snaive": {
+    "MSE": 0.9626,
+    "MAE": 0.4874
+  },
+  "smean": {
+    "MSE": 0.5175,
+    "MAE": 0.384
+  },
+  "model_pt": {
+    "MSE": 0.3358,
+    "MAE": 0.3017
+  }
+}

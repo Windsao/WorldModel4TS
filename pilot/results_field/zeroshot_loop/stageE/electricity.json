@@ -1,0 +1,78 @@
+{
+  "status": "complete",
+  "candidate_id": "ZL-050",
+  "stage": "E",
+  "dataset": "electricity",
+  "manifest": {
+    "dataset": "electricity",
+    "split": "audit",
+    "P": 24,
+    "L": 384,
+    "H": 96,
+    "M": 112,
+    "stride": 8,
+    "seed": 0,
+    "n": 2000,
+    "n_origins": 388,
+    "pairs_sha1": "079708b3947a7f13",
+    "range": [
+      15305,
+      18412
+    ]
+  },
+  "checkpoint": "MCG-NJU/videomae-base",
+  "m": 2,
+  "k": 3,
+  "combiner": "pow_n-dense8-base4",
+  "results": {
+    "pt_mse": 0.2098452550285676,
+    "pt_mae": 0.28807377729778166,
+    "pt_rho_mean": 0.8434487581253052,
+    "rand_mse": 0.2019970402829097,
+    "rand_mae": 0.28312637935831475,
+    "rand_rho_mean": 0.860073983669281,
+    "base_mse": 0.22257176998359715,
+    "prior_smean_mse": 0.228723406791687,
+    "prior_snaive_mse": 0.3846915364265442,
+    "prior_last_mse": 1.4626386165618896,
+    "prior_recent_mean_mse": 0.9112192988395691,
+    "prior_smean2_mse": 0.3381895422935486,
+    "prior_smean4_mse": 0.26124703884124756,
+    "prior_smean8_mse": 0.2144918143749237,
+    "prior_smean_drift_mse": 0.2943587005138397,
+    "prior_smean4_drift_mse": 0.3120540678501129,
+    "prior_pick_counts": {
+      "last": 32,
+      "smean": 1645,
+      "recent_mean": 21,
+      "snaive": 302
+    },
+    "argmin_base_mse": 0.24511390924453735,
+    "blend_weight_mean": {
+      "last": 0.014893353365191386,
+      "recent_mean": 0.02168696882768385,
+      "smean": 0.7774423639456813,
+      "snaive": 0.1859773138614434
+    },
+    "n_pseudo_origins": 5,
+    "smean_mse": 0.228723406791687,
+    "boot_pt_vs_rand": {
+      "lo": 0.9918402281681821,
+      "hi": 1.1223975713517889,
+      "p_better": 0.0458,
+      "n_origins": 388,
+      "block": 60,
+      "seed": 20260902
+    },
+    "boot_pt_vs_base": {
+      "lo": 0.9239448218142491,
+      "hi": 0.9610380637562443,
+      "p_better": 1.0,
+      "n_origins": 388,
+      "block": 60,
+      "seed": 20260902
+    }
+  },
+  "git_commit": "unknown",
+  "wall_clock_s": 253.3
+}

@@ -1,0 +1,110 @@
+{
+  "status": "complete",
+  "stage": "R3",
+  "regime": "HA",
+  "dataset": "ETTm2",
+  "layout": "G1",
+  "layout_seed": 0,
+  "visible_cols": 5,
+  "masked_cols": 9,
+  "control": "pretrained",
+  "checkpoint": "MCG-NJU/videomae-base",
+  "renderer": "dense_static",
+  "width_rule": "visionts_align0.4",
+  "git_commit": "86ece3af7191c2b610f281695289b7dba8cbb3fe",
+  "torch": "2.13.0+cu130",
+  "transformers": "4.46.3",
+  "manifest": {
+    "dataset": "ETTm2",
+    "P": 96,
+    "context": 1536,
+    "horizon": 96,
+    "M": 7,
+    "borders": [
+      34560,
+      46080,
+      57600
+    ],
+    "purge": 1632,
+    "stride": 32,
+    "splits": {
+      "train": [
+        1632,
+        19756
+      ],
+      "val": [
+        23020,
+        26342
+      ],
+      "audit": [
+        29606,
+        34560
+      ]
+    },
+    "support": {
+      "train": [
+        96,
+        19840
+      ],
+      "val": [
+        21484,
+        26412
+      ],
+      "audit": [
+        28070,
+        34630
+      ]
+    },
+    "counts": {
+      "train": 1500,
+      "val": 512,
+      "audit": 512
+    },
+    "pair_sha1": {
+      "train": "f40629921c836dc8",
+      "val": "11fd5713797ef11a",
+      "audit": "96793ec3c35c1735"
+    },
+    "seed": 0
+  },
+  "n_eval": 512,
+  "seed": 0,
+  "metrics": {
+    "native_model": 0.823717,
+    "native_zero": 0.768165,
+    "raw_oracle": 0.005979,
+    "raw_oracle_zero": 0.002823,
+    "ts_model_oracle_mse": 0.080039,
+    "ts_model_oracle_mae": 0.123725,
+    "ts_zero_oracle_mse": 0.081154,
+    "ts_zero_oracle_mae": 0.128055,
+    "raw_context_global": 0.041111,
+    "ts_model_context_global_mse": 0.580524,
+    "ts_model_context_global_mae": 0.4998,
+    "ts_zero_context_global_mse": 0.575957,
+    "ts_zero_context_global_mae": 0.498628,
+    "raw_nearest_visible_left": 0.055881,
+    "ts_model_nearest_visible_left_mse": 0.776037,
+    "ts_model_nearest_visible_left_mae": 0.548955,
+    "ts_zero_nearest_visible_left_mse": 0.767899,
+    "ts_zero_nearest_visible_left_mae": 0.549222,
+    "raw_nearest_visible_physical": 0.051157,
+    "ts_model_nearest_visible_physical_mse": 0.776037,
+    "ts_model_nearest_visible_physical_mae": 0.548955,
+    "ts_zero_nearest_visible_physical_mse": 0.767899,
+    "ts_zero_nearest_visible_physical_mae": 0.549222,
+    "native_ratio": 1.072318,
+    "target_dist": {
+      "frac_std_le_1e-5": 0.1875,
+      "mean_median": 0.376833,
+      "mean_p05": 0.20149,
+      "mean_p95": 0.622536,
+      "std_median": 0.018391,
+      "std_p05": 1e-06,
+      "std_p95": 0.093272
+    },
+    "layout_hash": "3a8f9e0f76bc9360",
+    "mask_hash": "0d75e1abd0ac2cfd"
+  },
+  "wall_clock_s": 13.6
+}

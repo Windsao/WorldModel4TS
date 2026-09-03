@@ -1,0 +1,83 @@
+{
+  "status": "complete",
+  "candidate_id": "ZL-050",
+  "stage": "F",
+  "dataset": "ETTm2",
+  "manifest": {
+    "dataset": "ETTm2",
+    "data_path": "/nyx-storage1/hanliu/wm4ts/data/ETTm2.csv",
+    "data_sha1": "7010eb61daf7f0dc",
+    "P": 96,
+    "context": 1536,
+    "horizon": 96,
+    "borders": [
+      34560,
+      46080,
+      57600
+    ],
+    "max_ch": 112,
+    "M": 7,
+    "stride": 8,
+    "n_windows": 1429,
+    "n_pairs": 2000,
+    "pairs_sha1": "61eeac383f9016da",
+    "seed": 0
+  },
+  "checkpoint": "MCG-NJU/videomae-base",
+  "m": 2,
+  "k": 3,
+  "combiner": "pow_n-dense8-base4",
+  "results": {
+    "pt_mse": 0.1942308092514265,
+    "pt_mae": 0.2719020407087248,
+    "pt_rho_mean": 0.48008275032043457,
+    "rand_mse": 0.1970856668240585,
+    "rand_mae": 0.27517832100573725,
+    "rand_rho_mean": 0.4740097224712372,
+    "base_mse": 0.20027048000691797,
+    "prior_smean_mse": 0.33005815744400024,
+    "prior_snaive_mse": 0.26509442925453186,
+    "prior_last_mse": 0.25944602489471436,
+    "prior_recent_mean_mse": 0.22964809834957123,
+    "prior_smean2_mse": 0.2555495500564575,
+    "prior_smean4_mse": 0.2668039798736572,
+    "prior_smean8_mse": 0.29913681745529175,
+    "prior_smean_drift_mse": 0.19788692891597748,
+    "prior_smean4_drift_mse": 0.20902754366397858,
+    "prior_pick_counts": {
+      "recent_mean": 525,
+      "smean": 673,
+      "last": 456,
+      "snaive": 346
+    },
+    "argmin_base_mse": 0.2288246601819992,
+    "blend_weight_mean": {
+      "last": 0.24070499294528577,
+      "recent_mean": 0.28087743306948426,
+      "smean": 0.30614600801435227,
+      "snaive": 0.1722715659708777
+    },
+    "n_pseudo_origins": 8,
+    "smean_mse": 0.33005815744400024,
+    "visionts_mse": 0.25085338950157166,
+    "visionts_pairs_sha1": "61eeac383f9016da",
+    "boot_pt_vs_rand": {
+      "lo": 0.962697335765814,
+      "hi": 1.0303807138638794,
+      "p_better": 0.6826,
+      "n_origins": 1115,
+      "block": 204,
+      "seed": 20260902
+    },
+    "boot_pt_vs_base": {
+      "lo": 0.9387777268633748,
+      "hi": 1.0121649632248626,
+      "p_better": 0.9156,
+      "n_origins": 1115,
+      "block": 204,
+      "seed": 20260902
+    }
+  },
+  "git_commit": "unknown",
+  "wall_clock_s": 123.3
+}

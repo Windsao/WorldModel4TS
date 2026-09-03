@@ -1,0 +1,12 @@
+ETTm2 layout=G0 vc=5 mc=9 n=2000
+/nyx-storage1/hanliu/miniconda3/envs/wm4ts/lib/python3.10/site-packages/transformers/utils/hub.py:128: FutureWarning: Using `TRANSFORMERS_CACHE` is deprecated and will be removed in v5 of Transformers. Use `HF_HOME` instead.
+  warnings.warn(
+{
+  "method": 0.255298,
+  "zeroed": 0.256893,
+  "random": 0.258048,
+  "visionts": 0.250853,
+  "smean": 0.330058,
+  "snaive": 0.265094
+}
+[done] ETTm2

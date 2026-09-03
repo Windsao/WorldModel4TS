@@ -1,0 +1,83 @@
+{
+  "status": "complete",
+  "candidate_id": "ZL-050",
+  "stage": "F",
+  "dataset": "ETTh1",
+  "manifest": {
+    "dataset": "ETTh1",
+    "data_path": "/nyx-storage1/hanliu/wm4ts/data/ETTh1.csv",
+    "data_sha1": "b22844d8be77297b",
+    "P": 24,
+    "context": 384,
+    "horizon": 96,
+    "borders": [
+      8640,
+      11520,
+      14400
+    ],
+    "max_ch": 112,
+    "M": 7,
+    "stride": 8,
+    "n_windows": 349,
+    "n_pairs": 2000,
+    "pairs_sha1": "f6a6a61163e73096",
+    "seed": 0
+  },
+  "checkpoint": "MCG-NJU/videomae-base",
+  "m": 2,
+  "k": 3,
+  "combiner": "pow_n-dense8-base4",
+  "results": {
+    "pt_mse": 0.43301267266105176,
+    "pt_mae": 0.4040253496766847,
+    "pt_rho_mean": 0.6128775477409363,
+    "rand_mse": 0.44127692535402496,
+    "rand_mae": 0.41051974779688644,
+    "rand_rho_mean": 0.587049663066864,
+    "base_mse": 0.40756175309708653,
+    "prior_smean_mse": 0.4025617241859436,
+    "prior_snaive_mse": 0.504264235496521,
+    "prior_last_mse": 1.192674994468689,
+    "prior_recent_mean_mse": 0.73334139585495,
+    "prior_smean2_mse": 0.43101000785827637,
+    "prior_smean4_mse": 0.4055348038673401,
+    "prior_smean8_mse": 0.40493232011795044,
+    "prior_smean_drift_mse": 0.42560458183288574,
+    "prior_smean4_drift_mse": 0.4327576756477356,
+    "prior_pick_counts": {
+      "snaive": 410,
+      "recent_mean": 212,
+      "last": 149,
+      "smean": 1229
+    },
+    "argmin_base_mse": 0.43640801310539246,
+    "blend_weight_mean": {
+      "last": 0.07489092381288581,
+      "recent_mean": 0.14104753912471363,
+      "smean": 0.5898173064866565,
+      "snaive": 0.19424423057574397
+    },
+    "n_pseudo_origins": 5,
+    "smean_mse": 0.4025617241859436,
+    "visionts_mse": 0.4023480713367462,
+    "visionts_pairs_sha1": "f6a6a61163e73096",
+    "boot_pt_vs_rand": {
+      "lo": 0.9277696209528364,
+      "hi": 1.0589361452619928,
+      "p_better": 0.7172,
+      "n_origins": 349,
+      "block": 60,
+      "seed": 20260902
+    },
+    "boot_pt_vs_base": {
+      "lo": 0.9817399213027207,
+      "hi": 1.1669116928633472,
+      "p_better": 0.0682,
+      "n_origins": 349,
+      "block": 60,
+      "seed": 20260902
+    }
+  },
+  "git_commit": "unknown",
+  "wall_clock_s": 123.0
+}

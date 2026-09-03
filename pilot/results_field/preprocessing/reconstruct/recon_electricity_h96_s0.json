@@ -1,0 +1,33 @@
+{
+  "config": {
+    "dataset": "electricity",
+    "ckpt": "MCG-NJU/videomae-base",
+    "context": 440,
+    "horizon": 96,
+    "n": 2000,
+    "stride": 32,
+    "seed": 0,
+    "mask": "spatial tube, right 3 patch cols (21.4%)",
+    "transformers": "4.46.3",
+    "torch": "2.7.0",
+    "wall_clock_s": 35.3
+  },
+  "results": {
+    "snaive": {
+      "MSE": 0.3418,
+      "MAE": 0.3341
+    },
+    "smean": {
+      "MSE": 0.2096,
+      "MAE": 0.2909
+    },
+    "recon_model": {
+      "MSE": 1.7528,
+      "MAE": 1.0014
+    },
+    "recon_zeroed": {
+      "MSE": 0.8486,
+      "MAE": 0.7656
+    }
+  }
+}

@@ -1,0 +1,97 @@
+dataset=electricity mode=uni M=112 P=24 context=384 horizon=96 train=17933 test=646
+[done] snaive     {'MSE': 0.3401, 'MAE': 0.3334}
+[done] smean      {'MSE': 0.2071, 'MAE': 0.2886}
+/nyx-storage1/hanliu/miniconda3/envs/wm4ts/lib/python3.10/site-packages/transformers/utils/hub.py:128: FutureWarning: Using `TRANSFORMERS_CACHE` is deprecated and will be removed in v5 of Transformers. Use `HF_HOME` instead.
+  warnings.warn(
+[info] tune=adapter trainable=6182176/310042912 (1.99%)
+[info] ep0 step 0 loss 0.9523
+[info] ep0 step 200 loss 0.1702
+[info] ep0 step 400 loss 0.2236
+[info] ep0 step 600 loss 0.1747
+[info] ep0 step 800 loss 0.5889
+[info] ep0 step 1000 loss 0.0998
+[info] ep0 step 1200 loss 0.2404
+[info] ep0 step 1400 loss 0.1334
+[info] ep0 step 1600 loss 0.1246
+[info] ep0 step 1800 loss 0.1484
+[info] ep0 step 2000 loss 0.1146
+[info] ep0 step 2200 loss 0.3821
+[info] ep0 step 2400 loss 0.2314
+[info] epoch 0 train MSE 0.2309
+[info] ep1 step 0 loss 0.1745
+[info] ep1 step 200 loss 0.1503
+[info] ep1 step 400 loss 0.1510
+[info] ep1 step 600 loss 0.1450
+[info] ep1 step 800 loss 0.2997
+[info] ep1 step 1000 loss 0.1631
+[info] ep1 step 1200 loss 0.1518
+[info] ep1 step 1400 loss 0.1979
+[info] ep1 step 1600 loss 0.1562
+[info] ep1 step 1800 loss 0.1555
+[info] ep1 step 2000 loss 0.1867
+[info] ep1 step 2200 loss 0.1792
+[info] ep1 step 2400 loss 0.2138
+[info] epoch 1 train MSE 0.1619
+[info] ep2 step 0 loss 0.1301
+[info] ep2 step 200 loss 0.1229
+[info] ep2 step 400 loss 0.1190
+[info] ep2 step 600 loss 0.1216
+[info] ep2 step 800 loss 0.1601
+[info] ep2 step 1000 loss 0.3560
+[info] ep2 step 1200 loss 0.1178
+[info] ep2 step 1400 loss 0.1080
+[info] ep2 step 1600 loss 0.1705
+[info] ep2 step 1800 loss 0.1586
+[info] ep2 step 2000 loss 0.1438
+[info] ep2 step 2200 loss 0.1126
+[info] ep2 step 2400 loss 0.1357
+[info] epoch 2 train MSE 0.1538
+[W829 18:12:40.763934911 CUDACachingAllocator.cpp:3933] memory allocation failed with OOM on device 0 while trying to allocate 6576668672 bytes (free: 1408172032, total: 47696969728).
+[W829 18:12:42.163047619 CUDACachingAllocator.cpp:3933] memory allocation failed with OOM on device 0 while trying to allocate 6576668672 bytes (free: 1789853696, total: 47696969728).
+[W829 18:12:42.163213896 CUDACachingAllocator.cpp:3933] memory allocation failed with OOM on device 0 while trying to allocate 6576668672 bytes (free: 1789853696, total: 47696969728).
+Traceback (most recent call last):
+  File "/home/mzh1800/WorldModel4TS/pilot/run_field_lora.py", line 461, in <module>
+    main()
+  File "/home/mzh1800/WorldModel4TS/pilot/run_field_lora.py", line 424, in main
+    pred = run(model, Xtr, Ytr, Xte_u, Yte_u, args.epochs, args.lr,
+  File "/home/mzh1800/WorldModel4TS/pilot/run_field_lora.py", line 350, in run
+    preds.append(model(xb).cpu().numpy())
+  File "/nyx-storage1/hanliu/miniconda3/envs/wm4ts/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1778, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/nyx-storage1/hanliu/miniconda3/envs/wm4ts/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1789, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/mzh1800/WorldModel4TS/pilot/run_field_lora.py", line 245, in forward
+    return self._forward_adapter(x)
+  File "/home/mzh1800/WorldModel4TS/pilot/run_field_lora.py", line 230, in _forward_adapter
+    tokens = self.enc(pixel_values=vid).last_hidden_state  # [B, N, d] (frozen)
+  File "/nyx-storage1/hanliu/miniconda3/envs/wm4ts/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1778, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/nyx-storage1/hanliu/miniconda3/envs/wm4ts/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1789, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/nyx-storage1/hanliu/miniconda3/envs/wm4ts/lib/python3.10/site-packages/transformers/models/videomae/modeling_videomae.py", line 697, in forward
+    encoder_outputs = self.encoder(
+  File "/nyx-storage1/hanliu/miniconda3/envs/wm4ts/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1778, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/nyx-storage1/hanliu/miniconda3/envs/wm4ts/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1789, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/nyx-storage1/hanliu/miniconda3/envs/wm4ts/lib/python3.10/site-packages/transformers/models/videomae/modeling_videomae.py", line 481, in forward
+    layer_outputs = layer_module(hidden_states, layer_head_mask, output_attentions)
+  File "/nyx-storage1/hanliu/miniconda3/envs/wm4ts/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1778, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/nyx-storage1/hanliu/miniconda3/envs/wm4ts/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1789, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/nyx-storage1/hanliu/miniconda3/envs/wm4ts/lib/python3.10/site-packages/transformers/models/videomae/modeling_videomae.py", line 438, in forward
+    layer_output = self.intermediate(layer_output)
+  File "/nyx-storage1/hanliu/miniconda3/envs/wm4ts/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1778, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/nyx-storage1/hanliu/miniconda3/envs/wm4ts/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1789, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/nyx-storage1/hanliu/miniconda3/envs/wm4ts/lib/python3.10/site-packages/transformers/models/videomae/modeling_videomae.py", line 381, in forward
+    hidden_states = self.intermediate_act_fn(hidden_states)
+  File "/nyx-storage1/hanliu/miniconda3/envs/wm4ts/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1778, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/nyx-storage1/hanliu/miniconda3/envs/wm4ts/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1789, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/nyx-storage1/hanliu/miniconda3/envs/wm4ts/lib/python3.10/site-packages/transformers/activations.py", line 78, in forward
+    return self.act(input)
+torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 6.12 GiB. GPU 0 has a total capacity of 44.42 GiB of which 1.67 GiB is free. Including non-PyTorch memory, this process has 16.96 GiB memory in use. Process 2304057 has 25.78 GiB memory in use. Of the allocated memory 15.78 GiB is allocated by PyTorch, and 879.95 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://docs.pytorch.org/docs/stable/notes/cuda.html#optimizing-memory-usage-with-pytorch-cuda-alloc-conf)

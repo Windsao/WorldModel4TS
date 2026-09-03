@@ -1,0 +1,38 @@
+dataset=ETTh2 M=7 P=24 ctx=384 h=96 train=5000 test=88
+[done] snaive   {'MSE': 0.3837, 'MAE': 0.3763}
+[done] smean    {'MSE': 0.35, 'MAE': 0.3939}
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+E0000 00:00:1788173145.672421    5853 cuda_dnn.cc:8579] Unable to register cuDNN factory: Attempting to register factory for plugin cuDNN when one has already been registered
+E0000 00:00:1788173145.680794    5853 cuda_blas.cc:1407] Unable to register cuBLAS factory: Attempting to register factory for plugin cuBLAS when one has already been registered
+W0000 00:00:1788173145.701237    5853 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
+W0000 00:00:1788173145.701405    5853 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
+W0000 00:00:1788173145.701511    5853 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
+W0000 00:00:1788173145.701635    5853 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
+[info] renderer=period_line readout=xattn pretrained=0 trainable=2959968/89187168
+[info] ep0 step 0 loss 0.3938
+[info] ep0 step 100 loss 0.7052
+[info] ep0 step 200 loss 0.4426
+[info] ep0 step 300 loss 0.6458
+[info] epoch 0 train MSE 0.6056
+[info] ep1 step 0 loss 0.5903
+[info] ep1 step 100 loss 0.4291
+[info] ep1 step 200 loss 1.1453
+[info] ep1 step 300 loss 0.1689
+[info] epoch 1 train MSE 0.5749
+[done] model_rand  MSE=0.3799 MAE=0.4187  (smean 0.3500)
+fatal: not a git repository (or any parent up to mount point /lambda/nfs)
+Stopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not set).
+{
+  "snaive": {
+    "MSE": 0.3837,
+    "MAE": 0.3763
+  },
+  "smean": {
+    "MSE": 0.35,
+    "MAE": 0.3939
+  },
+  "model_rand": {
+    "MSE": 0.3799,
+    "MAE": 0.4187
+  }
+}

@@ -1,0 +1,12 @@
+electricity layout=G0 vc=4 mc=10 n=2000
+/nyx-storage1/hanliu/miniconda3/envs/wm4ts/lib/python3.10/site-packages/transformers/utils/hub.py:128: FutureWarning: Using `TRANSFORMERS_CACHE` is deprecated and will be removed in v5 of Transformers. Use `HF_HOME` instead.
+  warnings.warn(
+{
+  "method": 0.231295,
+  "zeroed": 0.256734,
+  "random": 0.258106,
+  "visionts": 0.201354,
+  "smean": 0.20692,
+  "snaive": 0.332206
+}
+[done] electricity

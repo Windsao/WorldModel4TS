@@ -1,0 +1,53 @@
+{
+  "dataset": "ETTh2",
+  "P": 24,
+  "context": 384,
+  "horizon": 96,
+  "M": 7,
+  "borders": [
+    8640,
+    11520,
+    14400
+  ],
+  "purge": 480,
+  "stride": 32,
+  "splits": {
+    "train": [
+      480,
+      4896
+    ],
+    "val": [
+      5856,
+      6528
+    ],
+    "audit": [
+      7488,
+      8640
+    ]
+  },
+  "support": {
+    "train": [
+      96,
+      4960
+    ],
+    "val": [
+      5472,
+      6592
+    ],
+    "audit": [
+      7104,
+      8704
+    ]
+  },
+  "counts": {
+    "train": 966,
+    "val": 147,
+    "audit": 252
+  },
+  "pair_sha1": {
+    "train": "d0533c5beafdb464",
+    "val": "bda8d76183d492fb",
+    "audit": "74cf3dd6f86d4172"
+  },
+  "seed": 0
+}

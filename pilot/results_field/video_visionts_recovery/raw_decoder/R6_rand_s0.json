@@ -1,0 +1,68 @@
+{
+  "status": "complete",
+  "stage": "R6",
+  "regime": "LA",
+  "backbone": "random",
+  "layout": "G0",
+  "decoder_params": 7688448,
+  "steps": 1200,
+  "lr": 0.0001,
+  "batch": 4,
+  "seed": 0,
+  "val_history": [
+    [
+      100,
+      1.364
+    ],
+    [
+      200,
+      1.34336
+    ],
+    [
+      300,
+      1.75989
+    ],
+    [
+      400,
+      1.32049
+    ],
+    [
+      500,
+      1.29527
+    ],
+    [
+      600,
+      1.33733
+    ],
+    [
+      700,
+      1.29681
+    ],
+    [
+      800,
+      1.61658
+    ],
+    [
+      900,
+      1.49848
+    ]
+  ],
+  "best_R_val": 1.295265,
+  "audit": {
+    "ETTh2": {
+      "r6_mse": 0.693757,
+      "L0_mse": 0.488804,
+      "ratio": 1.419295
+    },
+    "ETTm2": {
+      "r6_mse": 0.574885,
+      "L0_mse": 0.319331,
+      "ratio": 1.80028
+    }
+  },
+  "aggregate_ratio_vs_L0": 1.598477,
+  "git_commit": "86ece3af7191c2b610f281695289b7dba8cbb3fe",
+  "torch": "2.13.0+cu130",
+  "transformers": "4.46.3",
+  "wall_clock_s": 124.1
+}

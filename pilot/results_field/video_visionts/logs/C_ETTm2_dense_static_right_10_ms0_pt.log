@@ -1,0 +1,26 @@
+ETTm2 dense_static right_10 P=96 L=1536 H=96 n=256
+/nyx-storage1/hanliu/miniconda3/envs/wm4ts/lib/python3.10/site-packages/transformers/utils/hub.py:128: FutureWarning: Using `TRANSFORMERS_CACHE` is deprecated and will be removed in v5 of Transformers. Use `HF_HOME` instead.
+  warnings.warn(
+{
+  "native_model": 0.76402,
+  "native_zero": 0.824021,
+  "native_ratio": 0.927185,
+  "native_gain": 0.072815,
+  "raw_oracle_mse": 0.003927,
+  "raw_oracle_zero_mse": 0.004444,
+  "raw_causal_mse": {
+    "nearest_visible_left": 0.031699,
+    "context_global": 0.044549
+  },
+  "ts_model_oracle_mse": 0.07677,
+  "ts_model_oracle_mae": 0.114593,
+  "ts_model_causal_mse": 0.315396,
+  "ts_model_causal_mae": 0.333332,
+  "ts_zeroed_oracle_mse": 0.07975,
+  "ts_zeroed_oracle_mae": 0.120083,
+  "ts_zeroed_causal_mse": 0.316903,
+  "ts_zeroed_causal_mae": 0.335906,
+  "seam_error": 0.210509,
+  "smean": 0.409112,
+  "snaive": 0.291957
+}

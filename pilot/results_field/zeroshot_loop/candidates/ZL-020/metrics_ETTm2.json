@@ -1,0 +1,69 @@
+{
+  "status": "complete",
+  "candidate_id": "ZL-020",
+  "dataset": "ETTm2",
+  "split": "audit",
+  "manifest": {
+    "dataset": "ETTm2",
+    "split": "audit",
+    "P": 96,
+    "L": 1536,
+    "H": 96,
+    "M": 7,
+    "stride": 32,
+    "seed": 0,
+    "n": 256,
+    "n_origins": 132,
+    "pairs_sha1": "081acde2b5e33652",
+    "range": [
+      29606,
+      34560
+    ]
+  },
+  "checkpoint": "MCG-NJU/videomae-base",
+  "m": 2,
+  "k": 3,
+  "n_keys": 14,
+  "config_hash": "34b2350018471a50",
+  "results": {
+    "pt_col_norm_succ_mse": 0.08972706645727158,
+    "pt_col_ts_mse": 0.30068349838256836,
+    "rand_col_norm_succ_mse": 0.09506251662969589,
+    "rand_col_ts_mse": 0.3031662404537201,
+    "pt_meanpool_norm_succ_mse": 0.20023438334465027,
+    "pt_meanpool_ts_mse": 1.1491460800170898,
+    "raw_period_norm_succ_mse": 0.09762366116046906,
+    "raw_period_ts_mse": 0.3189544975757599,
+    "oracle_best_key_norm_mse": 0.0564841628074646,
+    "prior_smean_ts_mse": 0.58111971616745,
+    "prior_snaive_ts_mse": 0.3166921138763428,
+    "prior_last_ts_mse": 0.24220769107341766,
+    "prior_recent_mean_ts_mse": 0.24927900731563568,
+    "boot_pt_col_vs_rand_col": {
+      "lo": 0.9266557097434998,
+      "hi": 1.0115060806274414,
+      "p_better": 0.8176,
+      "n_origins": 132,
+      "block": 51,
+      "seed": 20260902
+    },
+    "boot_pt_col_vs_raw_period": {
+      "lo": 0.8830916881561279,
+      "hi": 1.005765676498413,
+      "p_better": 0.9596,
+      "n_origins": 132,
+      "block": 51,
+      "seed": 20260902
+    },
+    "boot_pt_col_vs_pt_meanpool": {
+      "lo": 0.41344141960144043,
+      "hi": 0.5334646105766296,
+      "p_better": 1.0,
+      "n_origins": 132,
+      "block": 51,
+      "seed": 20260902
+    }
+  },
+  "git_commit": "86ece3af7191c2b610f281695289b7dba8cbb3fe",
+  "wall_clock_s": 28.2
+}

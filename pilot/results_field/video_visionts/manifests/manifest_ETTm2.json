@@ -1,0 +1,20 @@
+{
+  "dataset": "ETTm2",
+  "data_path": "/nyx-storage1/hanliu/wm4ts/data/ETTm2.csv",
+  "data_sha1": "7010eb61daf7f0dc",
+  "P": 96,
+  "context": 1536,
+  "horizon": 96,
+  "borders": [
+    34560,
+    46080,
+    57600
+  ],
+  "max_ch": 112,
+  "M": 7,
+  "stride": 8,
+  "n_windows": 1429,
+  "n_pairs": 2000,
+  "pairs_sha1": "61eeac383f9016da",
+  "seed": 0
+}

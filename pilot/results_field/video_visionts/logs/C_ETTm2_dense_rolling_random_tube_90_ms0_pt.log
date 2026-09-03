@@ -1,0 +1,17 @@
+ETTm2 dense_rolling random_tube_90 P=96 L=1536 H=96 n=256
+/nyx-storage1/hanliu/miniconda3/envs/wm4ts/lib/python3.10/site-packages/transformers/utils/hub.py:128: FutureWarning: Using `TRANSFORMERS_CACHE` is deprecated and will be removed in v5 of Transformers. Use `HF_HOME` instead.
+  warnings.warn(
+{
+  "native_model": 0.465822,
+  "native_zero": 0.924006,
+  "native_ratio": 0.504133,
+  "native_gain": 0.495867,
+  "raw_oracle_mse": 0.004707,
+  "raw_oracle_zero_mse": 0.009432,
+  "raw_causal_mse": {
+    "nearest_visible_left": 0.042291,
+    "context_global": 0.03441
+  },
+  "smean": 0.538838,
+  "snaive": 0.329659
+}

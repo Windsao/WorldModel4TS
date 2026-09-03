@@ -1,0 +1,158 @@
+dataset=ETTh1 M=7 P=24 ctx=384 h=96 train=8161 test=349
+[done] snaive   {'MSE': 0.512, 'MAE': 0.4332}
+[done] smean    {'MSE': 0.4022, 'MAE': 0.4083}
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+E0000 00:00:1788195883.714601    2691 cuda_dnn.cc:8579] Unable to register cuDNN factory: Attempting to register factory for plugin cuDNN when one has already been registered
+E0000 00:00:1788195883.734346    2691 cuda_blas.cc:1407] Unable to register cuBLAS factory: Attempting to register factory for plugin cuBLAS when one has already been registered
+W0000 00:00:1788195883.847021    2691 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
+W0000 00:00:1788195883.847115    2691 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
+W0000 00:00:1788195883.847178    2691 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
+W0000 00:00:1788195883.847244    2691 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
+[info] renderer=period_matrix readout=xattn pretrained=1 trainable=2959968/89187168
+[info] ep0 step 0 loss 0.4256
+[info] ep0 step 100 loss 0.4922
+[info] ep0 step 200 loss 0.6718
+[info] ep0 step 300 loss 0.2886
+[info] ep0 step 400 loss 0.4648
+[info] ep0 step 500 loss 0.2234
+[info] ep0 step 600 loss 0.5122
+[info] ep0 step 700 loss 0.4364
+[info] ep0 step 800 loss 0.3314
+[info] ep0 step 900 loss 0.2607
+[info] ep0 step 1000 loss 0.4111
+[info] ep0 step 1100 loss 0.3723
+[info] ep0 step 1200 loss 0.2950
+[info] ep0 step 1300 loss 0.4924
+[info] ep0 step 1400 loss 0.3646
+[info] ep0 step 1500 loss 0.6440
+[info] ep0 step 1600 loss 0.3774
+[info] ep0 step 1700 loss 0.2285
+[info] ep0 step 1800 loss 0.3867
+[info] ep0 step 1900 loss 0.3849
+[info] ep0 step 2000 loss 0.4792
+[info] ep0 step 2100 loss 0.3806
+[info] ep0 step 2200 loss 0.3320
+[info] ep0 step 2300 loss 0.2662
+[info] ep0 step 2400 loss 0.2651
+[info] epoch 0 train MSE 0.4000
+[info] ep1 step 0 loss 0.2507
+[info] ep1 step 100 loss 0.3825
+[info] ep1 step 200 loss 0.1987
+[info] ep1 step 300 loss 0.3331
+[info] ep1 step 400 loss 0.1590
+[info] ep1 step 500 loss 0.2445
+[info] ep1 step 600 loss 0.2678
+[info] ep1 step 700 loss 0.1584
+[info] ep1 step 800 loss 0.3427
+[info] ep1 step 900 loss 0.2248
+[info] ep1 step 1000 loss 0.4244
+[info] ep1 step 1100 loss 0.2084
+[info] ep1 step 1200 loss 0.3925
+[info] ep1 step 1300 loss 0.2924
+[info] ep1 step 1400 loss 0.4350
+[info] ep1 step 1500 loss 0.3213
+[info] ep1 step 1600 loss 0.2709
+[info] ep1 step 1700 loss 0.4019
+[info] ep1 step 1800 loss 0.2963
+[info] ep1 step 1900 loss 0.2079
+[info] ep1 step 2000 loss 0.4206
+[info] ep1 step 2100 loss 0.2882
+[info] ep1 step 2200 loss 0.3277
+[info] ep1 step 2300 loss 0.3119
+[info] ep1 step 2400 loss 0.2747
+[info] epoch 1 train MSE 0.3229
+[info] ep2 step 0 loss 0.1897
+[info] ep2 step 100 loss 0.3295
+[info] ep2 step 200 loss 0.2567
+[info] ep2 step 300 loss 0.2044
+[info] ep2 step 400 loss 0.2655
+[info] ep2 step 500 loss 0.2240
+[info] ep2 step 600 loss 0.2311
+[info] ep2 step 700 loss 0.2469
+[info] ep2 step 800 loss 0.2806
+[info] ep2 step 900 loss 0.3299
+[info] ep2 step 1000 loss 0.1891
+[info] ep2 step 1100 loss 0.2146
+[info] ep2 step 1200 loss 0.1923
+[info] ep2 step 1300 loss 0.3826
+[info] ep2 step 1400 loss 0.2422
+[info] ep2 step 1500 loss 0.3216
+[info] ep2 step 1600 loss 0.2928
+[info] ep2 step 1700 loss 0.3114
+[info] ep2 step 1800 loss 0.2302
+[info] ep2 step 1900 loss 0.3668
+[info] ep2 step 2000 loss 0.2490
+[info] ep2 step 2100 loss 0.2018
+[info] ep2 step 2200 loss 0.1826
+[info] ep2 step 2300 loss 0.2622
+[info] ep2 step 2400 loss 0.2664
+[info] epoch 2 train MSE 0.2943
+[info] ep3 step 0 loss 0.1922
+[info] ep3 step 100 loss 0.5334
+[info] ep3 step 200 loss 0.1922
+[info] ep3 step 300 loss 0.2767
+[info] ep3 step 400 loss 0.2210
+[info] ep3 step 500 loss 0.2451
+[info] ep3 step 600 loss 0.2194
+[info] ep3 step 700 loss 0.2111
+[info] ep3 step 800 loss 0.2361
+[info] ep3 step 900 loss 0.2979
+[info] ep3 step 1000 loss 0.2698
+[info] ep3 step 1100 loss 0.2143
+[info] ep3 step 1200 loss 0.2734
+[info] ep3 step 1300 loss 0.2639
+[info] ep3 step 1400 loss 0.1781
+[info] ep3 step 1500 loss 0.1837
+[info] ep3 step 1600 loss 0.2682
+[info] ep3 step 1700 loss 0.2260
+[info] ep3 step 1800 loss 0.3031
+[info] ep3 step 1900 loss 0.2315
+[info] ep3 step 2000 loss 0.2745
+[info] ep3 step 2100 loss 0.3882
+[info] ep3 step 2200 loss 0.2070
+[info] ep3 step 2300 loss 0.2799
+[info] ep3 step 2400 loss 0.3064
+[info] epoch 3 train MSE 0.2766
+[info] ep4 step 0 loss 0.2972
+[info] ep4 step 100 loss 0.3196
+[info] ep4 step 200 loss 0.3661
+[info] ep4 step 300 loss 0.2302
+[info] ep4 step 400 loss 0.2225
+[info] ep4 step 500 loss 0.3035
+[info] ep4 step 600 loss 0.1696
+[info] ep4 step 700 loss 0.2835
+[info] ep4 step 800 loss 0.2341
+[info] ep4 step 900 loss 0.3488
+[info] ep4 step 1000 loss 0.2277
+[info] ep4 step 1100 loss 0.2084
+[info] ep4 step 1200 loss 0.5868
+[info] ep4 step 1300 loss 0.1701
+[info] ep4 step 1400 loss 0.1754
+[info] ep4 step 1500 loss 0.2503
+[info] ep4 step 1600 loss 0.3218
+[info] ep4 step 1700 loss 0.3623
+[info] ep4 step 1800 loss 0.2629
+[info] ep4 step 1900 loss 0.1947
+[info] ep4 step 2000 loss 0.2874
+[info] ep4 step 2100 loss 0.3089
+[info] ep4 step 2200 loss 0.2667
+[info] ep4 step 2300 loss 0.2481
+[info] ep4 step 2400 loss 0.2458
+[info] epoch 4 train MSE 0.2674
+[done] model_pt    MSE=0.4195 MAE=0.4359  (smean 0.4022)
+fatal: not a git repository (or any parent up to mount point /lambda/nfs)
+Stopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not set).
+{
+  "snaive": {
+    "MSE": 0.512,
+    "MAE": 0.4332
+  },
+  "smean": {
+    "MSE": 0.4022,
+    "MAE": 0.4083
+  },
+  "model_pt": {
+    "MSE": 0.4195,
+    "MAE": 0.4359
+  }
+}

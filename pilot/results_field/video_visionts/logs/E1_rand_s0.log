@@ -1,0 +1,69 @@
+/nyx-storage1/hanliu/miniconda3/envs/wm4ts/lib/python3.10/site-packages/transformers/utils/hub.py:128: FutureWarning: Using `TRANSFORMERS_CACHE` is deprecated and will be removed in v5 of Transformers. Use `HF_HOME` instead.
+  warnings.warn(
+lens params 308838 (<500k), backbone=random
+train pool: [('ETTh2', 1500), ('ETTm2', 1500)]
+[info] step 0 loss 116.01745
+[info] step 100 loss 0.12423
+[info] step 200 loss 0.20523
+[info] step 300 loss 0.14223
+[info] step 400 loss 0.15448
+[info] step 500 loss 0.11848
+[info] step 600 loss 0.11712
+[info] step 700 loss 0.20115
+[info] step 800 loss 0.14206
+[info] step 900 loss 0.15853
+[info] step 1000 loss 0.10707
+[info] step 1100 loss 0.11895
+[info] step 1200 loss 0.06440
+[info] step 1300 loss 0.14022
+[info] step 1400 loss 0.13158
+[done] ETTh1 lens=0.6757 causal=0.4107 visionts=0.4023
+[done] ETTh2 lens=0.4712 causal=0.3296 visionts=0.3130
+[done] ETTm2 lens=0.4067 causal=0.2636 visionts=0.2509
+[done] electricity lens=0.5950 causal=0.2581 visionts=0.2014
+[done] traffic lens=1.0715 causal=0.6296 visionts=0.5207
+[done] solar lens=1.1862 causal=0.2581 visionts=0.2729
+{
+  "ETTh1": {
+    "lens": 0.67575,
+    "causal": 0.410654,
+    "visionts": 0.4023480713367462,
+    "smean": 0.4025617241859436,
+    "snaive": 0.504264235496521
+  },
+  "ETTh2": {
+    "lens": 0.471246,
+    "causal": 0.329577,
+    "visionts": 0.31297650933265686,
+    "smean": 0.3453695476055145,
+    "snaive": 0.3852261006832123
+  },
+  "ETTm2": {
+    "lens": 0.406653,
+    "causal": 0.263626,
+    "visionts": 0.25085338950157166,
+    "smean": 0.33005815744400024,
+    "snaive": 0.26509442925453186
+  },
+  "electricity": {
+    "lens": 0.595003,
+    "causal": 0.258106,
+    "visionts": 0.20135408639907837,
+    "smean": 0.20692041516304016,
+    "snaive": 0.33220574259757996
+  },
+  "traffic": {
+    "lens": 1.071496,
+    "causal": 0.629561,
+    "visionts": 0.5206549167633057,
+    "smean": 0.5105753540992737,
+    "snaive": 0.9490860104560852
+  },
+  "solar": {
+    "lens": 1.186227,
+    "causal": 0.258113,
+    "visionts": 0.2728644013404846,
+    "smean": 0.19733230769634247,
+    "snaive": 0.28514984250068665
+  }
+}

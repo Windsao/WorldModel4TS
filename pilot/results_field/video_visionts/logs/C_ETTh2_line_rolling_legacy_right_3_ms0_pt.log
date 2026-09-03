@@ -1,0 +1,17 @@
+ETTh2 line_rolling_legacy right_3 P=24 L=384 H=96 n=256
+/nyx-storage1/hanliu/miniconda3/envs/wm4ts/lib/python3.10/site-packages/transformers/utils/hub.py:128: FutureWarning: Using `TRANSFORMERS_CACHE` is deprecated and will be removed in v5 of Transformers. Use `HF_HOME` instead.
+  warnings.warn(
+{
+  "native_model": 0.035819,
+  "native_zero": 0.000222,
+  "native_ratio": 161.346846,
+  "native_gain": -160.346846,
+  "raw_oracle_mse": 0.0,
+  "raw_oracle_zero_mse": 0.0,
+  "raw_causal_mse": {
+    "nearest_visible_left": 0.008515,
+    "context_global": 0.00207
+  },
+  "smean": 0.451754,
+  "snaive": 0.461081
+}

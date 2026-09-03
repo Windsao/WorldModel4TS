@@ -1,0 +1,81 @@
+{
+  "status": "complete",
+  "stage": "R4",
+  "regime": "LA",
+  "variant": "L3",
+  "layout": "G0",
+  "layout_seed": 0,
+  "backbone": "pretrained",
+  "lens_params": 177126,
+  "steps": 1500,
+  "lr": 0.0003,
+  "batch": 8,
+  "seed": 0,
+  "checkpoint": "MCG-NJU/videomae-base",
+  "val_history": [
+    [
+      50,
+      1.00047
+    ],
+    [
+      100,
+      1.00096
+    ],
+    [
+      150,
+      0.99894
+    ],
+    [
+      200,
+      1.01888
+    ],
+    [
+      250,
+      0.99979
+    ],
+    [
+      300,
+      1.00858
+    ],
+    [
+      350,
+      1.00288
+    ],
+    [
+      400,
+      1.00279
+    ],
+    [
+      450,
+      1.00398
+    ]
+  ],
+  "best_R_val": 0.998935,
+  "audit": {
+    "ETTh2": {
+      "lens_mse": 0.494027,
+      "L0_mse": 0.486136,
+      "ratio": 1.016232
+    },
+    "ETTm2": {
+      "lens_mse": 0.326545,
+      "L0_mse": 0.317959,
+      "ratio": 1.027
+    }
+  },
+  "aggregate_ratio_vs_L0": 1.021602,
+  "clamp_stats": {
+    "ETTh2": {
+      "mean_clamp_rate": 0.0,
+      "logstd_saturation_rate": 0.0
+    },
+    "ETTm2": {
+      "mean_clamp_rate": 0.0,
+      "logstd_saturation_rate": 0.0
+    }
+  },
+  "git_commit": "86ece3af7191c2b610f281695289b7dba8cbb3fe",
+  "torch": "2.13.0+cu130",
+  "transformers": "4.46.3",
+  "wall_clock_s": 93.4
+}

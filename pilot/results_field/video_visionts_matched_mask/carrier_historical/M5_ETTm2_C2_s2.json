@@ -1,0 +1,91 @@
+{
+  "status": "complete",
+  "stage": "M5",
+  "regime": "HA",
+  "dataset": "ETTm2",
+  "carrier": "C2",
+  "mask": "right_future_100",
+  "checkpoint": "MCG-NJU/videomae-base",
+  "P": 96,
+  "context": 1536,
+  "horizon": 96,
+  "n_eval": 512,
+  "seed": 2,
+  "manifest": {
+    "dataset": "ETTm2",
+    "P": 96,
+    "context": 1536,
+    "horizon": 96,
+    "M": 7,
+    "borders": [
+      34560,
+      46080,
+      57600
+    ],
+    "purge": 1632,
+    "stride": 32,
+    "splits": {
+      "train": [
+        1632,
+        19756
+      ],
+      "val": [
+        23020,
+        26342
+      ],
+      "audit": [
+        29606,
+        34560
+      ]
+    },
+    "support": {
+      "train": [
+        96,
+        19840
+      ],
+      "val": [
+        21484,
+        26412
+      ],
+      "audit": [
+        28070,
+        34630
+      ]
+    },
+    "counts": {
+      "train": 1500,
+      "val": 512,
+      "audit": 512
+    },
+    "pair_sha1": {
+      "train": "d22d6890885fad2a",
+      "val": "5075b692e75d1728",
+      "audit": "a278f590098a1b4a"
+    },
+    "seed": 2
+  },
+  "metrics": {
+    "native_pt": {
+      "mse": 0.848461831718473,
+      "mse_zero": 0.9980404922342281,
+      "ratio_zero": 0.8501276634769537
+    },
+    "native_rand": {
+      "mse": 1.1483353868951824,
+      "mse_zero": 0.9980404922342281,
+      "ratio_zero": 1.150589976890118
+    },
+    "native_pt_over_rand": 0.7388623928175774,
+    "ts_pt_mse": 1.4001201866194606,
+    "ts_rand_mse": 2.0135129305223622,
+    "ts_zero_mse": 0.5783274262212217,
+    "ts_i0_mse": 0.3616677962709218,
+    "ts_pt_over_zero": 2.420981822992235,
+    "ts_pt_over_i0": 3.8712879638601945,
+    "ts_pt_over_rand": 0.6953619047562956
+  },
+  "git_commit": "86ece3af7191c2b610f281695289b7dba8cbb3fe",
+  "torch": "2.13.0+cu130",
+  "transformers": "4.46.3",
+  "wall_clock_s": 25.0
+}

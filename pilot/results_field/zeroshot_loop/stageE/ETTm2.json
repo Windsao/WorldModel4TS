@@ -1,0 +1,78 @@
+{
+  "status": "complete",
+  "candidate_id": "ZL-050",
+  "stage": "E",
+  "dataset": "ETTm2",
+  "manifest": {
+    "dataset": "ETTm2",
+    "split": "audit",
+    "P": 96,
+    "L": 1536,
+    "H": 96,
+    "M": 7,
+    "stride": 8,
+    "seed": 0,
+    "n": 2000,
+    "n_origins": 611,
+    "pairs_sha1": "894b94106e5d299d",
+    "range": [
+      29606,
+      34560
+    ]
+  },
+  "checkpoint": "MCG-NJU/videomae-base",
+  "m": 2,
+  "k": 3,
+  "combiner": "pow_n-dense8-base4",
+  "results": {
+    "pt_mse": 0.23498780371569,
+    "pt_mae": 0.2923027196429363,
+    "pt_rho_mean": 0.45869067311286926,
+    "rand_mse": 0.23344390662515918,
+    "rand_mae": 0.2924216236786271,
+    "rand_rho_mean": 0.45936280488967896,
+    "base_mse": 0.242416397609057,
+    "prior_smean_mse": 0.5855912566184998,
+    "prior_snaive_mse": 0.33783814311027527,
+    "prior_last_mse": 0.27965179085731506,
+    "prior_recent_mean_mse": 0.26413819193840027,
+    "prior_smean2_mse": 0.3181769549846649,
+    "prior_smean4_mse": 0.35022005438804626,
+    "prior_smean8_mse": 0.4291782081127167,
+    "prior_smean_drift_mse": 0.2428295910358429,
+    "prior_smean4_drift_mse": 0.2600903809070587,
+    "prior_pick_counts": {
+      "smean": 537,
+      "recent_mean": 540,
+      "last": 695,
+      "snaive": 228
+    },
+    "argmin_base_mse": 0.27007120847702026,
+    "blend_weight_mean": {
+      "last": 0.3037716797167652,
+      "recent_mean": 0.3203825330791117,
+      "smean": 0.26690836298534537,
+      "snaive": 0.10893742421877765
+    },
+    "n_pseudo_origins": 8,
+    "smean_mse": 0.5855912566184998,
+    "boot_pt_vs_rand": {
+      "lo": 0.9902268672775074,
+      "hi": 1.025585314766691,
+      "p_better": 0.2466,
+      "n_origins": 611,
+      "block": 204,
+      "seed": 20260902
+    },
+    "boot_pt_vs_base": {
+      "lo": 0.9534426707308645,
+      "hi": 0.99632562497772,
+      "p_better": 0.9884,
+      "n_origins": 611,
+      "block": 204,
+      "seed": 20260902
+    }
+  },
+  "git_commit": "unknown",
+  "wall_clock_s": 253.3
+}

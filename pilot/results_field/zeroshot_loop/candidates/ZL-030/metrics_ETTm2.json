@@ -1,0 +1,78 @@
+{
+  "status": "complete",
+  "candidate_id": "ZL-030",
+  "dataset": "ETTm2",
+  "split": "audit",
+  "manifest": {
+    "dataset": "ETTm2",
+    "split": "audit",
+    "P": 96,
+    "L": 1536,
+    "H": 96,
+    "M": 7,
+    "stride": 8,
+    "seed": 0,
+    "n": 3000,
+    "n_origins": 620,
+    "pairs_sha1": "08a5f46c399d7cb3",
+    "range": [
+      29606,
+      34560
+    ]
+  },
+  "checkpoint": "MCG-NJU/videomae-base",
+  "m": 2,
+  "k": 3,
+  "n_keys": 14,
+  "config_hash": "e4f7e218bca18410",
+  "results": {
+    "prior_pick_counts": {
+      "last": 1060,
+      "recent_mean": 835,
+      "smean": 789,
+      "snaive": 316
+    },
+    "pt_col_ts_mse": 0.3206508457660675,
+    "pt_col_resid_norm_mse": 0.1009642481803894,
+    "rand_col_ts_mse": 0.3252352476119995,
+    "rand_col_resid_norm_mse": 0.10203899443149567,
+    "raw_period_ts_mse": 0.31824952363967896,
+    "raw_period_resid_norm_mse": 0.09858734160661697,
+    "prior_only_ts_mse": 0.3041304349899292,
+    "base_selected_ts_mse": 0.29361414909362793,
+    "boot_pt_vs_rand_col": {
+      "lo": 0.9606072306632996,
+      "hi": 1.0097154378890991,
+      "p_better": 0.9162,
+      "n_origins": 620,
+      "block": 204,
+      "seed": 20260902
+    },
+    "boot_pt_vs_raw_period": {
+      "lo": 0.9517233371734619,
+      "hi": 1.0466228723526,
+      "p_better": 0.4396,
+      "n_origins": 620,
+      "block": 204,
+      "seed": 20260902
+    },
+    "boot_pt_vs_prior_only": {
+      "lo": 1.0005099773406982,
+      "hi": 1.11045241355896,
+      "p_better": 0.0244,
+      "n_origins": 620,
+      "block": 204,
+      "seed": 20260902
+    },
+    "boot_pt_vs_base_selected": {
+      "lo": 1.015164852142334,
+      "hi": 1.1752513647079468,
+      "p_better": 0.008,
+      "n_origins": 620,
+      "block": 204,
+      "seed": 20260902
+    }
+  },
+  "git_commit": "86ece3af7191c2b610f281695289b7dba8cbb3fe",
+  "wall_clock_s": 178.0
+}

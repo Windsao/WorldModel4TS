@@ -1,0 +1,13 @@
+ETTm2 dense_rolling/right_10 P=96 L=1536 H=96 n=2000
+/nyx-storage1/hanliu/miniconda3/envs/wm4ts/lib/python3.10/site-packages/transformers/utils/hub.py:128: FutureWarning: Using `TRANSFORMERS_CACHE` is deprecated and will be removed in v5 of Transformers. Use `HF_HOME` instead.
+  warnings.warn(
+[ok] deterministic; hidden block is blank in the model input by construction
+{
+  "pretrained": 0.284255,
+  "zeroed": 0.284652,
+  "random": 0.286016,
+  "visionts": 0.250853,
+  "smean": 0.330058,
+  "snaive": 0.265094
+}
+[done] ETTm2

@@ -1,0 +1,6 @@
+DONE probe rc=0
+DONE frozen ETTm1 rc=0
+DONE frozen traffic rc=0
+DONE random_control rc=0
+DONE frozen solar rc=0
+DONE frozen ETTm2 rc=0

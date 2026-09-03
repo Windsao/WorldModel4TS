@@ -1,0 +1,12 @@
+dataset=ETTh2 M=7 P=24 ctx=384 h=96 train=5000 test=88
+[done] snaive   {'MSE': 0.3837, 'MAE': 0.3763}
+[done] smean    {'MSE': 0.35, 'MAE': 0.3939}
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+E0000 00:00:1788190582.476216    9512 cuda_dnn.cc:8579] Unable to register cuDNN factory: Attempting to register factory for plugin cuDNN when one has already been registered
+E0000 00:00:1788190582.482028    9512 cuda_blas.cc:1407] Unable to register cuBLAS factory: Attempting to register factory for plugin cuBLAS when one has already been registered
+W0000 00:00:1788190582.496739    9512 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
+W0000 00:00:1788190582.496908    9512 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
+W0000 00:00:1788190582.496998    9512 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
+W0000 00:00:1788190582.497092    9512 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
+[info] renderer=period_matrix readout=xattn pretrained=1 trainable=2959968/89187168
+[info] ep0 step 0 loss 0.3691

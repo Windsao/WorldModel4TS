@@ -1,0 +1,20 @@
+Sun Aug 30 18:48:45 UTC 2026 6h cap (1/9)
+/lambda/nfs/wm4ts-fs/results:
+frozen
+probe
+random_control
+smoke
+
+/lambda/nfs/wm4ts-fs/results/frozen:
+field_ETTh1_uni_video_frozen_L384_h96_s0.json
+field_ETTh2_uni_video_frozen_L384_h96_s0.json
+field_electricity_uni_video_frozen_L384_h96_s0.json
+
+/lambda/nfs/wm4ts-fs/results/probe:
+probe_electricity.json
+
+/lambda/nfs/wm4ts-fs/results/random_control:
+
+/lambda/nfs/wm4ts-fs/results/smoke:
+field_ETTh1_uni_video_frozen_L384_h96_s0.json
+{"data": {"terminated_instances":[{"id":"fc77a04f3538496491f143052e8c65e7","name":"wm4ts-zeroshot-2","ip":"209.20.159.125","private_ip":"172.29.150.40","status":"terminating","ssh_key_names":["latentmind-key"],"file_system_names":[],"region":{"name":"us-west-3","description":"Utah, USA"},"instance_type":{"name":"gpu_1x_h100_pcie","description":"1x H100 (80 GB PCIe)","gpu_description":"H100 (80 GB PCIe)","price_cents_per_hour":329,"specs":{"vcpus":26,"memory_gib":200,"storage_gib":1024,"gpus":1},"architecture":"x86_64"},"workspace_id":"80e6ae865d444b988dc6d9da9f935bf4","hostname":"209-20-159-125","jupyter_token":"e494921b7b9f4931a44ef8210fbaf6f3","jupyter_url":"https://bc7eb18eca6b4d5097531b55177313a1-0.lambdaspaces.com/?token=e494921b7b9f4931a44ef8210fbaf6f3","is_reserved":false,"actions":{"migrate":{"available":true},"rebuild":{"available":true},"restart":{"available":true},"cold_reboot":{"available":true},"power_cycle":{"available":true},"terminate":{"available":true}},"tags":[],"firewall_rulesets":[]}]}}

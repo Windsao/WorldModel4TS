@@ -1,0 +1,34 @@
+dataset=electricity M=112 P=24 ctx=384 h=96 windows=5500
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+E0000 00:00:1788082474.319910    2979 cuda_dnn.cc:8579] Unable to register cuDNN factory: Attempting to register factory for plugin cuDNN when one has already been registered
+E0000 00:00:1788082474.327466    2979 cuda_blas.cc:1407] Unable to register cuBLAS factory: Attempting to register factory for plugin cuBLAS when one has already been registered
+W0000 00:00:1788082474.346825    2979 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
+W0000 00:00:1788082474.347201    2979 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
+W0000 00:00:1788082474.347475    2979 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
+W0000 00:00:1788082474.347759    2979 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
+[uni_barcode ] PR= 114.11/768  probe=130346875690635953099863427067878487834092122889181863410506630499946858684907843019704270288757810217740301508363180528544089787013620687022617692819423232.0000 const=1.0168  skill=128198348846995525333032840186924730502097488200927674857794529646054210205702087510129824795604778342715837649380591080324839400838977752127654633096085504.000
+[vts_2d      ] PR= 116.22/768  probe=9269493202288955366427351526249359223437914853923120503419230724924415781294387927244681592610312846325817636382163201299317167799905812480.0000 const=1.0168  skill=9116702773929719088457163522008267573158081625506583630137715786844996184193929697076307099569712720672244358965247780588161206541604618240.000
+[field_2d    ] PR= 136.57/768  probe=16593322985911176727295009384427665509773373672216404153579899216093357111804533462305545991221251516205930617868250670677622784.0000 const=1.0025  skill=16552757068425040569052456266825413649156086172089804147850617701319146703930390066113788742425695007275257867820759108674387968.000
+{
+  "uni_barcode": {
+    "partic_ratio": 114.11,
+    "feat_dim": 768,
+    "probe_mse": 1.3034687569063595e+155,
+    "const_mse": 1.0168,
+    "skill_ratio": 1.2819834884699553e+155
+  },
+  "vts_2d": {
+    "partic_ratio": 116.22,
+    "feat_dim": 768,
+    "probe_mse": 9.269493202288955e+138,
+    "const_mse": 1.0168,
+    "skill_ratio": 9.116702773929719e+138
+  },
+  "field_2d": {
+    "partic_ratio": 136.57,
+    "feat_dim": 768,
+    "probe_mse": 1.6593322985911177e+127,
+    "const_mse": 1.0025,
+    "skill_ratio": 1.655275706842504e+127
+  }
+}

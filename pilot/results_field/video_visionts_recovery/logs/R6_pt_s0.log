@@ -1,0 +1,17 @@
+/nyx-storage1/hanliu/miniconda3/envs/wm4ts/lib/python3.10/site-packages/transformers/utils/hub.py:128: FutureWarning: Using `TRANSFORMERS_CACHE` is deprecated and will be removed in v5 of Transformers. Use `HF_HOME` instead.
+  warnings.warn(
+R6 decoder params 7.69M  backbone=pretrained
+[info] step 100 loss 0.05117 R_val 1.3592 best 1.3592
+[info] step 200 loss 0.06896 R_val 1.3465 best 1.3465
+[info] step 300 loss 0.01663 R_val 1.7082 best 1.3465
+[info] step 400 loss 0.03891 R_val 1.3304 best 1.3304
+[info] step 500 loss 0.02766 R_val 1.7937 best 1.3304
+[info] step 600 loss 0.02200 R_val 1.3756 best 1.3304
+[info] step 700 loss 0.03305 R_val 1.3148 best 1.3148
+[info] step 800 loss 0.04668 R_val 1.4841 best 1.3148
+[info] step 900 loss 0.02835 R_val 1.5715 best 1.3148
+[info] step 1000 loss 0.02425 R_val 1.2929 best 1.2929
+[info] step 1100 loss 0.02476 R_val 1.4135 best 1.2929
+[info] step 1200 loss 0.02948 R_val 1.3202 best 1.2929
+[audit] {"ETTh2": {"r6_mse": 0.563158, "L0_mse": 0.488804, "ratio": 1.152113}, "ETTm2": {"r6_mse": 0.422008, "L0_mse": 0.319331, "ratio": 1.321539}}  aggregate=1.2339
+[done]

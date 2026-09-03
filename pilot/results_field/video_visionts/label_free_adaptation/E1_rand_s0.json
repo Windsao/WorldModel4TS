@@ -1,0 +1,68 @@
+{
+  "status": "complete",
+  "stage": "E1",
+  "regime": "LA",
+  "backbone": "random",
+  "mask": "right_10",
+  "renderer": "dense_static",
+  "lens_params": 308838,
+  "train_datasets": [
+    "ETTh2",
+    "ETTm2"
+  ],
+  "train_steps": 1500,
+  "batch": 8,
+  "lr": 0.001,
+  "seed": 0,
+  "checkpoint": "MCG-NJU/videomae-base",
+  "git_commit": "86ece3af7191c2b610f281695289b7dba8cbb3fe",
+  "git_dirty": true,
+  "torch": "2.13.0+cu130",
+  "transformers": "4.46.3",
+  "results": {
+    "ETTh1": {
+      "lens": 0.67575,
+      "causal": 0.410654,
+      "visionts": 0.4023480713367462,
+      "smean": 0.4025617241859436,
+      "snaive": 0.504264235496521
+    },
+    "ETTh2": {
+      "lens": 0.471246,
+      "causal": 0.329577,
+      "visionts": 0.31297650933265686,
+      "smean": 0.3453695476055145,
+      "snaive": 0.3852261006832123
+    },
+    "ETTm2": {
+      "lens": 0.406653,
+      "causal": 0.263626,
+      "visionts": 0.25085338950157166,
+      "smean": 0.33005815744400024,
+      "snaive": 0.26509442925453186
+    },
+    "electricity": {
+      "lens": 0.595003,
+      "causal": 0.258106,
+      "visionts": 0.20135408639907837,
+      "smean": 0.20692041516304016,
+      "snaive": 0.33220574259757996
+    },
+    "traffic": {
+      "lens": 1.071496,
+      "causal": 0.629561,
+      "visionts": 0.5206549167633057,
+      "smean": 0.5105753540992737,
+      "snaive": 0.9490860104560852
+    },
+    "solar": {
+      "lens": 1.186227,
+      "causal": 0.258113,
+      "visionts": 0.2728644013404846,
+      "smean": 0.19733230769634247,
+      "snaive": 0.28514984250068665
+    }
+  },
+  "wall_clock_s": 278.7,
+  "peak_gpu_mem_gb": 2.18
+}

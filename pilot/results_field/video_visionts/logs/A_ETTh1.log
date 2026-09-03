@@ -1,0 +1,14 @@
+ETTh1: P=24 L=384 H=96 windows=349 pairs=2000
+[ok] mirrored forward matches official (max|d|=0.00e+00)
+{
+  "visionts_pretrained": 0.4023480713367462,
+  "visionts_zeroed": 0.7102985978126526,
+  "visionts_random": 1.0367848873138428,
+  "smean": 0.4025617241859436,
+  "snaive": 0.504264235496521,
+  "visionts_pretrained_mae": 0.38623425364494324,
+  "smean_mae": 0.40607747435569763
+}
+/nyx-storage1/hanliu/miniconda3/envs/wm4ts/lib/python3.10/site-packages/transformers/utils/hub.py:128: FutureWarning: Using `TRANSFORMERS_CACHE` is deprecated and will be removed in v5 of Transformers. Use `HF_HOME` instead.
+  warnings.warn(
+[done] ETTh1

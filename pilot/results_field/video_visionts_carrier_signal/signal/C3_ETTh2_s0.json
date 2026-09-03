@@ -1,0 +1,91 @@
+{
+  "status": "complete",
+  "stage": "C3",
+  "dataset": "ETTh2",
+  "split": "audit",
+  "regime": "historical_audit",
+  "manifest_seed": 0,
+  "checkpoint": "MCG-NJU/videomae-base",
+  "carrier": "C2",
+  "frequency": 2,
+  "norm_const": 0.4,
+  "geometry": "4/10",
+  "mask": "right_future_100",
+  "input_arm": "matrix",
+  "backbone_arm": "matrix",
+  "random_init_seed": 0,
+  "shuffle_seed": 0,
+  "decoder": "D0-D3",
+  "calibration": null,
+  "git_commit": "86ece3af7191c2b610f281695289b7dba8cbb3fe",
+  "manifest": {
+    "manifest_seed": 0,
+    "pairs_sha1": "74cf3dd6f86d4172",
+    "n_pairs": 252,
+    "n_origins": 36
+  },
+  "native_metrics": {
+    "b0_zero": 0.9980404919387474,
+    "b1_neutral": 0.4064524830101828,
+    "b3_smean": 0.3771608292140707,
+    "b4_snaive": 0.37991509575001564,
+    "pt_true": 0.8493192568629702,
+    "pt_shuffle": 0.8628973830435831,
+    "pt_neutral": 0.8528727620399315,
+    "rand_true": 1.151631638915271
+  },
+  "phase_metrics": {
+    "z_mse": {
+      "b0_zero": 0.18739783567358018,
+      "b1_neutral": 0.18739784932980963,
+      "b3_smean": 0.1743515629902847,
+      "b4_snaive": 0.18601973433036054,
+      "pt_true": 0.35932295768316314,
+      "pt_shuffle": 0.37262787666742325,
+      "pt_neutral": 0.35566127831721694,
+      "rand_true": 0.7530532884376517,
+      "y_shuffle": 0.34288966961749173,
+      "D0": 0.3991780959100066,
+      "D1": 0.36212996435287165,
+      "D2": 0.35932295768316314,
+      "D3": 0.360309218051815
+    },
+    "pearson_pt_true": 0.0951560477955743,
+    "spearman_pt_true": 0.07765866418543246,
+    "phase_cos": {
+      "pt_true": 0.632350339197075,
+      "pt_shuffle": 0.6202703384346482,
+      "pt_neutral": 0.6374350326000858,
+      "rand_true": 0.31139284929000544
+    },
+    "rho_median": 0.9935253262519836,
+    "rho_mean": 0.9919129014015198
+  },
+  "ts_metrics": {
+    "d0": 1.170164841875238,
+    "d1": 1.0994891294163929,
+    "d2": 1.0931801799017065,
+    "d3": 1.0937674600725014,
+    "rand_d2": 2.206744975228824,
+    "b1_d2": 0.7001472853197493,
+    "ctx_mean": 0.7001472624669608,
+    "smean": 0.6759574049504177,
+    "snaive": 0.5288796156188289,
+    "i0": 0.48613565939036435,
+    "o3": 0.1620056983220946
+  },
+  "bootstrap": {
+    "d2_true_vs_shuffle_ts": {
+      "ratio_lo": 0.9582252504088696,
+      "ratio_hi": 0.9928756626389097,
+      "p_improve": 0.9992,
+      "n_origins": 36,
+      "block": 15,
+      "seed": 20260902,
+      "n_boot": 5000
+    }
+  },
+  "provenance": {
+    "torch": "2.13.0+cu130"
+  }
+}

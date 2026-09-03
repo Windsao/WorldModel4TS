@@ -1,0 +1,33 @@
+{
+  "config": {
+    "dataset": "traffic",
+    "ckpt": "MCG-NJU/videomae-base",
+    "context": 440,
+    "horizon": 96,
+    "n": 2000,
+    "stride": 32,
+    "seed": 0,
+    "mask": "spatial tube, right 3 patch cols (21.4%)",
+    "transformers": "4.46.3",
+    "torch": "2.7.0",
+    "wall_clock_s": 38.2
+  },
+  "results": {
+    "snaive": {
+      "MSE": 0.9502,
+      "MAE": 0.4861
+    },
+    "smean": {
+      "MSE": 0.52,
+      "MAE": 0.3848
+    },
+    "recon_model": {
+      "MSE": 2.2511,
+      "MAE": 1.0482
+    },
+    "recon_zeroed": {
+      "MSE": 1.208,
+      "MAE": 0.7824
+    }
+  }
+}

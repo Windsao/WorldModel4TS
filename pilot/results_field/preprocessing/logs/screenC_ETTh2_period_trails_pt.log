@@ -1,0 +1,38 @@
+dataset=ETTh2 M=7 P=24 ctx=384 h=96 train=5000 test=88
+[done] snaive   {'MSE': 0.3837, 'MAE': 0.3763}
+[done] smean    {'MSE': 0.35, 'MAE': 0.3939}
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+E0000 00:00:1788174163.451582    6026 cuda_dnn.cc:8579] Unable to register cuDNN factory: Attempting to register factory for plugin cuDNN when one has already been registered
+E0000 00:00:1788174163.459930    6026 cuda_blas.cc:1407] Unable to register cuBLAS factory: Attempting to register factory for plugin cuBLAS when one has already been registered
+W0000 00:00:1788174163.480461    6026 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
+W0000 00:00:1788174163.480647    6026 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
+W0000 00:00:1788174163.480770    6026 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
+W0000 00:00:1788174163.480886    6026 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
+[info] renderer=period_trails readout=xattn pretrained=1 trainable=2959968/89187168
+[info] ep0 step 0 loss 0.4015
+[info] ep0 step 100 loss 0.7034
+[info] ep0 step 200 loss 0.4602
+[info] ep0 step 300 loss 0.7153
+[info] epoch 0 train MSE 0.6028
+[info] ep1 step 0 loss 0.5916
+[info] ep1 step 100 loss 0.4328
+[info] ep1 step 200 loss 1.2979
+[info] ep1 step 300 loss 0.1494
+[info] epoch 1 train MSE 0.5633
+[done] model_pt    MSE=0.3779 MAE=0.4155  (smean 0.3500)
+fatal: not a git repository (or any parent up to mount point /lambda/nfs)
+Stopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not set).
+{
+  "snaive": {
+    "MSE": 0.3837,
+    "MAE": 0.3763
+  },
+  "smean": {
+    "MSE": 0.35,
+    "MAE": 0.3939
+  },
+  "model_pt": {
+    "MSE": 0.3779,
+    "MAE": 0.4155
+  }
+}

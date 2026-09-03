@@ -1,0 +1,63 @@
+{
+  "status": "complete",
+  "candidate_id": "ZL-052",
+  "stage": "E",
+  "dataset": "ETTm2",
+  "manifest": {
+    "dataset": "ETTm2",
+    "split": "audit",
+    "P": 96,
+    "L": 1536,
+    "H": 96,
+    "M": 7,
+    "stride": 8,
+    "seed": 0,
+    "n": 2000,
+    "n_origins": 611,
+    "pairs_sha1": "894b94106e5d299d",
+    "range": [
+      29606,
+      34560
+    ]
+  },
+  "results": {
+    "smean_mse": 0.5855912566184998,
+    "pt_mse": 0.23349626964669082,
+    "pt_kernel_only_mse": 0.2702208184710213,
+    "pt_weight_mean": {
+      "smean": 0.1950554242345962,
+      "snaive": 0.11237616953036185,
+      "last": 0.25938322815162157,
+      "recent_mean": 0.25812199755778986,
+      "kernel": 0.17506318052563052
+    },
+    "blend_mse": 0.242416397609057,
+    "n_pseudo_origins": 6,
+    "rand_mse": 0.2355106999591706,
+    "rand_kernel_only_mse": 0.27999159725042067,
+    "rand_weight_mean": {
+      "smean": 0.1918486515915592,
+      "snaive": 0.11777962226627375,
+      "last": 0.2598552445367128,
+      "recent_mean": 0.26229257137323037,
+      "kernel": 0.16822391023222386
+    },
+    "boot_pt_vs_rand": {
+      "lo": 0.971924006646408,
+      "hi": 1.008859792072333,
+      "p_better": 0.768,
+      "n_origins": 611,
+      "block": 204,
+      "seed": 20260902
+    },
+    "boot_pt_vs_blend": {
+      "lo": 0.9378150358057354,
+      "hi": 0.9823720271783268,
+      "p_better": 1.0,
+      "n_origins": 611,
+      "block": 204,
+      "seed": 20260902
+    }
+  },
+  "wall_clock_s": 1691.4
+}

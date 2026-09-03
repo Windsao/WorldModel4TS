@@ -1,0 +1,63 @@
+dataset=electricity mode=uni M=112 P=24 context=384 horizon=96 train=17933 test=646
+[done] snaive     {'MSE': 0.3401, 'MAE': 0.3334}
+[done] smean      {'MSE': 0.2071, 'MAE': 0.2886}
+/nyx-storage1/hanliu/miniconda3/envs/wm4ts/lib/python3.10/site-packages/transformers/utils/hub.py:128: FutureWarning: Using `TRANSFORMERS_CACHE` is deprecated and will be removed in v5 of Transformers. Use `HF_HOME` instead.
+  warnings.warn(
+[info] tune=adapter trainable=3662880/89890080 (4.07%)
+[info] ep0 step 0 loss 0.9566
+[info] ep0 step 200 loss 0.2190
+[info] ep0 step 400 loss 0.2244
+[info] ep0 step 600 loss 0.1877
+[info] ep0 step 800 loss 0.7287
+[info] ep0 step 1000 loss 0.1215
+[info] ep0 step 1200 loss 0.2551
+[info] ep0 step 1400 loss 0.1326
+[info] ep0 step 1600 loss 0.1289
+[info] ep0 step 1800 loss 0.1596
+[info] ep0 step 2000 loss 0.1343
+[info] ep0 step 2200 loss 0.4052
+[info] ep0 step 2400 loss 0.2463
+[info] epoch 0 train MSE 0.2412
+[info] ep1 step 0 loss 0.1842
+[info] ep1 step 200 loss 0.1547
+[info] ep1 step 400 loss 0.1553
+[info] ep1 step 600 loss 0.1515
+[info] ep1 step 800 loss 0.3110
+[info] ep1 step 1000 loss 0.1597
+[info] ep1 step 1200 loss 0.1641
+[info] ep1 step 1400 loss 0.1989
+[info] ep1 step 1600 loss 0.1613
+[info] ep1 step 1800 loss 0.1566
+[info] ep1 step 2000 loss 0.1915
+[info] ep1 step 2200 loss 0.1857
+[info] ep1 step 2400 loss 0.2241
+[info] epoch 1 train MSE 0.1665
+[info] ep2 step 0 loss 0.1415
+[info] ep2 step 200 loss 0.1316
+[info] ep2 step 400 loss 0.1199
+[info] ep2 step 600 loss 0.1304
+[info] ep2 step 800 loss 0.1594
+[info] ep2 step 1000 loss 0.3516
+[info] ep2 step 1200 loss 0.1177
+[info] ep2 step 1400 loss 0.1061
+[info] ep2 step 1600 loss 0.1691
+[info] ep2 step 1800 loss 0.1698
+[info] ep2 step 2000 loss 0.1460
+[info] ep2 step 2200 loss 0.1231
+[info] ep2 step 2400 loss 0.1408
+[info] epoch 2 train MSE 0.1590
+[done] video_uni_adapter_s0 MSE=0.1487 MAE=0.2571
+{
+  "snaive": {
+    "MSE": 0.3401,
+    "MAE": 0.3334
+  },
+  "smean": {
+    "MSE": 0.2071,
+    "MAE": 0.2886
+  },
+  "video_uni_adapter_s0": {
+    "MSE": 0.1487,
+    "MAE": 0.2571
+  }
+}

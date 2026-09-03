@@ -1,0 +1,20 @@
+{
+  "dataset": "electricity",
+  "data_path": "/nyx-storage1/hanliu/wm4ts/data/electricity.txt",
+  "data_sha1": "ab17f324161ee718",
+  "P": 24,
+  "context": 384,
+  "horizon": 96,
+  "borders": [
+    18412,
+    21043,
+    26304
+  ],
+  "max_ch": 112,
+  "M": 112,
+  "stride": 8,
+  "n_windows": 646,
+  "n_pairs": 2000,
+  "pairs_sha1": "09ee7194eb5c58ed",
+  "seed": 0
+}

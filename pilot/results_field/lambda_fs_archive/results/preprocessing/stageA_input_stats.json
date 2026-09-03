@@ -1,0 +1,86 @@
+{
+  "ETTh2|barcode_nearest": {
+    "const_tubelet_frac": 0.1203,
+    "tubelet_pixel_std": 0.07,
+    "spatial_grad_rms": 0.0269,
+    "temporal_diff_rms": 0.1615,
+    "temporal_over_spatial": 6.0116
+  },
+  "ETTh2|barcode_bilinear": {
+    "const_tubelet_frac": 0.1132,
+    "tubelet_pixel_std": 0.0604,
+    "spatial_grad_rms": 0.0086,
+    "temporal_diff_rms": 0.1497,
+    "temporal_over_spatial": 17.4876
+  },
+  "ETTh2|period_matrix": {
+    "const_tubelet_frac": 0.1157,
+    "tubelet_pixel_std": 0.0455,
+    "spatial_grad_rms": 0.0083,
+    "temporal_diff_rms": 0.0984,
+    "temporal_over_spatial": 11.8747
+  },
+  "ETTh2|period_line": {
+    "const_tubelet_frac": 0.7703,
+    "tubelet_pixel_std": 0.0399,
+    "spatial_grad_rms": 0.0672,
+    "temporal_diff_rms": 0.122,
+    "temporal_over_spatial": 1.8155
+  },
+  "ETTh2|period_trails": {
+    "const_tubelet_frac": 0.6767,
+    "tubelet_pixel_std": 0.0518,
+    "spatial_grad_rms": 0.0779,
+    "temporal_diff_rms": 0.0914,
+    "temporal_over_spatial": 1.1729
+  },
+  "ETTh2|recurrence": {
+    "const_tubelet_frac": 0.0656,
+    "tubelet_pixel_std": 0.1941,
+    "spatial_grad_rms": 0.0614,
+    "temporal_diff_rms": 0.2873,
+    "temporal_over_spatial": 4.6825
+  },
+  "electricity|barcode_nearest": {
+    "const_tubelet_frac": 0.019,
+    "tubelet_pixel_std": 0.0449,
+    "spatial_grad_rms": 0.0178,
+    "temporal_diff_rms": 0.0941,
+    "temporal_over_spatial": 5.2944
+  },
+  "electricity|barcode_bilinear": {
+    "const_tubelet_frac": 0.0176,
+    "tubelet_pixel_std": 0.0388,
+    "spatial_grad_rms": 0.0057,
+    "temporal_diff_rms": 0.0907,
+    "temporal_over_spatial": 15.8358
+  },
+  "electricity|period_matrix": {
+    "const_tubelet_frac": 0.0177,
+    "tubelet_pixel_std": 0.0329,
+    "spatial_grad_rms": 0.0058,
+    "temporal_diff_rms": 0.0639,
+    "temporal_over_spatial": 10.9723
+  },
+  "electricity|period_line": {
+    "const_tubelet_frac": 0.8154,
+    "tubelet_pixel_std": 0.0335,
+    "spatial_grad_rms": 0.0604,
+    "temporal_diff_rms": 0.1093,
+    "temporal_over_spatial": 1.809
+  },
+  "electricity|period_trails": {
+    "const_tubelet_frac": 0.7666,
+    "tubelet_pixel_std": 0.0401,
+    "spatial_grad_rms": 0.0638,
+    "temporal_diff_rms": 0.078,
+    "temporal_over_spatial": 1.2229
+  },
+  "electricity|recurrence": {
+    "const_tubelet_frac": 0.0059,
+    "tubelet_pixel_std": 0.2133,
+    "spatial_grad_rms": 0.0586,
+    "temporal_diff_rms": 0.2016,
+    "temporal_over_spatial": 3.4394
+  }
+}

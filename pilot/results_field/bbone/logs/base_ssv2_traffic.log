@@ -1,0 +1,46 @@
+dataset=traffic mode=uni M=112 P=24 context=384 horizon=96 train=11801 test=427
+[done] snaive     {'MSE': 0.9626, 'MAE': 0.4874}
+[done] smean      {'MSE': 0.5175, 'MAE': 0.384}
+/nyx-storage1/hanliu/miniconda3/envs/wm4ts/lib/python3.10/site-packages/transformers/utils/hub.py:128: FutureWarning: Using `TRANSFORMERS_CACHE` is deprecated and will be removed in v5 of Transformers. Use `HF_HOME` instead.
+  warnings.warn(
+[info] tune=adapter trainable=3662880/89890080 (4.07%)
+[info] ep0 step 0 loss 1.1562
+[info] ep0 step 200 loss 0.6098
+[info] ep0 step 400 loss 0.4128
+[info] ep0 step 600 loss 0.3949
+[info] ep0 step 800 loss 0.3285
+[info] ep0 step 1000 loss 0.4433
+[info] ep0 step 1200 loss 0.5599
+[info] ep0 step 1400 loss 0.2538
+[info] ep0 step 1600 loss 0.2881
+[info] ep0 step 1800 loss 0.3133
+[info] ep0 step 2000 loss 0.1911
+[info] ep0 step 2200 loss 0.2905
+[info] ep0 step 2400 loss 0.4155
+[info] epoch 0 train MSE 0.4139
+[info] ep1 step 0 loss 0.2314
+[info] ep1 step 200 loss 0.3259
+[info] ep1 step 400 loss 0.3808
+[info] ep1 step 600 loss 0.2193
+[info] ep1 step 800 loss 0.2732
+[info] ep1 step 1000 loss 0.2942
+[info] ep1 step 1200 loss 0.2927
+[info] ep1 step 1400 loss 0.3034
+[info] ep1 step 1600 loss 0.3129
+[info] ep1 step 1800 loss 0.2513
+[info] ep1 step 2000 loss 0.3984
+[info] ep1 step 2200 loss 0.1275
+[info] ep1 step 2400 loss 0.2655
+[info] epoch 1 train MSE 0.2890
+[info] ep2 step 0 loss 0.2304
+[info] ep2 step 200 loss 0.2045
+[info] ep2 step 400 loss 0.1596
+[info] ep2 step 600 loss 0.2349
+[info] ep2 step 800 loss 0.2793
+[info] ep2 step 1000 loss 0.3228
+[info] ep2 step 1200 loss 0.1840
+[info] ep2 step 1400 loss 0.2279
+[info] ep2 step 1600 loss 0.3135
+[info] ep2 step 1800 loss 0.2244
+[info] ep2 step 2000 loss 0.2978
+[info] ep2 step 2200 loss 0.3313

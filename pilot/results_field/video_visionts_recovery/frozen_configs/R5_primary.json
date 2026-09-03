@@ -1,0 +1,18 @@
+{
+  "frozen_at": "before any R5 genuine-future result was read",
+  "renderer": "dense_static",
+  "normalization": "context mu/sd, z=0.4*(x-mu)/sd, shared by all 16 frames",
+  "width_rule": "visible=max(1,int(L/(L+H)*14*0.4)); right_10 for L=384/H=96, right_9 for L=1536,2304",
+  "layout": "G0",
+  "layout_reason": "G1 (1.0418) and G2 (1.52-1.53, 3 seeds) both FAILED the R3 promotion gate; G0=0.9687",
+  "stat_rule": "nearest_visible_physical",
+  "lens": "L0 (none)",
+  "lens_reason": "L1=1.0347 L2=1.0204 L3=1.0216 aggregate vs L0, all FAIL the <=0.97 R4 gate",
+  "selection_metrics": "R3 native_ratio + R4 aggregate pseudo-future MSE ratio, ETTh2+ETTm2 historical audit only",
+  "layout_hashes": {
+    "G0": "f8c3e37c77daa95a",
+    "G1": "d4c26f352b43db41",
+    "G2": "c5e4ec0eedc9b89c"
+  },
+  "git_commit": "86ece3af7191c2b610f281695289b7dba8cbb3fe"
+}

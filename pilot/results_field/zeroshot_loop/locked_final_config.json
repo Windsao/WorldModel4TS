@@ -1,0 +1,41 @@
+{
+  "candidate_id": "ZL-051",
+  "locked_at": "before any six-dataset evaluation of this method",
+  "selected_on": "ETTh2 + ETTm2 historical audit windows only",
+  "method": {
+    "prior_family": [
+      "smean",
+      "snaive",
+      "last",
+      "recent_mean"
+    ],
+    "prior_selection": "EVIDENCE-SCALED BLEND over DENSE pseudo-origins: origins rolled one period at a time back from L-H while at least 8 periods of context remain; per-prior loss L_p averaged over them; w_p proportional to (L_min/L_p)^n_origins, renormalised. Parameter-free.",
+    "render": "period matrix, rows=phase cols=period, 224x224, repeated over 16 frames",
+    "backbone": "MCG-NJU/videomae-base, frozen, VideoMAEModel (no head)",
+    "tokens": "per-period-COLUMN token means (never global mean pooling)",
+    "kernel": "fixed cosine similarity, query = last m=2 periods, keys = all earlier m-period windows whose successors are observed",
+    "k": 3,
+    "combination": "y = prior + rho * clip(kernel - prior, +-3*mean|diff|*sqrt(H)); rho = parameter-free top-k agreement",
+    "trained_parameters": 0
+  },
+  "controls": [
+    "random-init VideoMAE (identical architecture and path)",
+    "raw period-vector kernel",
+    "prior alone"
+  ],
+  "zero_shot_contract": "no future value, no training, no benchmark-derived choice; all statistics from the observed context of each origin",
+  "dev_selection": {
+    "split": "HISTORICAL audit windows of all six datasets; the benchmark test windows were never touched",
+    "compared": "2 prior families x {argmin, uniform, invloss, softmin, softmin_n, pow_n} x {sparse, dense4, dense8} = 25 combiners",
+    "geo_mean_vs_fixed_smean": {
+      "base4/pow_n-dense8": 0.7542,
+      "base4/softmin_n-dense8": 0.7576,
+      "seasonal/pow_n-dense8": 0.7596,
+      "base4/softmin-dense8": 0.7686,
+      "seasonal/argmin": 0.8257,
+      "base4/argmin": 0.8384,
+      "fixed_smean": 1.0,
+      "base4/uniform": 1.1333
+    }
+  }
+}

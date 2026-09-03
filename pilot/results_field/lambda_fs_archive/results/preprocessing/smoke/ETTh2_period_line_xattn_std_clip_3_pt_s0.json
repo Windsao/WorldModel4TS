@@ -1,0 +1,54 @@
+{
+  "config": {
+    "git_commit": "unknown",
+    "git_dirty": null,
+    "dataset": "ETTh2",
+    "data_dir": "/lambda/nfs/wm4ts-fs/data",
+    "renderer": "period_line",
+    "readout": "xattn",
+    "norm": "std_clip_3",
+    "pretrained": 1,
+    "ckpt": "MCG-NJU/videomae-base",
+    "transformers": "4.46.3",
+    "torch": "2.7.0",
+    "context": 384,
+    "horizon": 96,
+    "M": 7,
+    "P": 24,
+    "n_train": 64,
+    "n_test": 308,
+    "stride": 64,
+    "ft_cap": 64,
+    "epochs": 1,
+    "batch": 16,
+    "lr": 0.0001,
+    "seed": 0,
+    "eval_batch": 64,
+    "sample_idx_hash": 14283,
+    "trainable_params": 2959968,
+    "total_params": 89187168,
+    "input_diagnostics": {
+      "const_tubelet_frac": 0.7615,
+      "tubelet_pixel_std": 0.041,
+      "spatial_grad_rms": 0.0676,
+      "temporal_diff_rms": 0.1244,
+      "temporal_over_spatial": 1.8385
+    },
+    "wall_clock_s": 36.6,
+    "peak_gpu_mem_gb": 5.08
+  },
+  "results": {
+    "snaive": {
+      "MSE": 0.3973,
+      "MAE": 0.3816
+    },
+    "smean": {
+      "MSE": 0.3419,
+      "MAE": 0.3895
+    },
+    "model_pt": {
+      "MSE": 0.4835,
+      "MAE": 0.4727
+    }
+  }
+}

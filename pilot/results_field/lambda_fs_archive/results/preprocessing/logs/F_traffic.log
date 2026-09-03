@@ -1,0 +1,34 @@
+[done] snaive   {'MSE': 0.9502, 'MAE': 0.4861}
+[done] smean    {'MSE': 0.52, 'MAE': 0.3848}
+dataset=traffic ctx=440 h=96 samples=2000
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+E0000 00:00:1788235099.624459    3031 cuda_dnn.cc:8579] Unable to register cuDNN factory: Attempting to register factory for plugin cuDNN when one has already been registered
+E0000 00:00:1788235099.630383    3031 cuda_blas.cc:1407] Unable to register cuBLAS factory: Attempting to register factory for plugin cuBLAS when one has already been registered
+W0000 00:00:1788235099.645574    3031 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
+W0000 00:00:1788235099.645731    3031 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
+W0000 00:00:1788235099.645824    3031 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
+W0000 00:00:1788235099.645920    3031 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
+[info] 0/2000
+[info] 640/2000
+[info] 1280/2000
+[info] 1920/2000
+[done] recon_model   {'MSE': 2.2511, 'MAE': 1.0482}
+[done] recon_zeroed  {'MSE': 1.208, 'MAE': 0.7824}
+{
+  "snaive": {
+    "MSE": 0.9502,
+    "MAE": 0.4861
+  },
+  "smean": {
+    "MSE": 0.52,
+    "MAE": 0.3848
+  },
+  "recon_model": {
+    "MSE": 2.2511,
+    "MAE": 1.0482
+  },
+  "recon_zeroed": {
+    "MSE": 1.208,
+    "MAE": 0.7824
+  }
+}

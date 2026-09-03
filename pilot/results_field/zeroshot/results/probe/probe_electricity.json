@@ -1,0 +1,32 @@
+{
+  "dataset": "electricity",
+  "M": 112,
+  "P": 24,
+  "n": 1500,
+  "results": {
+    "uni_barcode": {
+      "partic_ratio": 114.11,
+      "feat_dim": 768,
+      "probe_mse": 1.0489,
+      "const_mse": 1.0494,
+      "skill_ratio": 0.9995,
+      "ridge_lam": 1000000.0
+    },
+    "vts_2d": {
+      "partic_ratio": 124.47,
+      "feat_dim": 768,
+      "probe_mse": 1.0623,
+      "const_mse": 1.0494,
+      "skill_ratio": 1.0123,
+      "ridge_lam": 1000000.0
+    },
+    "field_2d": {
+      "partic_ratio": 129.16,
+      "feat_dim": 768,
+      "probe_mse": 0.9964,
+      "const_mse": 0.9875,
+      "skill_ratio": 1.009,
+      "ridge_lam": 1000000.0
+    }
+  }
+}

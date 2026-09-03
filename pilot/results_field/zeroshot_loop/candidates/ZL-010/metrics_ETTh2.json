@@ -1,0 +1,81 @@
+{
+  "status": "complete",
+  "candidate_id": "ZL-010",
+  "dataset": "ETTh2",
+  "split": "audit",
+  "manifest": {
+    "dataset": "ETTh2",
+    "split": "audit",
+    "P": 24,
+    "L": 384,
+    "H": 96,
+    "M": 7,
+    "stride": 32,
+    "seed": 0,
+    "n": 192,
+    "n_origins": 36,
+    "pairs_sha1": "553044224477ae31",
+    "range": [
+      7488,
+      8640
+    ]
+  },
+  "checkpoint": "MCG-NJU/videomae-base",
+  "motif_W": 48,
+  "n_candidates": 15,
+  "k": 3,
+  "query_candidate_min_gap_steps": 24,
+  "candidate_overlap_with_future": 0.0,
+  "config_hash": "b9225d5859204fa7",
+  "results": {
+    "pt_scroll_norm_cont_mse": 5.083296298980713,
+    "pt_scroll_ts_mse": 0.7578569054603577,
+    "rand_scroll_norm_cont_mse": 5.299039363861084,
+    "rand_scroll_ts_mse": 0.8027483224868774,
+    "pt_permuted_norm_cont_mse": 5.2177605628967285,
+    "pt_permuted_ts_mse": 0.7365171313285828,
+    "pt_static_norm_cont_mse": 5.124115467071533,
+    "pt_static_ts_mse": 0.7756609320640564,
+    "raw_l2_norm_cont_mse": 4.92031717300415,
+    "raw_l2_ts_mse": 0.6716221570968628,
+    "prior_smean_ts_mse": 0.7387369275093079,
+    "prior_snaive_ts_mse": 0.5697329044342041,
+    "prior_last_ts_mse": 0.6092314720153809,
+    "prior_recent_mean_ts_mse": 0.4862208366394043,
+    "oracle_best_candidate_norm_mse": 2.9717321395874023,
+    "boot_pt_scroll_vs_rand_scroll": {
+      "lo": 0.8583484888076782,
+      "hi": 1.0151441097259521,
+      "p_better": 0.8836,
+      "n_origins": 36,
+      "block": 15,
+      "seed": 20260902
+    },
+    "boot_pt_scroll_vs_pt_permuted": {
+      "lo": 0.9150369763374329,
+      "hi": 1.025752305984497,
+      "p_better": 0.7562,
+      "n_origins": 36,
+      "block": 15,
+      "seed": 20260902
+    },
+    "boot_pt_scroll_vs_pt_static": {
+      "lo": 0.8654484748840332,
+      "hi": 1.0787917375564575,
+      "p_better": 0.5938,
+      "n_origins": 36,
+      "block": 15,
+      "seed": 20260902
+    },
+    "boot_pt_scroll_vs_raw_l2": {
+      "lo": 0.8654574155807495,
+      "hi": 1.212516188621521,
+      "p_better": 0.3654,
+      "n_origins": 36,
+      "block": 15,
+      "seed": 20260902
+    }
+  },
+  "git_commit": "86ece3af7191c2b610f281695289b7dba8cbb3fe",
+  "wall_clock_s": 358.2
+}

@@ -1,0 +1,20 @@
+{
+  "dataset": "traffic",
+  "data_path": "/nyx-storage1/hanliu/wm4ts/data/traffic.txt",
+  "data_sha1": "3daa37ccbdc279fc",
+  "P": 24,
+  "context": 384,
+  "horizon": 96,
+  "borders": [
+    12280,
+    14035,
+    17544
+  ],
+  "max_ch": 112,
+  "M": 112,
+  "stride": 8,
+  "n_windows": 427,
+  "n_pairs": 2000,
+  "pairs_sha1": "3b3c83d22500ee46",
+  "seed": 0
+}

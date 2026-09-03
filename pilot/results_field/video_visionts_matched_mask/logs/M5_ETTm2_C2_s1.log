@@ -1,0 +1,24 @@
+ETTm2 carrier=C2 n=512 P=96 L=1536 H=96
+/nyx-storage1/hanliu/miniconda3/envs/wm4ts/lib/python3.10/site-packages/transformers/utils/hub.py:128: FutureWarning: Using `TRANSFORMERS_CACHE` is deprecated and will be removed in v5 of Transformers. Use `HF_HOME` instead.
+  warnings.warn(
+{
+  "native_pt": {
+    "mse": 0.8508958618130965,
+    "mse_zero": 0.9980404922426063,
+    "ratio_zero": 0.852566472429516
+  },
+  "native_rand": {
+    "mse": 1.1423273600283084,
+    "mse_zero": 0.9980404922426063,
+    "ratio_zero": 1.144570154124196
+  },
+  "native_pt_over_rand": 0.744879,
+  "ts_pt_mse": 1.561399,
+  "ts_rand_mse": 2.054227,
+  "ts_zero_mse": 0.57418,
+  "ts_i0_mse": 0.340203,
+  "ts_pt_over_zero": 2.719354,
+  "ts_pt_over_i0": 4.589612,
+  "ts_pt_over_rand": 0.760091
+}
+[done]

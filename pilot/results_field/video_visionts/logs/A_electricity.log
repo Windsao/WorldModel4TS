@@ -1,0 +1,14 @@
+electricity: P=24 L=384 H=96 windows=646 pairs=2000
+[ok] mirrored forward matches official (max|d|=0.00e+00)
+{
+  "visionts_pretrained": 0.20135408639907837,
+  "visionts_zeroed": 0.8561775088310242,
+  "visionts_random": 1.26518976688385,
+  "smean": 0.20692041516304016,
+  "snaive": 0.33220574259757996,
+  "visionts_pretrained_mae": 0.2759915292263031,
+  "smean_mae": 0.2898780107498169
+}
+/nyx-storage1/hanliu/miniconda3/envs/wm4ts/lib/python3.10/site-packages/transformers/utils/hub.py:128: FutureWarning: Using `TRANSFORMERS_CACHE` is deprecated and will be removed in v5 of Transformers. Use `HF_HOME` instead.
+  warnings.warn(
+[done] electricity

@@ -1,0 +1,13 @@
+solar dense_rolling/right_10 P=144 L=2304 H=144 n=2000
+/nyx-storage1/hanliu/miniconda3/envs/wm4ts/lib/python3.10/site-packages/transformers/utils/hub.py:128: FutureWarning: Using `TRANSFORMERS_CACHE` is deprecated and will be removed in v5 of Transformers. Use `HF_HOME` instead.
+  warnings.warn(
+[ok] deterministic; hidden block is blank in the model input by construction
+{
+  "pretrained": 0.247251,
+  "zeroed": 0.26335,
+  "random": 0.264233,
+  "visionts": 0.272864,
+  "smean": 0.197332,
+  "snaive": 0.28515
+}
+[done] solar

@@ -1,0 +1,96 @@
+dataset=electricity mode=uni M=112 P=24 context=384 horizon=96 train=17933 test=646
+[done] snaive     {'MSE': 0.3401, 'MAE': 0.3334}
+[done] smean      {'MSE': 0.2071, 'MAE': 0.2886}
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+E0000 00:00:1788163675.591261    2825 cuda_dnn.cc:8579] Unable to register cuDNN factory: Attempting to register factory for plugin cuDNN when one has already been registered
+E0000 00:00:1788163675.595996    2825 cuda_blas.cc:1407] Unable to register cuBLAS factory: Attempting to register factory for plugin cuBLAS when one has already been registered
+W0000 00:00:1788163675.608288    2825 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
+W0000 00:00:1788163675.608452    2825 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
+W0000 00:00:1788163675.608585    2825 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
+W0000 00:00:1788163675.608699    2825 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
+[info] tune=frozen trainable=665952/86893152 (0.77%)
+[info] ep0 step 0 loss 0.7444
+[info] ep0 step 200 loss 0.7098
+[info] ep0 step 400 loss 0.8873
+[info] ep0 step 600 loss 0.6867
+[info] ep0 step 800 loss 1.2080
+[info] ep0 step 1000 loss 0.6310
+[info] ep0 step 1200 loss 0.7530
+[info] ep0 step 1400 loss 0.6059
+[info] ep0 step 1600 loss 0.6007
+[info] ep0 step 1800 loss 0.5923
+[info] ep0 step 2000 loss 0.6356
+[info] ep0 step 2200 loss 0.8395
+[info] ep0 step 2400 loss 0.9067
+[info] epoch 0 train MSE 0.7833
+[info] ep1 step 0 loss 0.8699
+[info] ep1 step 200 loss 0.5876
+[info] ep1 step 400 loss 0.7063
+[info] ep1 step 600 loss 0.6768
+[info] ep1 step 800 loss 0.7629
+[info] ep1 step 1000 loss 0.5504
+[info] ep1 step 1200 loss 0.7904
+[info] ep1 step 1400 loss 0.7560
+[info] ep1 step 1600 loss 0.6168
+[info] ep1 step 1800 loss 0.6329
+[info] ep1 step 2000 loss 0.6407
+[info] ep1 step 2200 loss 0.5086
+[info] ep1 step 2400 loss 0.6100
+[info] epoch 1 train MSE 0.6711
+[info] ep2 step 0 loss 0.6827
+[info] ep2 step 200 loss 0.6752
+[info] ep2 step 400 loss 0.5059
+[info] ep2 step 600 loss 0.6041
+[info] ep2 step 800 loss 0.5476
+[info] ep2 step 1000 loss 0.6564
+[info] ep2 step 1200 loss 0.5002
+[info] ep2 step 1400 loss 0.5837
+[info] ep2 step 1600 loss 0.4516
+[info] ep2 step 1800 loss 0.5393
+[info] ep2 step 2000 loss 0.5314
+[info] ep2 step 2200 loss 0.4778
+[info] ep2 step 2400 loss 0.5728
+[info] epoch 2 train MSE 0.5577
+[info] ep3 step 0 loss 0.5130
+[info] ep3 step 200 loss 0.6258
+[info] ep3 step 400 loss 0.3634
+[info] ep3 step 600 loss 0.4135
+[info] ep3 step 800 loss 0.4318
+[info] ep3 step 1000 loss 0.4442
+[info] ep3 step 1200 loss 0.4276
+[info] ep3 step 1400 loss 0.4325
+[info] ep3 step 1600 loss 0.5996
+[info] ep3 step 1800 loss 0.5397
+[info] ep3 step 2000 loss 0.4342
+[info] ep3 step 2200 loss 0.4448
+[info] ep3 step 2400 loss 0.4958
+[info] epoch 3 train MSE 0.4786
+[info] ep4 step 0 loss 0.3410
+[info] ep4 step 200 loss 0.3269
+[info] ep4 step 400 loss 0.5087
+[info] ep4 step 600 loss 0.4046
+[info] ep4 step 800 loss 0.4241
+[info] ep4 step 1000 loss 0.3804
+[info] ep4 step 1200 loss 0.5320
+[info] ep4 step 1400 loss 0.6179
+[info] ep4 step 1600 loss 0.3816
+[info] ep4 step 1800 loss 0.4060
+[info] ep4 step 2000 loss 0.5472
+[info] ep4 step 2200 loss 0.4042
+[info] ep4 step 2400 loss 0.6096
+[info] epoch 4 train MSE 0.4473
+[done] video_uni_rand_frozen_s0 MSE=0.4336 MAE=0.5257
+{
+  "snaive": {
+    "MSE": 0.3401,
+    "MAE": 0.3334
+  },
+  "smean": {
+    "MSE": 0.2071,
+    "MAE": 0.2886
+  },
+  "video_uni_rand_frozen_s0": {
+    "MSE": 0.4336,
+    "MAE": 0.5257
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "status": "complete",
+  "stage": "C",
+  "regime": "HA",
+  "dataset": "ETTh2",
+  "renderer": "dense_rolling",
+  "mask": "random_tube_90",
+  "mask_spatial_count": 176,
+  "mask_ratio": 0.898,
+  "mask_seed": 0,
+  "masked_cols": null,
+  "control": "pretrained",
+  "checkpoint": "MCG-NJU/videomae-base",
+  "norm_pix_loss": true,
+  "git_commit": "86ece3af7191c2b610f281695289b7dba8cbb3fe",
+  "git_dirty": true,
+  "torch": "2.13.0+cu130",
+  "transformers": "4.46.3",
+  "P": 24,
+  "context": 384,
+  "horizon": 96,
+  "M": 7,
+  "n_eval": 256,
+  "stride": 32,
+  "seed": 0,
+  "batch": 16,
+  "metrics": {
+    "native_model": 0.426249,
+    "native_zero": 0.897195,
+    "native_ratio": 0.475091,
+    "native_gain": 0.524909,
+    "raw_oracle_mse": 0.003377,
+    "raw_oracle_zero_mse": 0.007877,
+    "raw_causal_mse": {
+      "nearest_visible_left": 0.042999,
+      "context_global": 0.032161
+    },
+    "smean": 0.655768,
+    "snaive": 0.712025
+  },
+  "wall_clock_s": 6.7,
+  "peak_gpu_mem_gb": 2.11
+}

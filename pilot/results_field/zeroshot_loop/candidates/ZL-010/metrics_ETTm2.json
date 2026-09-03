@@ -1,0 +1,81 @@
+{
+  "status": "complete",
+  "candidate_id": "ZL-010",
+  "dataset": "ETTm2",
+  "split": "audit",
+  "manifest": {
+    "dataset": "ETTm2",
+    "split": "audit",
+    "P": 96,
+    "L": 1536,
+    "H": 96,
+    "M": 7,
+    "stride": 32,
+    "seed": 0,
+    "n": 192,
+    "n_origins": 119,
+    "pairs_sha1": "eff522b1d5beb4f0",
+    "range": [
+      29606,
+      34560
+    ]
+  },
+  "checkpoint": "MCG-NJU/videomae-base",
+  "motif_W": 192,
+  "n_candidates": 81,
+  "k": 3,
+  "query_candidate_min_gap_steps": 96,
+  "candidate_overlap_with_future": 0.0,
+  "config_hash": "aa97e828be40cc60",
+  "results": {
+    "pt_scroll_norm_cont_mse": 3.440159797668457,
+    "pt_scroll_ts_mse": 0.38705533742904663,
+    "rand_scroll_norm_cont_mse": 3.3232481479644775,
+    "rand_scroll_ts_mse": 0.39221492409706116,
+    "pt_permuted_norm_cont_mse": 3.8677117824554443,
+    "pt_permuted_ts_mse": 0.44700855016708374,
+    "pt_static_norm_cont_mse": 3.524681806564331,
+    "pt_static_ts_mse": 0.4251280128955841,
+    "raw_l2_norm_cont_mse": 2.497330904006958,
+    "raw_l2_ts_mse": 0.28094586730003357,
+    "prior_smean_ts_mse": 0.6360273957252502,
+    "prior_snaive_ts_mse": 0.2986755967140198,
+    "prior_last_ts_mse": 0.24920466542243958,
+    "prior_recent_mean_ts_mse": 0.24075190722942352,
+    "oracle_best_candidate_norm_mse": 1.295851469039917,
+    "boot_pt_scroll_vs_rand_scroll": {
+      "lo": 0.8912673592567444,
+      "hi": 1.031980276107788,
+      "p_better": 0.8804,
+      "n_origins": 119,
+      "block": 51,
+      "seed": 20260902
+    },
+    "boot_pt_scroll_vs_pt_permuted": {
+      "lo": 0.7644547820091248,
+      "hi": 0.8971368670463562,
+      "p_better": 1.0,
+      "n_origins": 119,
+      "block": 51,
+      "seed": 20260902
+    },
+    "boot_pt_scroll_vs_pt_static": {
+      "lo": 0.833870530128479,
+      "hi": 1.000304102897644,
+      "p_better": 0.9744,
+      "n_origins": 119,
+      "block": 51,
+      "seed": 20260902
+    },
+    "boot_pt_scroll_vs_raw_l2": {
+      "lo": 1.0625865459442139,
+      "hi": 1.6828938722610474,
+      "p_better": 0.0024,
+      "n_origins": 119,
+      "block": 51,
+      "seed": 20260902
+    }
+  },
+  "git_commit": "86ece3af7191c2b610f281695289b7dba8cbb3fe",
+  "wall_clock_s": 1808.6
+}

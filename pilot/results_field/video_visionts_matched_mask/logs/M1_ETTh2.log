@@ -1,0 +1,8 @@
+ETTh2 P=24 L=384 H=96 audit_n=252 geometry=4ctx/10fut
+/nyx-storage1/hanliu/miniconda3/envs/wm4ts/lib/python3.10/site-packages/transformers/utils/hub.py:128: FutureWarning: Using `TRANSFORMERS_CACHE` is deprecated and will be removed in v5 of Transformers. Use `HF_HOME` instead.
+  warnings.warn(
+[check] max relative subset-recombination error = 1.21e-08
+  right_future_100|seed0       all=0.9671 ctx=nan fut=0.9671
+  global_random_147|seed0      all=0.8613 ctx=0.5121 fut=1.0043
+  context_random_42|seed0      all=0.4727 ctx=0.4727 fut=nan
+[done] ETTh2

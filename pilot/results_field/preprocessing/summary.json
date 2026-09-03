@@ -1,0 +1,40 @@
+{
+  "ETTh1|period_matrix|xattn|std_clip_3|0": {
+    "pt": 0.4195,
+    "rand": 0.4469,
+    "smean": 0.4022,
+    "snaive": 0.512,
+    "absolute_gain": -0.04301342615614118,
+    "transfer_gain": 0.06131125531438808
+  },
+  "ETTm2|period_matrix|xattn|std_clip_3|0": {
+    "pt": 0.1719,
+    "rand": 0.1768,
+    "smean": 0.3224,
+    "snaive": 0.2631,
+    "absolute_gain": 0.4668114143920596,
+    "transfer_gain": 0.027714932126696918
+  },
+  "solar|period_matrix|xattn|std_clip_3|0": {
+    "pt": 0.1796,
+    "rand": 0.1846,
+    "smean": 0.2005,
+    "snaive": 0.289,
+    "absolute_gain": 0.10423940149625935,
+    "transfer_gain": 0.02708559046587203
+  },
+  "traffic|period_matrix|xattn|std_clip_3|0": {
+    "pt": 0.3358,
+    "rand": 0.3582,
+    "smean": 0.5175,
+    "snaive": 0.9626,
+    "absolute_gain": 0.3511111111111111,
+    "transfer_gain": 0.06253489670575106
+  },
+  "_heldout": {
+    "n": 4,
+    "beats_smean": 3,
+    "beats_random": 4,
+    "mean_transfer_gain": 0.04466166865317702
+  }
+}
