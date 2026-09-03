@@ -49,6 +49,33 @@ Nothing is blocking. The remaining open question is H-A (cross-channel transfer 
 origin), which is the only mechanism-level hypothesis never tested. It now has to clear a much
 higher bar: the ZL-051 blend, not VisionTS.
 
+
+## Backbone-positive attempt (ZL-060 / ZL-080 / ZL-100) — CLOSED for VideoMAE
+
+The preregistered bar has two conditions. On electricity, period_line, 120 origins:
+
+  (i)  pretrained / random-init = 0.6572, CI [0.6249, 0.6871]  -> PASSES
+  (ii) B / A                    = 1.0479, CI [1.0401, 1.0554]  -> FAILS (wrong direction)
+
+A = prior blend + raw-L2 retrieval, B = A + pretrained retrieval. Repeated on solar with the
+static rendering: pt/rand 1.0476, B/A 1.0356 — same direction. **BACKBONE-POSITIVE = False.**
+
+The renderer route (ZL-080) is KILLed: position-coded motion looked like a mechanism on four
+datasets and does not replicate (five-dataset geometric mean 0.990 vs 1.034 static).
+
+The negative is now sharper than "the weights are worth nothing": VideoMAE features are MORE
+structured than random by a wide, significant margin (eff_rank 16.98 vs 7.07, pt/rand 0.657) —
+the structure is simply not the structure forecasting needs, and normalised L2 captures more of it.
+
+## Open: a different backbone (ZL-110 / ZL-111)
+
+VideoMAE is a masked PIXEL autoencoder with norm_pix_loss=True, so its decoder structurally
+cannot emit absolute values. V-JEPA 2 predicts in REPRESENTATION space — the world-model framing
+this project is named for — and has no such blocker. A smoke test put its in-context ridge readout
+at pt/blend = 1.008 where VideoMAE sits at 1.43-2.15, a qualitative difference in readout quality.
+Running: ZL-110 (ridge, 4 datasets) and ZL-111 (the same B/A decisive test with V-JEPA 2).
+Isolated transformers 4.56.1 in {WD}/tfnew; activate with TFNEW=$PWD/tfnew.
+
 ## MANDATORY for any new decode path
 ZL-040 shipped an oracle-statistic leak: it de-normalized masked cubes with statistics taken from
 a video containing the true future. It was caught only by the suspicious-gain audit (zero logits

@@ -107,3 +107,24 @@ The method: four context-only priors combined by evidence-scaled weights
 
 It earns 15-27% of the blend weight from pseudo-origin evidence and is 24-31% worse at the real
 origin — the same **ranking-does-not-become-values** signature that closed families F1-F4.
+
+## Backbone-positive attempt — CLOSED for VideoMAE (ZL-060 / ZL-080 / ZL-100)
+
+| test | result | reading |
+|---|---|---|
+| pretrained / random-init | **0.6572**, CI [0.625, 0.687] | pretraining does something real |
+| pretrained / raw-L2 | 1.3384 | a trivial baseline is better |
+| **B / A** (adding it to the best video-free method) | **1.0479**, CI [1.040, 1.055] | **it makes that method worse** |
+
+Preregistered verdict **BACKBONE-POSITIVE = False**. Solar repeat: pt/rand 1.0476, B/A 1.0356.
+
+**Corrected finding.** Position-coded motion rendering looked like a mechanism on four datasets
+(pt/rand 0.73-0.87 vs 1.03 static) and does NOT replicate — ETTh2 and solar reverse it, and the
+five-dataset geometric mean is 0.990 vs 1.034. ZL-080 = KILL. What survives is (a) the boundary
+is whether the value is encoded as a POSITION, not how much motion there is, and (b) every
+earlier verdict was measured on a rendering with inter-frame difference exactly 0.0000.
+
+**The negative, in its sharpest form.** VideoMAE features are not unstructured — they are more
+structured than random by a wide, significant margin (effective rank 16.98 vs 7.07). The
+structure is not the structure forecasting needs, and a two-line normalised-L2 similarity
+captures more of it.
