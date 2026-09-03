@@ -543,3 +543,72 @@ Video foundation models do not usefully transfer to time-series forecasting. The
 The apparent competitiveness of the adapter is a strong linear baseline (NLinear + RevIN) with
 a generic parameter-count bump on top. This is a well-supported negative result in the spirit of
 *"Are Transformers Effective for Time Series Forecasting?"* (Zeng et al., AAAI 2023).
+
+---
+
+# 9. The zero-shot loop (2026-09-01 → 09-03): one positive, and the sharpest form of the negative
+
+A self-directed search over 20 preregistered candidates, each with a falsification rule fixed
+before the run and a verdict recorded in `pilot/results_field/zeroshot_loop/ledger.jsonl`.
+
+## 9.1 The positive result — and it contains no video model
+
+**ZL-051**: four context-only priors combined by evidence-scaled weights
+`w_p ∝ (L_min/L_p)^n_origins` over dense pseudo-origins. Zero trained parameters.
+
+> **Q_all = 0.9152 against VisionTS** on benchmark test windows at identical origins
+> (`pairs_sha1` verified). 4 wins with paired CI excluding 1, 2 ties, 0 losses.
+
+Report: `ZEROSHOT_POSITIVE_RESULT.md`. Code: `pilot/zeroshot_loop.py:pseudo_origin_blend`,
+`pilot/run_zl_locked.py`. Leak audit: `pilot/audit_zl051.py` (permuting the future leaves the
+prediction bit-identical; a zero prediction does not beat the prior).
+
+Three corrections were forced by the data, in order: argmin prior *selection* lost to a fixed
+`smean` on 5 of 6 datasets; plain averaging fixed ETT and broke the high-seasonality datasets;
+dense origins plus evidence-scaled sharpness repaired both regimes at once.
+
+## 9.2 The backbone: a real representation that is the wrong representation
+
+The preregistered backbone-positive bar has two conditions. On electricity, `period_line`,
+120 origins, paired moving-block bootstrap (`pilot/run_zl100_motion_crosschannel.py`):
+
+| | value | 95% CI | |
+|---|---|---|---|
+| (i) pretrained / random-init | **0.6572** | [0.6249, 0.6871] | **PASSES** |
+| (ii) B / A — adding it to the best video-free method | **1.0479** | [1.0401, 1.0554] | **FAILS**, wrong direction |
+
+where A = prior blend + raw-L2 retrieval, B = A + pretrained retrieval. Repeated on solar:
+pt/rand 1.0476, B/A 1.0356. **BACKBONE-POSITIVE = False.**
+
+So the failure is *not* that VideoMAE features are unstructured. They are more structured than
+random by a wide, significant margin (effective rank 16.98 vs 7.07,
+`pilot/diag_embedding_health.py`). The structure is not the structure forecasting needs, and a
+two-line normalised-L2 similarity captures more of it.
+
+## 9.3 A confound in every earlier verdict
+
+Every feature-route experiment in §§1–8 and in families F1–F4 fed VideoMAE **a static image
+repeated over all 16 frames** — measured inter-frame difference **exactly 0.0000** — while the
+frame-order audit had already shown the model reads the frame axis (permuting frames costs 11%,
+CI excluding 1). Rendering the value as a *position* that moves across frames changes the sign of
+the pretrained effect on individual datasets, though it does not replicate across all five
+(geometric mean 0.990 vs 1.034 static, so ZL-080 is a KILL).
+
+The negative conclusions survive — their margins were far larger than this confound — but
+"we used the period-matrix image" is no longer an adequate description of the model input.
+Report: `ZEROSHOT_BACKBONE_RENDERING.md`. Renderers: `pilot/video_renderers_motion.py`.
+
+## 9.4 Families closed
+
+| family | closed by | signature |
+|---|---|---|
+| F1 safe residual | ZL-001 | the gain came from the deterministic inversion path |
+| F2 analog retrieval | ZL-010 | frame order is read, but pretrained ≈ random and both lose to raw L2 |
+| F3 token kernel | ZL-031 | an ORACLE per-origin blend extracts −0.06% from the pretrained weights |
+| F4 temporal tubelet | ZL-040 | pretrained is 8.6% worse than emitting zero logits |
+| H-A cross-channel | ZL-060 / ZL-100 | pretrained beats random by 34% and still degrades the ensemble |
+| H-B renderer/regime | ZL-080 | does not replicate across datasets |
+
+ZL-040 shipped an oracle-statistic leak that was caught only by the mandatory suspicious-gain
+check (zero logits "beat" the prior 2.3x). Its forecast numbers were voided; its leak-free native
+metrics were kept. Every decode path is now audited before its numbers are read.
