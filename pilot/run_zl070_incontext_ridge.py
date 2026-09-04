@@ -54,7 +54,7 @@ def feats(model, win, P, raw=False, batch=64):
     return X.double().cpu().numpy(), mu.cpu().numpy(), sd.cpu().numpy()
 
 
-def ridge_fit_predict(Xtr, Ytr, Xte, lams=(1e-1, 1, 10, 1e2, 1e3, 1e4, 1e5), val=0.25, seed=0):
+def ridge_fit_predict(Xtr, Ytr, Xte, lams=None, val=0.25, seed=0):
     """Dual-form ridge in float64 with lambda picked on a held-out split of the TRAINING pairs.
 
     float64 through an SVD, not a fixed lambda in float32: probe_frozen.py originally did the
@@ -70,6 +70,14 @@ def ridge_fit_predict(Xtr, Ytr, Xte, lams=(1e-1, 1, 10, 1e2, 1e3, 1e4, 1e5), val
     A = Xtr[ti] - mu
     U, S, Vt = np.linalg.svd(A, full_matrices=False)
     UtY = U.T @ (Ytr[ti] - ym)
+    # lambda grid SCALED BY THE SPECTRUM. A fixed absolute grid is not scale-free: with 2560
+    # heavily overlapping training windows in 3072 dimensions the smallest fixed lambda (1e-1)
+    # is far below the noise floor, the min-norm solution's norm explodes, and the run returns
+    # MSEs ~1e6 times the prior (observed in ZL-122 at n_pseudo=16). Anchoring the grid to
+    # S[0]**2 makes the same relative shrinkage apply at any conditioning.
+    if lams is None:
+        s0 = float(S[0] ** 2) if len(S) else 1.0
+        lams = tuple(s0 * f for f in (1e-8, 1e-6, 1e-4, 1e-3, 1e-2, 1e-1, 1.0, 10.0))
     best, bl = None, None
     for lam in lams:
         W = Vt.T @ ((S[:, None] / (S[:, None] ** 2 + lam)) * UtY)
@@ -81,7 +89,12 @@ def ridge_fit_predict(Xtr, Ytr, Xte, lams=(1e-1, 1, 10, 1e2, 1e3, 1e4, 1e5), val
     A = Xtr - mu
     U, S, Vt = np.linalg.svd(A, full_matrices=False)
     W = Vt.T @ ((S[:, None] / (S[:, None] ** 2 + bl)) * (U.T @ (Ytr - ym)))
-    return (Xte - mu) @ W + ym, bl
+    pred = (Xte - mu) @ W + ym
+    # sanity clamp: a zero-shot readout may not produce values far outside the training targets.
+    # Without this a mis-selected lambda silently poisons an entire run.
+    lo_, hi_ = Ytr.min(), Ytr.max()
+    span = max(hi_ - lo_, 1e-8)
+    return np.clip(pred, lo_ - 2 * span, hi_ + 2 * span), bl
 
 
 def main():
