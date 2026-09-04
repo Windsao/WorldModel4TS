@@ -1,0 +1,81 @@
+{
+  "status": "complete",
+  "candidate_id": "ZL-130",
+  "dataset": "ETTm2",
+  "manifest": {
+    "dataset": "ETTm2",
+    "data_path": "/nyx-storage1/hanliu/wm4ts/data/ETTm2.csv",
+    "data_sha1": "7010eb61daf7f0dc",
+    "P": 96,
+    "context": 1536,
+    "horizon": 96,
+    "borders": [
+      34560,
+      46080,
+      57600
+    ],
+    "max_ch": 112,
+    "M": 7,
+    "stride": 8,
+    "n_windows": 1429,
+    "n_pairs": 2000,
+    "pairs_sha1": "61eeac383f9016da",
+    "seed": 0
+  },
+  "results": {
+    "n_origins": 110,
+    "M": 7,
+    "backbone": "videomae",
+    "renderer": "static_matrix",
+    "visionts_mse": 0.28132610221562737,
+    "pairs_sha1": "61eeac383f9016da",
+    "blend_mse": 0.21096500075360144,
+    "blend_over_visionts": 0.749894869662338,
+    "blend_ci": [
+      0.48921332612941265,
+      1.4108077298465247
+    ],
+    "evidence_pt_mse": 0.2219676638403256,
+    "evidence_pt_over_visionts": 0.7890048669219984,
+    "evidence_pt_ci": [
+      0.503101459726615,
+      1.5478417940735145
+    ],
+    "evidence_rand_mse": 0.21759232387048416,
+    "evidence_rand_over_visionts": 0.7734523108833559,
+    "evidence_rand_ci": [
+      0.5042673076487375,
+      1.5204548345320736
+    ],
+    "blend_plus_pt_mse": 0.23458885439524935,
+    "blend_plus_pt_over_visionts": 0.8338680717775863,
+    "blend_plus_pt_ci": [
+      0.5576872751373138,
+      1.6582931855978778
+    ],
+    "blend_plus_rand_mse": 0.224229147559364,
+    "blend_plus_rand_over_visionts": 0.7970435227780591,
+    "blend_plus_rand_ci": [
+      0.5275457251044373,
+      1.5484625976797777
+    ],
+    "blend_plus_rawL2_mse": 0.22409529761636507,
+    "blend_plus_rawL2_over_visionts": 0.7965677406094486,
+    "blend_plus_rawL2_ci": [
+      0.5154761225366656,
+      1.5705758908593457
+    ],
+    "pt_only_mse": 0.3396912487054413,
+    "pt_only_over_visionts": 1.2074643839663302,
+    "pt_only_ci": [
+      0.8034440928071068,
+      2.3966463738787844
+    ],
+    "video_weight_pt": 0.34458764013002985,
+    "evidence_pt_over_blend": 1.052153973632692,
+    "evidence_pt_over_rand": 1.0201079702262188,
+    "video_adds_over_blend": 1.1119799661425338,
+    "pretrained_over_random_in_ensemble": 1.0462014280866079
+  },
+  "wall_clock_s": 196.8
+}

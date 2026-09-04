@@ -122,3 +122,28 @@ def r_growing_matrix(z):
 RENDERERS = {"static_matrix": r_static_matrix, "period_dot": r_period_dot,
              "period_line": r_period_line, "period_bar": r_period_bar,
              "scroll": r_scroll, "growing_matrix": r_growing_matrix}
+
+
+# ---------------------------------------------------------------------------
+# frames = CHANNELS, not time.
+#
+# Every renderer above puts time on the frame axis, which asks the backbone to do temporal
+# extrapolation -- the thing six families of experiments say it cannot convert into values.
+# This one puts a DIFFERENT CHANNEL in each frame, all at the same origin. The model's
+# cross-frame attention then operates on cross-channel structure, which is (a) information no
+# univariate prior has, and (b) the only place any backbone in this repository showed an
+# advantage (electricity and traffic, both with hundreds of channels).
+#
+# Nothing is asked of the model that it was not pretrained to do: relate co-occurring frames.
+
+def r_channel_frames(zq, zc):
+    """zq [B,G,P] query channel, zc [B,T-1,G,P] co-observed channels -> [B,T,3,S,S].
+
+    Frame 0 is the query channel's period matrix; frames 1..T-1 are other channels observed at
+    the SAME origin. All values are at or before the origin, so the zero-shot contract holds.
+    """
+    B, G, P = zq.shape
+    T = zc.shape[1] + 1
+    allz = torch.cat([zq.unsqueeze(1), zc], 1).reshape(B * T, 1, G, P)
+    img = F.interpolate((allz + 1) / 2, size=(S, S), mode="bilinear", align_corners=False)
+    return img.reshape(B, T, S, S).unsqueeze(2).expand(B, T, 3, S, S).contiguous()

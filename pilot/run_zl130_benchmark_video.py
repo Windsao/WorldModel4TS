@@ -77,13 +77,20 @@ def main():
     t0 = time.time()
     data, borders, P, L, H, Xte, Yte, pairs, man = build_manifest(
         a.dataset, a.data_dir, a.max_ch, 8, 2000, a.seed)
+    # walk UP from --root: the reference lives beside the results tree, and --root may point
+    # several levels deeper (e.g. .../zeroshot_loop/v2), which a single dirname() misses.
     vp = None
-    for r_ in ("pilot/results_field/video_visionts",
-               os.path.join(os.path.dirname(a.root.rstrip("/")), "video_visionts")):
+    cands = ["pilot/results_field/video_visionts"]
+    d_ = os.path.abspath(a.root)
+    for _ in range(5):
+        d_ = os.path.dirname(d_)
+        cands.append(os.path.join(d_, "video_visionts"))
+    for r_ in cands:
         c = os.path.join(r_, "visionts_reference", f"visionts_{a.dataset}.json")
         if os.path.exists(c):
             vp = c
             break
+    assert vp is not None, f"VisionTS reference for {a.dataset} not found; searched {cands}"
     vj = json.load(open(vp))
     assert vj["manifest"]["pairs_sha1"] == man["pairs_sha1"], "manifest mismatch vs VisionTS"
     pw = vj["per_window_mse"]
@@ -95,8 +102,15 @@ def main():
     uo = np.unique(pairs[:, 0])
     lags = [H, H + P, H + 2 * P, H + 3 * P]
     keep = [w for w in uo if borders[1] + w * stride >= max(lags)]
-    step = max(1, len(keep) // a.max_origins)
-    wins = keep[::step][:a.max_origins]
+    # SPAN the whole test range. keep[::step][:max_origins] silently truncates to the FIRST
+    # max_origins*step windows -- on electricity that dropped the last 70 of 620 origins and made
+    # the subset systematically harder (blend/VisionTS 1.31 here vs 0.98 on the full manifest).
+    if len(keep) > a.max_origins:
+        sel = np.linspace(0, len(keep) - 1, a.max_origins).round().astype(int)
+        wins = [keep[i] for i in sorted(set(sel.tolist()))]
+    else:
+        wins = list(keep)
+    step = max(1, len(keep) // max(1, len(wins)))
     print(f"[ZL-130] {a.dataset} backbone={a.backbone} M={M} P={P} L={L} H={H} "
           f"origins {len(wins)}/{len(uo)}", flush=True)
 
@@ -110,15 +124,25 @@ def main():
     torch.manual_seed(a.seed)
     mr = MC(CC.from_pretrained(ckpt)).to(DEV).eval()
 
-    CTX, FUT, VTS, ORI = [], [], [], []
+    # Use EXACTLY the manifest's (window, channel) pairs. Averaging our error over channels
+    # 0..M-1 while VisionTS's stored per-window MSE averages over the manifest's SAMPLED channels
+    # is not a paired comparison: on electricity (321 channels) that made the prior blend look
+    # 1.1694x VisionTS here against 0.9832 on the full manifest -- a channel-selection artefact.
+    from collections import defaultdict
+    ch_of = defaultdict(list)
+    for w_, c_ in pairs:
+        ch_of[int(w_)].append(int(c_))
+    CTX, FUT, VTS, ORI, CHS = [], [], [], [], []
     for w in wins:
         t = borders[1] + int(w) * stride + L
-        if t + H > len(series[0]):
+        cs = sorted(set(ch_of[int(w)]))
+        if t + H > series.shape[1] or not cs:
             continue
-        CTX.append(np.stack([series[c, t - L:t] for c in range(M)]))
-        FUT.append(np.stack([series[c, t:t + H] for c in range(M)]))
+        CTX.append(np.stack([series[c, t - L:t] for c in cs]))
+        FUT.append(np.stack([series[c, t:t + H] for c in cs]))
         VTS.append(float(pw[str(int(w))]))
         ORI.append(int(w))
+        CHS.append(cs)
     ctx, fut = np.concatenate(CTX), np.concatenate(FUT)
     pr = {k_: v for k_, v in ZL.priors(ctx, P, H).items() if k_ in FAMILY}
     _, blend, _, _ = ZL.pseudo_origin_blend(ctx, P, H, pr, rule="pow_n", dense=True,
@@ -126,13 +150,16 @@ def main():
     Y = {"blend": blend}
     for nm in ("pt", "rand", "rawL2"):
         preds = []
-        for w in ORI:
+        for w, cs in zip(ORI, CHS):
             t = borders[1] + int(w) * stride + L
-            q = np.stack([series[c, t - L:t] for c in range(M)])
-            D = np.concatenate([np.stack([series[c, t - d - L:t - d] for c in range(M)])
+            # queries are the manifest's channels; DONORS may be any observed channel, which is
+            # the whole point of cross-channel retrieval and is still strictly zero-shot.
+            dc = list(range(M))
+            q = np.stack([series[c, t - L:t] for c in cs])
+            D = np.concatenate([np.stack([series[c, t - d - L:t - d] for c in dc])
                                 for d in lags])
             Df = torch.from_numpy(np.concatenate(
-                [np.stack([series[c, t - d:t - d + H] for c in range(M)]) for d in lags])
+                [np.stack([series[c, t - d:t - d + H] for c in dc]) for d in lags])
             ).float().to(DEV)
             with torch.no_grad():
                 if nm == "rawL2":
@@ -198,7 +225,10 @@ def main():
     for nm, y in arms.items():
         # per-sample MSE over the horizon first, then average the channels of each
         # origin -- that is exactly what the stored VisionTS per_window_mse is.
-        e = ((y - fut) ** 2).mean(1).reshape(len(ORI), M).mean(1)
+        pe = ((y - fut) ** 2).mean(1)
+        off, e = 0, np.empty(len(ORI))
+        for i_, cs in enumerate(CHS):
+            e[i_] = pe[off:off + len(cs)].mean(); off += len(cs)
         per[nm] = e
         res[f"{nm}_mse"] = float(e.mean())
         res[f"{nm}_over_visionts"] = float(e.mean() / vts.mean())

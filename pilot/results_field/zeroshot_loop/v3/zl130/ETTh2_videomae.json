@@ -1,0 +1,81 @@
+{
+  "status": "complete",
+  "candidate_id": "ZL-130",
+  "dataset": "ETTh2",
+  "manifest": {
+    "dataset": "ETTh2",
+    "data_path": "/nyx-storage1/hanliu/wm4ts/data/ETTh2.csv",
+    "data_sha1": "3c8512146f103b53",
+    "P": 24,
+    "context": 384,
+    "horizon": 96,
+    "borders": [
+      8640,
+      11520,
+      14400
+    ],
+    "max_ch": 112,
+    "M": 7,
+    "stride": 8,
+    "n_windows": 349,
+    "n_pairs": 2000,
+    "pairs_sha1": "f6a6a61163e73096",
+    "seed": 0
+  },
+  "results": {
+    "n_origins": 110,
+    "M": 7,
+    "backbone": "videomae",
+    "renderer": "static_matrix",
+    "visionts_mse": 0.32168972302566873,
+    "pairs_sha1": "f6a6a61163e73096",
+    "blend_mse": 0.32211683933318125,
+    "blend_over_visionts": 1.0013277275490657,
+    "blend_ci": [
+      0.750741805025366,
+      1.768148036935213
+    ],
+    "evidence_pt_mse": 0.3375060230152213,
+    "evidence_pt_over_visionts": 1.0491663203934263,
+    "evidence_pt_ci": [
+      0.7760318231840838,
+      1.8252225334608785
+    ],
+    "evidence_rand_mse": 0.3333030874703566,
+    "evidence_rand_over_visionts": 1.036101136012235,
+    "evidence_rand_ci": [
+      0.7855306480284606,
+      1.8427891536492995
+    ],
+    "blend_plus_pt_mse": 0.365957027981805,
+    "blend_plus_pt_over_visionts": 1.137608701141516,
+    "blend_plus_pt_ci": [
+      0.8624486016805618,
+      2.011860192109533
+    ],
+    "blend_plus_rand_mse": 0.36288106216479343,
+    "blend_plus_rand_over_visionts": 1.1280467984855018,
+    "blend_plus_rand_ci": [
+      0.8406120709444407,
+      1.9852539844389947
+    ],
+    "blend_plus_rawL2_mse": 0.3570490342838716,
+    "blend_plus_rawL2_over_visionts": 1.1099174413333106,
+    "blend_plus_rawL2_ci": [
+      0.8136779145669668,
+      1.9222283823569142
+    ],
+    "pt_only_mse": 0.5077488526871259,
+    "pt_only_over_visionts": 1.5783807076939504,
+    "pt_only_ci": [
+      1.2213336817352072,
+      2.651346450772879
+    ],
+    "video_weight_pt": 0.2966812696847454,
+    "evidence_pt_over_blend": 1.047775160447673,
+    "evidence_pt_over_rand": 1.012609950831129,
+    "video_adds_over_blend": 1.1361002695151796,
+    "pretrained_over_random_in_ensemble": 1.0084765123830428
+  },
+  "wall_clock_s": 221.3
+}

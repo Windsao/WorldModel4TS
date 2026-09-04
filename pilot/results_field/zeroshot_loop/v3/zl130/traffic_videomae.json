@@ -1,0 +1,81 @@
+{
+  "status": "complete",
+  "candidate_id": "ZL-130",
+  "dataset": "traffic",
+  "manifest": {
+    "dataset": "traffic",
+    "data_path": "/nyx-storage1/hanliu/wm4ts/data/traffic.txt",
+    "data_sha1": "3daa37ccbdc279fc",
+    "P": 24,
+    "context": 384,
+    "horizon": 96,
+    "borders": [
+      12280,
+      14035,
+      17544
+    ],
+    "max_ch": 112,
+    "M": 112,
+    "stride": 8,
+    "n_windows": 427,
+    "n_pairs": 2000,
+    "pairs_sha1": "3b3c83d22500ee46",
+    "seed": 0
+  },
+  "results": {
+    "n_origins": 97,
+    "M": 112,
+    "backbone": "videomae",
+    "renderer": "static_matrix",
+    "visionts_mse": 0.5469442832946163,
+    "pairs_sha1": "3b3c83d22500ee46",
+    "blend_mse": 0.513406384629128,
+    "blend_over_visionts": 0.9386813251553399,
+    "blend_ci": [
+      0.7755713458982403,
+      1.1374765073631752
+    ],
+    "evidence_pt_mse": 0.4959605917764119,
+    "evidence_pt_over_visionts": 0.9067844877889663,
+    "evidence_pt_ci": [
+      0.7527101247981978,
+      1.078188291660258
+    ],
+    "evidence_rand_mse": 0.48925379361379867,
+    "evidence_rand_over_visionts": 0.8945221817964553,
+    "evidence_rand_ci": [
+      0.7515747351049051,
+      1.062472797378517
+    ],
+    "blend_plus_pt_mse": 0.4600058346463036,
+    "blend_plus_pt_over_visionts": 0.8410469744292354,
+    "blend_plus_pt_ci": [
+      0.6992251059603578,
+      0.9864267442490118
+    ],
+    "blend_plus_rand_mse": 0.4396913615723361,
+    "blend_plus_rand_over_visionts": 0.8039052148489,
+    "blend_plus_rand_ci": [
+      0.6574133259630419,
+      0.9488027942652093
+    ],
+    "blend_plus_rawL2_mse": 0.38440234275832424,
+    "blend_plus_rawL2_over_visionts": 0.7028181014029588,
+    "blend_plus_rawL2_ci": [
+      0.5621897284074625,
+      0.8239620734842049
+    ],
+    "pt_only_mse": 0.5016799429335546,
+    "pt_only_over_visionts": 0.917241405123747,
+    "pt_only_ci": [
+      0.7646575024617068,
+      1.0569597114794418
+    ],
+    "video_weight_pt": 0.14344378150491607,
+    "evidence_pt_over_blend": 0.9660195249318558,
+    "evidence_pt_over_rand": 1.0137082190269278,
+    "video_adds_over_blend": 0.8959877563240675,
+    "pretrained_over_random_in_ensemble": 1.0462016651892432
+  },
+  "wall_clock_s": 3527.8
+}
