@@ -13,6 +13,16 @@ worse than a trivial seasonal-mean baseline**.
 > **Read [`PROGRESS.md`](PROGRESS.md) for the full record** — all 101 runs, per-file code
 > pointers, reproduction commands, and the config-matching audit.
 
+> **2026-09-06 update — the negative above is regime-specific.** The answer "no" holds for
+> *frozen, zero-shot* use of the backbone. In the *continual-pretraining* regime it flips:
+> after identical time-series continual pretraining (LOTSA subset, 20k steps, four arms that
+> differ only in encoder initialisation), the Kinetics-VideoMAE-initialised forecaster beats
+> VisionTS (Q = 0.787) and improves the strongest video-free method, the ZL-051 prior blend
+> (Q = 0.858, CI excluding 1 on 4/6 datasets), with the ordering video init > image init >
+> random. An autoregressive video model (MAGI-1) extrapolates rendered motion zero-shot but
+> still loses to the blend on real data. Report: [`VIDEO_TS_RESCUE_RESULTS.md`](VIDEO_TS_RESCUE_RESULTS.md);
+> plan and literature: [`VIDEO_TS_LITERATURE_AND_RESCUE_PLAN.md`](VIDEO_TS_LITERATURE_AND_RESCUE_PLAN.md).
+
 ### What we thought we had, and what it actually was
 
 An earlier version of this README claimed VideoMAE "becomes a competitive time-series
