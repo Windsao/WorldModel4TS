@@ -283,10 +283,19 @@ class Stream(IterableDataset):
 
 
 # ------------------------------------------------------------------ models / arms
-def fresh_model(seed):
+MAE_DECODER = dict(decoder_num_hidden_layers=8, decoder_hidden_size=512,
+                   decoder_num_attention_heads=16, decoder_intermediate_size=2048)
+
+
+def fresh_model(seed, decoder="vmae"):
+    """decoder='vmae': VideoMAE-B's 4x384 decoder; 'mae': the image MAE's 8x512 decoder shape
+    (needed to host the MAE pretrained decoder weights and as its capacity-matched controls)."""
     from transformers import VideoMAEForPreTraining, VideoMAEConfig
     cfg = VideoMAEConfig.from_pretrained("MCG-NJU/videomae-base")
     cfg.norm_pix_loss = False
+    if decoder == "mae":
+        for k, v in MAE_DECODER.items():
+            setattr(cfg, k, v)
     torch.manual_seed(seed)
     return VideoMAEForPreTraining(cfg)
 
@@ -323,8 +332,80 @@ def map_image_mae_to_videomae(mae_sd):
     return out
 
 
+def map_image_mae_decoder_to_videomae(mae_sd):
+    """official MAE ViT-B DECODER keys -> HF VideoMAE decoder keys (8x512 shape). The pixel head
+    (768 = 16*16*3 per image patch) is inflated to a tubelet head (1536 = 2*16*16*3) by stacking
+    it twice, so at init both frames of a tubelet get the image decoder's prediction; the
+    decoder_embed bias is dropped (HF's encoder_to_decoder has no bias); position embeddings are
+    fixed 3D sincos in HF and are not mapped."""
+    out = {"mask_token": mae_sd["mask_token"],
+           "encoder_to_decoder.weight": mae_sd["decoder_embed.weight"]}
+    for i in range(8):
+        s, d = f"decoder_blocks.{i}.", f"decoder.decoder_layers.{i}."
+        q_w, k_w, v_w = mae_sd[s + "attn.qkv.weight"].chunk(3, 0)
+        q_b, _, v_b = mae_sd[s + "attn.qkv.bias"].chunk(3, 0)
+        out[d + "attention.attention.query.weight"] = q_w
+        out[d + "attention.attention.key.weight"] = k_w
+        out[d + "attention.attention.value.weight"] = v_w
+        out[d + "attention.attention.q_bias"] = q_b
+        out[d + "attention.attention.v_bias"] = v_b
+        out[d + "attention.output.dense.weight"] = mae_sd[s + "attn.proj.weight"]
+        out[d + "attention.output.dense.bias"] = mae_sd[s + "attn.proj.bias"]
+        out[d + "layernorm_before.weight"] = mae_sd[s + "norm1.weight"]
+        out[d + "layernorm_before.bias"] = mae_sd[s + "norm1.bias"]
+        out[d + "layernorm_after.weight"] = mae_sd[s + "norm2.weight"]
+        out[d + "layernorm_after.bias"] = mae_sd[s + "norm2.bias"]
+        out[d + "intermediate.dense.weight"] = mae_sd[s + "mlp.fc1.weight"]
+        out[d + "intermediate.dense.bias"] = mae_sd[s + "mlp.fc1.bias"]
+        out[d + "output.dense.weight"] = mae_sd[s + "mlp.fc2.weight"]
+        out[d + "output.dense.bias"] = mae_sd[s + "mlp.fc2.bias"]
+    out["decoder.norm.weight"] = mae_sd["decoder_norm.weight"]
+    out["decoder.norm.bias"] = mae_sd["decoder_norm.bias"]
+    out["decoder.head.weight"] = torch.cat([mae_sd["decoder_pred.weight"]] * TS, 0)
+    out["decoder.head.bias"] = torch.cat([mae_sd["decoder_pred.bias"]] * TS, 0)
+    return out
+
+
+ARMS = ["vmae_full", "vmae_enc", "imae_enc", "random",           # 4x384 decoder (round 1)
+        "imae_full", "imae_enc_d8", "vmae_enc_d8", "random_d8"]  # 8x512 decoder (round 2)
+
+
+def _load_mae(mae_ckpt):
+    mae_sd = torch.load(mae_ckpt, map_location="cpu")
+    return mae_sd.get("model", mae_sd)
+
+
+def _overwrite(base, part):
+    sd = base.state_dict()
+    for k, v in part.items():
+        assert k in sd and sd[k].shape == v.shape, (k, sd[k].shape if k in sd else None, v.shape)
+    sd.update(part)
+    base.load_state_dict(sd)
+    return len(part)
+
+
 def build_arm(arm, seed, mae_ckpt):
     from transformers import VideoMAEForPreTraining
+    if arm.endswith("_d8") or arm == "imae_full":
+        base = fresh_model(seed, decoder="mae")    # shared fresh 8x512 decoder for the 3 controls
+        if arm == "random_d8":
+            return base, {"encoder_loaded": 0, "decoder": "fresh_8x512"}
+        if arm == "vmae_enc_d8":
+            pt = VideoMAEForPreTraining.from_pretrained("MCG-NJU/videomae-base")
+            n = _overwrite(base, {k: v for k, v in pt.state_dict().items() if k.startswith("videomae.")})
+            return base, {"encoder_loaded": n, "decoder": "fresh_8x512"}
+        mae_sd = _load_mae(mae_ckpt)
+        enc = map_image_mae_to_videomae(mae_sd)
+        missing = [k for k in base.state_dict() if k.startswith("videomae.") and k not in enc]
+        assert not missing, f"unmapped encoder keys: {missing[:5]}"
+        n = _overwrite(base, enc)
+        if arm == "imae_enc_d8":
+            return base, {"encoder_loaded": n, "decoder": "fresh_8x512"}
+        dec = map_image_mae_decoder_to_videomae(mae_sd)
+        missing = [k for k in base.state_dict() if not k.startswith("videomae.") and k not in dec]
+        assert not missing, f"unmapped decoder keys: {missing[:5]}"
+        m = _overwrite(base, dec)
+        return base, {"encoder_loaded": n, "decoder": f"pretrained_mae_{m}_tensors"}
     base = fresh_model(seed)                       # the shared fresh init (decoder for 3 arms)
     if arm == "random":
         return base, {"encoder_loaded": 0}
@@ -376,7 +457,7 @@ def main():
     ap.add_argument("--build-corpus", action="store_true")
     ap.add_argument("--lotsa-dir", default="/nyx-storage1/hanliu/wm4ts/lotsa")
     ap.add_argument("--corpus-dir", default="/nyx-storage1/hanliu/wm4ts/route_b/corpus")
-    ap.add_argument("--arm", choices=["vmae_full", "vmae_enc", "imae_enc", "random"])
+    ap.add_argument("--arm", choices=ARMS)
     ap.add_argument("--mae-ckpt", default="/nyx-storage1/hanliu/wm4ts/ckpt/mae_visualize_vit_base.pth")
     ap.add_argument("--out", default="/nyx-storage1/hanliu/wm4ts/route_b")
     ap.add_argument("--gpu", type=int, default=0)

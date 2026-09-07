@@ -9,7 +9,7 @@ import argparse, glob, json, os
 import numpy as np
 
 DS = ["ETTh1", "ETTh2", "ETTm2", "electricity", "traffic", "solar"]
-ARMS = ["vmae_full", "vmae_enc", "imae_enc", "random"]
+ARMS = ["vmae_full", "vmae_enc", "imae_enc", "random", "imae_full", "imae_enc_d8", "vmae_enc_d8", "random_d8"]
 
 
 def geo(xs):
@@ -31,7 +31,8 @@ def main():
     if not R:
         print("no results"); return
     methods = ["smean", "snaive", "blend"] + (["visionts"] if any("visionts_mse" in r for r in R.values()) else [])
-    methods += [f"video_{a}" for a in ARMS] + [f"blend+video_{a}" for a in ARMS]
+    present = [a for a in ARMS if any(f"video_{a}_mse" in r for r in R.values())]
+    methods += [f"video_{a}" for a in present] + [f"blend+video_{a}" for a in present]
     print(f"\n### MSE per dataset (stage {args.stage}, step {args.step})\n")
     print("| method | " + " | ".join(R) + " |")
     print("|---|" + "---:|" * len(R))
@@ -69,7 +70,7 @@ def main():
                 print(f"  {ds:12s} {b}")
     # verdicts
     print("\n### Verdicts\n")
-    for a in ARMS:
+    for a in present:
         m = f"video_{a}"
         qi = summ["Q"].get(m, {}).get("vs_video_random")
         qii = summ["Q"].get(f"blend+{m}", {}).get("vs_blend")

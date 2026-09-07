@@ -1,0 +1,156 @@
+{
+  "status": "complete",
+  "stage": "E",
+  "dataset": "ETTm2",
+  "step": 20000,
+  "manifest": {
+    "dataset": "ETTm2",
+    "split": "audit",
+    "P": 96,
+    "L": 1536,
+    "H": 96,
+    "M": 7,
+    "stride": 8,
+    "seed": 0,
+    "n": 2000,
+    "n_origins": 611,
+    "pairs_sha1": "894b94106e5d299d",
+    "range": [
+      29606,
+      34560
+    ]
+  },
+  "results": {
+    "n": 2000,
+    "P": 96,
+    "L": 1536,
+    "H": 96,
+    "hp": 2,
+    "n_pseudo_origins": 8,
+    "smean_mse": 0.5855913162231445,
+    "smean_mae": 0.4920407831668854,
+    "snaive_mse": 0.33783814311027527,
+    "snaive_mae": 0.34331071376800537,
+    "blend_mse": 0.24241639760905703,
+    "blend_mae": 0.3019393389767157,
+    "video_imae_full_mse": 0.23640795052051544,
+    "video_imae_full_mae": 0.3020571172237396,
+    "blend+video_imae_full_mse": 0.22577439477924224,
+    "blend+video_imae_full_mae": 0.2894282348353083,
+    "w_video_imae_full_in_blend_mean": 0.34122448108112385,
+    "video_imae_enc_d8_mse": 0.2402738630771637,
+    "video_imae_enc_d8_mae": 0.3106507658958435,
+    "blend+video_imae_enc_d8_mse": 0.22533030401815052,
+    "blend+video_imae_enc_d8_mae": 0.292651229386385,
+    "w_video_imae_enc_d8_in_blend_mean": 0.3192211160546625,
+    "video_vmae_enc_d8_mse": 0.22524474561214447,
+    "video_vmae_enc_d8_mae": 0.28829821944236755,
+    "blend+video_vmae_enc_d8_mse": 0.22119211534816574,
+    "blend+video_vmae_enc_d8_mae": 0.2852598910601735,
+    "w_video_vmae_enc_d8_in_blend_mean": 0.38727620564887716,
+    "video_random_d8_mse": 0.2563389241695404,
+    "video_random_d8_mae": 0.3202606439590454,
+    "blend+video_random_d8_mse": 0.23230790852712926,
+    "blend+video_random_d8_mae": 0.29810860067562367,
+    "w_video_random_d8_in_blend_mean": 0.29251886230668256,
+    "bootstrap": {
+      "video_imae_full_vs_blend": {
+        "lo": 0.9029716619299801,
+        "hi": 1.0864841391895421,
+        "p_better": 0.6438,
+        "n_origins": 611,
+        "block": 204,
+        "seed": 20260902
+      },
+      "blend+video_imae_full_vs_blend": {
+        "lo": 0.898156057094775,
+        "hi": 0.9708754672186708,
+        "p_better": 1.0,
+        "n_origins": 611,
+        "block": 204,
+        "seed": 20260902
+      },
+      "video_imae_full_vs_smean": {
+        "lo": 0.3520168960094452,
+        "hi": 0.48404446244239807,
+        "p_better": 1.0,
+        "n_origins": 611,
+        "block": 204,
+        "seed": 20260902
+      },
+      "video_imae_enc_d8_vs_blend": {
+        "lo": 0.9285675225539599,
+        "hi": 1.1319456761473448,
+        "p_better": 0.4524,
+        "n_origins": 611,
+        "block": 204,
+        "seed": 20260902
+      },
+      "blend+video_imae_enc_d8_vs_blend": {
+        "lo": 0.9058125402844901,
+        "hi": 0.9825557011007977,
+        "p_better": 1.0,
+        "n_origins": 611,
+        "block": 204,
+        "seed": 20260902
+      },
+      "video_imae_enc_d8_vs_smean": {
+        "lo": 0.3568441569805145,
+        "hi": 0.5132636427879333,
+        "p_better": 1.0,
+        "n_origins": 611,
+        "block": 204,
+        "seed": 20260902
+      },
+      "video_vmae_enc_d8_vs_blend": {
+        "lo": 0.8750182317763808,
+        "hi": 1.0232979416010028,
+        "p_better": 0.931,
+        "n_origins": 611,
+        "block": 204,
+        "seed": 20260902
+      },
+      "blend+video_vmae_enc_d8_vs_blend": {
+        "lo": 0.8783367704337226,
+        "hi": 0.9503238525747919,
+        "p_better": 1.0,
+        "n_origins": 611,
+        "block": 204,
+        "seed": 20260902
+      },
+      "video_vmae_enc_d8_vs_smean": {
+        "lo": 0.33150434494018555,
+        "hi": 0.4659197926521301,
+        "p_better": 1.0,
+        "n_origins": 611,
+        "block": 204,
+        "seed": 20260902
+      },
+      "video_random_d8_vs_blend": {
+        "lo": 0.9597658902006102,
+        "hi": 1.2373936754459187,
+        "p_better": 0.1416,
+        "n_origins": 611,
+        "block": 204,
+        "seed": 20260902
+      },
+      "blend+video_random_d8_vs_blend": {
+        "lo": 0.9277404340316943,
+        "hi": 1.0170059561797085,
+        "p_better": 0.9492,
+        "n_origins": 611,
+        "block": 204,
+        "seed": 20260902
+      },
+      "video_random_d8_vs_smean": {
+        "lo": 0.37774857878685,
+        "hi": 0.552864134311676,
+        "p_better": 1.0,
+        "n_origins": 611,
+        "block": 204,
+        "seed": 20260902
+      }
+    }
+  },
+  "wall_clock_s": 541.7
+}

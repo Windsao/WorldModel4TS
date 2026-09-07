@@ -150,3 +150,27 @@ def test_masked_loss_uses_future_tokens_only():
     with torch.no_grad():
         l3 = B.masked_loss(model, B.rows_to_video(torch.from_numpy(rows3)[None], "cpu"), mask, 4)
     assert abs(float(l1) - float(l3)) > 1e-4
+
+
+@pytest.mark.skipif(not os.path.exists("/nyx-storage1/hanliu/wm4ts/ckpt/mae_visualize_vit_base.pth") or not _hf_ok(),
+                    reason="MAE checkpoint only on the cluster")
+def test_image_mae_full_arm_loads_decoder_and_inflates_head():
+    ck = "/nyx-storage1/hanliu/wm4ts/ckpt/mae_visualize_vit_base.pth"
+    model, info = B.build_arm("imae_full", 0, ck)
+    rnd = B.fresh_model(0, decoder="mae").state_dict()
+    sd = model.state_dict()
+    dec_keys = [k for k in sd if not k.startswith("videomae.")]
+    changed = sum(not torch.equal(sd[k], rnd[k]) for k in dec_keys)
+    assert changed == len(dec_keys), (changed, len(dec_keys))
+    mae = torch.load(ck, map_location="cpu"); mae = mae.get("model", mae)
+    W = mae["decoder_pred.weight"]
+    assert torch.equal(sd["decoder.head.weight"][:768], W) and torch.equal(sd["decoder.head.weight"][768:], W)
+    assert sd["decoder.head.weight"].shape == (1536, 512) and sd["encoder_to_decoder.weight"].shape == (512, 768)
+    # the three 8x512 controls share the decoder init bit-for-bit
+    a = B.build_arm("vmae_enc_d8", 0, ck)[0].state_dict(); b = B.build_arm("random_d8", 0, ck)[0].state_dict()
+    c = B.build_arm("imae_enc_d8", 0, ck)[0].state_dict()
+    for k in dec_keys:
+        assert torch.equal(a[k], b[k]) and torch.equal(a[k], c[k])
+    rows = torch.zeros(1, B.NF, B.IMG, dtype=torch.int16) + 100
+    out = model(pixel_values=B.rows_to_video(rows, "cpu"), bool_masked_pos=B.forecast_mask(2)[None])
+    assert torch.isfinite(out.loss)

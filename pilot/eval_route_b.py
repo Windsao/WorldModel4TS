@@ -123,7 +123,7 @@ def main():
     ap.add_argument("--stage", default="F", choices=["E", "F"])
     ap.add_argument("--data-dir", default="/nyx-storage1/hanliu/wm4ts/data")
     ap.add_argument("--ckpt-root", default="/nyx-storage1/hanliu/wm4ts/route_b")
-    ap.add_argument("--arms", default="vmae_full,vmae_enc,imae_enc,random")
+    ap.add_argument("--arms", default=",".join(B.ARMS))
     ap.add_argument("--step", type=int, default=20000)
     ap.add_argument("--vts-ref-dir", default=os.path.join(HERE, "results_field", "video_visionts", "visionts_reference"))
     ap.add_argument("--out", default=os.path.join(HERE, "results_field", "route_b"))
