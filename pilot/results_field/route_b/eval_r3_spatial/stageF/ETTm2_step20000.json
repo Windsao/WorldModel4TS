@@ -1,0 +1,132 @@
+{
+  "status": "complete",
+  "stage": "F",
+  "dataset": "ETTm2",
+  "step": 20000,
+  "manifest": {
+    "dataset": "ETTm2",
+    "data_path": "/nyx-storage1/hanliu/wm4ts/data/ETTm2.csv",
+    "data_sha1": "7010eb61daf7f0dc",
+    "P": 96,
+    "context": 1536,
+    "horizon": 96,
+    "borders": [
+      34560,
+      46080,
+      57600
+    ],
+    "max_ch": 112,
+    "M": 7,
+    "stride": 8,
+    "n_windows": 1429,
+    "n_pairs": 2000,
+    "pairs_sha1": "61eeac383f9016da",
+    "seed": 0
+  },
+  "results": {
+    "n": 2000,
+    "P": 96,
+    "L": 1536,
+    "H": 96,
+    "hp": 2,
+    "n_pseudo_origins": 8,
+    "smean_mse": 0.33005815744400024,
+    "smean_mae": 0.3772425949573517,
+    "snaive_mse": 0.26509442925453186,
+    "snaive_mae": 0.30165013670921326,
+    "blend_mse": 0.200270480006918,
+    "blend_mae": 0.27820544411349707,
+    "video_vmae_enc_d8_spatial_mse": 0.18785956501960754,
+    "video_vmae_enc_d8_spatial_mae": 0.2715127468109131,
+    "blend+video_vmae_enc_d8_spatial_mse": 0.18454575080515348,
+    "blend+video_vmae_enc_d8_spatial_mae": 0.26679671752609596,
+    "w_video_vmae_enc_d8_spatial_in_blend_mean": 0.39073272092184,
+    "video_imae_enc_d8_spatial_mse": 0.18663720786571503,
+    "video_imae_enc_d8_spatial_mae": 0.27212291955947876,
+    "blend+video_imae_enc_d8_spatial_mse": 0.18425946078192856,
+    "blend+video_imae_enc_d8_spatial_mae": 0.26697678039321454,
+    "w_video_imae_enc_d8_spatial_in_blend_mean": 0.3974297791553164,
+    "video_random_d8_spatial_mse": 0.17991091310977936,
+    "video_random_d8_spatial_mae": 0.26887407898902893,
+    "blend+video_random_d8_spatial_mse": 0.18075565799464777,
+    "blend+video_random_d8_spatial_mae": 0.2651470500413543,
+    "w_video_random_d8_spatial_in_blend_mean": 0.4081534790861178,
+    "visionts_mse": 0.25085338950157166,
+    "visionts_pairs_sha1": "61eeac383f9016da",
+    "bootstrap": {
+      "video_vmae_enc_d8_spatial_vs_blend": {
+        "lo": 0.9085253499001728,
+        "hi": 1.015808197014259,
+        "p_better": 0.9366,
+        "n_origins": 1115,
+        "block": 204,
+        "seed": 20260902
+      },
+      "blend+video_vmae_enc_d8_spatial_vs_blend": {
+        "lo": 0.9144310005280025,
+        "hi": 0.9548246322612792,
+        "p_better": 1.0,
+        "n_origins": 1115,
+        "block": 204,
+        "seed": 20260902
+      },
+      "video_vmae_enc_d8_spatial_vs_smean": {
+        "lo": 0.4830154478549957,
+        "hi": 0.6740227341651917,
+        "p_better": 1.0,
+        "n_origins": 1115,
+        "block": 204,
+        "seed": 20260902
+      },
+      "video_imae_enc_d8_spatial_vs_blend": {
+        "lo": 0.908600719781627,
+        "hi": 1.0118098459518132,
+        "p_better": 0.9462,
+        "n_origins": 1115,
+        "block": 204,
+        "seed": 20260902
+      },
+      "blend+video_imae_enc_d8_spatial_vs_blend": {
+        "lo": 0.9147861463082754,
+        "hi": 0.9510855282963598,
+        "p_better": 1.0,
+        "n_origins": 1115,
+        "block": 204,
+        "seed": 20260902
+      },
+      "video_imae_enc_d8_spatial_vs_smean": {
+        "lo": 0.48279356956481934,
+        "hi": 0.6765933632850647,
+        "p_better": 1.0,
+        "n_origins": 1115,
+        "block": 204,
+        "seed": 20260902
+      },
+      "video_random_d8_spatial_vs_blend": {
+        "lo": 0.8707492196233996,
+        "hi": 0.9851768010623457,
+        "p_better": 0.9882,
+        "n_origins": 1115,
+        "block": 204,
+        "seed": 20260902
+      },
+      "blend+video_random_d8_spatial_vs_blend": {
+        "lo": 0.8940401729109096,
+        "hi": 0.944484989250738,
+        "p_better": 1.0,
+        "n_origins": 1115,
+        "block": 204,
+        "seed": 20260902
+      },
+      "video_random_d8_spatial_vs_smean": {
+        "lo": 0.4624198079109192,
+        "hi": 0.6528990268707275,
+        "p_better": 1.0,
+        "n_origins": 1115,
+        "block": 204,
+        "seed": 20260902
+      }
+    }
+  },
+  "wall_clock_s": 462.8
+}

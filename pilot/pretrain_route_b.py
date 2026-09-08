@@ -226,6 +226,7 @@ def masked_loss(model, vid, mask, hp):
     """raw-pixel MSE on the FUTURE tokens only for forecast batches (masked tokens are ordered by
     token index, so the future tubelets are the last n_future tokens); all masked tokens for tube
     batches. Labels use the exact HF packing via videomae_patch_utils."""
+    set_attn_bias(model, mask[0])
     out = model(pixel_values=vid, bool_masked_pos=mask)
     logits = out.logits.float()
     B = vid.shape[0]
@@ -242,6 +243,57 @@ def tube_mask(rng, ratio=0.75):
     m = torch.zeros(TT, n, dtype=torch.bool)
     m[:, cols] = True
     return m.flatten()
+
+
+# ------------------------------------------------------------------ encoder attention constraint
+def _spatial_attn_forward(self, hidden_states, head_mask=None, output_attentions=False):
+    """HF VideoMAE self-attention (transformers 4.46.3 default = SDPA) plus an additive attention
+    bias `self._attn_bias` [n_vis, n_vis] (0 within a tubelet, -1e4 across tubelets), so the
+    ENCODER sees each tubelet as an independent image while the decoder keeps full attention.
+    Uses scaled_dot_product_attention so no [B, heads, n, n] probability tensor is materialised."""
+    k_bias = torch.zeros_like(self.v_bias, requires_grad=False) if self.q_bias is not None else None
+    keys = F.linear(input=hidden_states, weight=self.key.weight, bias=k_bias)
+    values = F.linear(input=hidden_states, weight=self.value.weight, bias=self.v_bias)
+    queries = F.linear(input=hidden_states, weight=self.query.weight, bias=self.q_bias)
+    key_layer = self.transpose_for_scores(keys)
+    value_layer = self.transpose_for_scores(values)
+    query_layer = self.transpose_for_scores(queries)
+    bias = getattr(self, "_attn_bias", None)
+    if bias is not None:
+        bias = bias.to(query_layer.dtype)
+    context_layer = F.scaled_dot_product_attention(
+        query_layer, key_layer, value_layer, attn_mask=bias,
+        dropout_p=self.dropout.p if self.training else 0.0)
+    context_layer = context_layer.permute(0, 2, 1, 3).contiguous()
+    context_layer = context_layer.view(context_layer.size()[:-2] + (self.all_head_size,))
+    return (context_layer, None) if output_attentions else (context_layer,)
+
+
+def apply_spatial_attention(model):
+    """patch every ENCODER self-attention module (decoder untouched)."""
+    import types
+    n = 0
+    for layer in model.videomae.encoder.layer:
+        att = layer.attention.attention
+        att.forward = types.MethodType(_spatial_attn_forward, att)
+        att._attn_bias = None
+        n += 1
+    model._spatial_attention = True
+    return n
+
+
+def set_attn_bias(model, mask_row):
+    """mask_row: bool [N_TOK] (same for the batch). Visible tokens keep their tubelet-major order
+    inside HF VideoMAE, so visible token i belongs to tubelet (global index // 196)."""
+    if not getattr(model, "_spatial_attention", False):
+        return
+    idx = torch.nonzero(~mask_row.reshape(-1)).flatten()
+    tid = idx // (GH * GH)
+    same = tid[:, None] == tid[None, :]
+    bias = torch.where(same, torch.zeros((), dtype=torch.float32), torch.full((), -1e4, dtype=torch.float32))
+    dev = next(model.parameters()).device
+    for layer in model.videomae.encoder.layer:
+        layer.attention.attention._attn_bias = bias.to(dev)
 
 
 # ------------------------------------------------------------------ data stream
@@ -471,6 +523,9 @@ def main():
     ap.add_argument("--save-every", type=int, default=2500)
     ap.add_argument("--val-every", type=int, default=1000)
     ap.add_argument("--val-batches", type=int, default=8)
+    ap.add_argument("--enc-attn", choices=["full", "spatial"], default="full",
+                    help="spatial: encoder attends only within each tubelet (decoder unchanged)")
+    ap.add_argument("--tag", default="", help="suffix for the output dir, e.g. _spatial or _60k")
     args = ap.parse_args()
 
     if args.build_corpus:
@@ -480,8 +535,10 @@ def main():
     dev = f"cuda:{args.gpu}"
     torch.cuda.set_device(args.gpu)
     model, info = build_arm(args.arm, args.seed, args.mae_ckpt)
+    if args.enc_attn == "spatial":
+        info["spatial_attention_layers"] = apply_spatial_attention(model)
     model = model.to(dev).train()
-    out_dir = os.path.join(args.out, args.arm)
+    out_dir = os.path.join(args.out, args.arm + args.tag)
     os.makedirs(out_dir, exist_ok=True)
     json.dump({**vars(args), **info}, open(os.path.join(out_dir, "run_config.json"), "w"), indent=1)
     print(f"[{args.arm}] {info}  params {sum(p.numel() for p in model.parameters())/1e6:.1f}M", flush=True)

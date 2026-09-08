@@ -38,6 +38,11 @@ class VideoForecaster:
         from transformers import VideoMAEForPreTraining
         self.model = VideoMAEForPreTraining.from_pretrained(ckpt).to(device).eval()
         self.device, self.batch = device, batch
+        rc = os.path.join(os.path.dirname(ckpt.rstrip("/")), "run_config.json")
+        self.enc_attn = json.load(open(rc)).get("enc_attn", "full") if os.path.exists(rc) else "full"
+        if self.enc_attn == "spatial":
+            B.apply_spatial_attention(self.model)
+            print(f"[spatial encoder attention] {ckpt}", flush=True)
 
     @torch.no_grad()
     def __call__(self, ctx, P, H):
@@ -66,6 +71,7 @@ class VideoForecaster:
             r = torch.from_numpy(rows[s:s + self.batch])
             m = mask[None].expand(r.shape[0], -1)
             vid = B.rows_to_video(r, self.device)
+            B.set_attn_bias(self.model, mask)
             with torch.autocast("cuda", dtype=torch.bfloat16, enabled=self.device.startswith("cuda")):
                 logits = self.model(pixel_values=vid, bool_masked_pos=m.to(self.device)).logits
             logits = logits.float()[:, -nf:]

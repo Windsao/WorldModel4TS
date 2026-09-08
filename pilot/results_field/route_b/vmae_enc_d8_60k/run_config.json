@@ -1,0 +1,23 @@
+{
+ "build_corpus": false,
+ "lotsa_dir": "/nyx-storage1/hanliu/wm4ts/lotsa",
+ "corpus_dir": "/nyx-storage1/hanliu/wm4ts/route_b/corpus",
+ "arm": "vmae_enc_d8",
+ "mae_ckpt": "/nyx-storage1/hanliu/wm4ts/ckpt/mae_visualize_vit_base.pth",
+ "out": "/nyx-storage1/hanliu/wm4ts/route_b",
+ "gpu": 0,
+ "steps": 60000,
+ "batch": 32,
+ "lr": 0.0001,
+ "warmup": 500,
+ "wd": 0.05,
+ "seed": 0,
+ "workers": 6,
+ "save_every": 10000,
+ "val_every": 1000,
+ "val_batches": 8,
+ "enc_attn": "full",
+ "tag": "_60k",
+ "encoder_loaded": 184,
+ "decoder": "fresh_8x512"
+}

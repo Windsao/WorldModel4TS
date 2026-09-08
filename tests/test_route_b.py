@@ -174,3 +174,26 @@ def test_image_mae_full_arm_loads_decoder_and_inflates_head():
     rows = torch.zeros(1, B.NF, B.IMG, dtype=torch.int16) + 100
     out = model(pixel_values=B.rows_to_video(rows, "cpu"), bool_masked_pos=B.forecast_mask(2)[None])
     assert torch.isfinite(out.loss)
+
+
+@pytest.mark.skipif(not _hf_ok(), reason="transformers/VideoMAE not importable here")
+def test_spatial_attention_equals_per_tubelet_encoding():
+    """with the block bias, an encoder layer on the full visible sequence must equal running the
+    same layer on each tubelet's tokens separately; with no bias it must equal the stock forward."""
+    model = B.fresh_model(0).eval()
+    mask = B.forecast_mask(4, lead_tubelets=1)                            # tubelets 1..5 visible
+    rows = torch.zeros(1, B.NF, B.IMG, dtype=torch.int16) + 100
+    vid = B.rows_to_video(rows, "cpu")
+    with torch.no_grad():
+        ref = model(pixel_values=vid, bool_masked_pos=mask[None]).logits.clone()
+        B.apply_spatial_attention(model)
+        same = model(pixel_values=vid, bool_masked_pos=mask[None]).logits    # bias None -> stock
+        assert torch.allclose(ref, same, atol=1e-5)
+        B.set_attn_bias(model, mask)
+        emb = model.videomae.embeddings(vid, mask[None])                    # [1, n_vis, 768]
+        layer = model.videomae.encoder.layer[0]
+        full = layer(emb)[0]
+        idx = torch.nonzero(~mask).flatten() // (B.GH * B.GH)
+        layer.attention.attention._attn_bias = None
+        parts = torch.cat([layer(emb[:, idx == t])[0] for t in idx.unique()], 1)
+        assert torch.allclose(full, parts, atol=1e-4), (full - parts).abs().max()
