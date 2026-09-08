@@ -1,0 +1,32 @@
+{
+ "dataset": "ETTm2",
+ "pred_len": 336,
+ "period": 96,
+ "context": 4032,
+ "model": "vmf_auto",
+ "stride": 1,
+ "mode": "multiperiod",
+ "scales": "1",
+ "plan": [
+  96,
+  4,
+  1,
+  12,
+  0
+ ],
+ "n_origins": 11185,
+ "n_origins_all": 11185,
+ "origin_range": null,
+ "se": 8111569.230163574,
+ "ae": 8946424.966064453,
+ "cnt": 26307120,
+ "n_channels": 7,
+ "mse": 0.30834121067466047,
+ "mae": 0.34007618340831125,
+ "wall_s": 1636.7,
+ "raw_shape": [
+  69680,
+  7
+ ],
+ "test_start": 46080
+}

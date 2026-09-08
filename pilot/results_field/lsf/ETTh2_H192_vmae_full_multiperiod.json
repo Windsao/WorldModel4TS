@@ -1,0 +1,32 @@
+{
+ "dataset": "ETTh2",
+ "pred_len": 192,
+ "period": 24,
+ "context": 1728,
+ "model": "vmae_full",
+ "stride": 1,
+ "mode": "multiperiod",
+ "scales": "1",
+ "plan": [
+  48,
+  4,
+  2,
+  12,
+  0
+ ],
+ "n_origins": 2689,
+ "n_origins_all": 2689,
+ "origin_range": null,
+ "se": 1348909.2039794922,
+ "ae": 1426202.4440917969,
+ "cnt": 3614016,
+ "n_channels": 7,
+ "mse": 0.37324383842780223,
+ "mae": 0.39463091588188787,
+ "wall_s": 466.6,
+ "raw_shape": [
+  17420,
+  7
+ ],
+ "test_start": 11520
+}

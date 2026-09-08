@@ -1,0 +1,32 @@
+{
+ "dataset": "weather",
+ "pred_len": 96,
+ "period": 144,
+ "context": 4032,
+ "model": "vmf_auto",
+ "stride": 1,
+ "mode": "multiperiod",
+ "scales": "1",
+ "plan": [
+  144,
+  2,
+  1,
+  14,
+  0
+ ],
+ "n_origins": 10444,
+ "n_origins_all": 10444,
+ "origin_range": null,
+ "se": 3114353.282775879,
+ "ae": 3886407.4536132812,
+ "cnt": 21055104,
+ "n_channels": 21,
+ "mse": 0.14791440986355986,
+ "mae": 0.18458267665708425,
+ "wall_s": 4481.7,
+ "raw_shape": [
+  52696,
+  21
+ ],
+ "test_start": 42157
+}

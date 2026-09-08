@@ -1,0 +1,18 @@
+{
+ "dataset": "ETTh1",
+ "pred_len": 96,
+ "period": 24,
+ "context": 2880,
+ "model": "visionts",
+ "stride": 1,
+ "n_origins": 2785,
+ "n_channels": 7,
+ "mse": 0.35274977553978204,
+ "mae": 0.38327986846940787,
+ "wall_s": 38.8,
+ "raw_shape": [
+  17420,
+  7
+ ],
+ "test_start": 11520
+}

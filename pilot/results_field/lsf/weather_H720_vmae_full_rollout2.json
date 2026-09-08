@@ -1,0 +1,27 @@
+{
+ "dataset": "weather",
+ "pred_len": 720,
+ "period": 144,
+ "context": 4032,
+ "model": "vmae_full",
+ "stride": 1,
+ "mode": "rollout2",
+ "scales": "1",
+ "plan": [
+  144,
+  4,
+  1,
+  12,
+  0
+ ],
+ "n_origins": 9820,
+ "n_channels": 21,
+ "mse": 0.30297464855894024,
+ "mae": 0.31374627144840594,
+ "wall_s": 7801.2,
+ "raw_shape": [
+  52696,
+  21
+ ],
+ "test_start": 42157
+}

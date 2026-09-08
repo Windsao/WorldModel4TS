@@ -53,6 +53,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dir", default="pilot/results_field/lsf")
     ap.add_argument("--tag", default="vmf_auto")
+    ap.add_argument("--use-ensemble", action="store_true", help="report ensemble_mse (ours + extra models) instead of ours alone")
     args = ap.parse_args()
     R = load(args.dir, args.tag)
     print(f"\n### {args.tag} vs VisionTS (paper), MSE / MAE per horizon\n")
@@ -66,9 +67,10 @@ def main():
             v = VTS_PAPER[ds][H]
             if r is None:
                 print(f"| {ds} | {H} | — | — | {v[0]:.3f} | {v[1]:.3f} | — |"); continue
-            ms.append(r["mse"]); ma.append(r["mae"])
+            mse_, mae_ = (r["ensemble_mse"], r["ensemble_mae"]) if args.use_ensemble and "ensemble_mse" in r else (r["mse"], r["mae"])
+            ms.append(mse_); ma.append(mae_)
             flag = " (partial " + r["INCOMPLETE"] + ")" if "INCOMPLETE" in r else ""
-            print(f"| {ds} | {H} | {r['mse']:.3f}{flag} | {r['mae']:.3f} | {v[0]:.3f} | {v[1]:.3f} | {r['mse'] / v[0]:.3f} |")
+            print(f"| {ds} | {H} | {mse_:.3f}{flag} | {mae_:.3f} | {v[0]:.3f} | {v[1]:.3f} | {mse_ / v[0]:.3f} |")
         if len(ms) == 4:
             avg[ds] = (float(np.mean(ms)), float(np.mean(ma)))
     print(f"\n### average over horizons (MSE), published zero-shot baselines vs {args.tag}\n")
@@ -83,8 +85,8 @@ def main():
         vals = [v for v in row if v is not None]
         mean = np.mean(vals) if len(vals) == len(DS) else None
         print(f"| {m} | " + " | ".join("—" if v is None else f"{v:.3f}" for v in row) + f" | {'—' if mean is None else f'{mean:.3f}'} |")
-    json.dump({"per_horizon": {f"{k[0]}_{k[1]}": {"mse": v["mse"], "mae": v["mae"]} for k, v in R.items()}, "avg": avg},
-              open(os.path.join(args.dir, f"summary_{args.tag}.json"), "w"), indent=1)
+    json.dump({"per_horizon": {f"{k[0]}_{k[1]}": {"mse": v["mse"], "mae": v["mae"], "ensemble_mse": v.get("ensemble_mse")} for k, v in R.items()}, "avg": avg},
+              open(os.path.join(args.dir, f"summary_{args.tag}{'_ens' if args.use_ensemble else ''}.json"), "w"), indent=1)
 
 
 if __name__ == "__main__":

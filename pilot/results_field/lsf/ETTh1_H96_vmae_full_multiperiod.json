@@ -1,0 +1,30 @@
+{
+ "dataset": "ETTh1",
+ "pred_len": 96,
+ "period": 24,
+ "context": 2880,
+ "model": "vmae_full",
+ "stride": 1,
+ "mode": "multiperiod",
+ "plan": [
+  24,
+  4,
+  1,
+  12,
+  0
+ ],
+ "n_origins": 2785,
+ "n_channels": 7,
+ "mse": 0.4184930601802414,
+ "mae": 0.40462924060102423,
+ "wall_s": 131.5,
+ "raw_shape": [
+  17420,
+  7
+ ],
+ "test_start": 11520,
+ "blend_mse": 0.483313028500567,
+ "blend_mae": 0.47730014663249765,
+ "avg_model_blend_mse": 0.3972488861185848,
+ "avg_model_blend_mae": 0.41756083549280404
+}

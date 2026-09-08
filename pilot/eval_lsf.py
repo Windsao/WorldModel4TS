@@ -36,7 +36,7 @@ FILES = {"ETTh1": "ETTh1.csv", "ETTh2": "ETTh2.csv", "ETTm1": "ETTm1.csv", "ETTm
 
 
 # ------------------------------------------------------------------ data (TSL convention)
-def load_lsf(dataset, data_dir):
+def load_lsf(dataset, data_dir, split="test"):
     """-> (data float32 [N, C] standardised with TRAIN stats, test_start index, raw shape)."""
     import pandas as pd
     path = os.path.join(data_dir, FILES[dataset])
@@ -59,6 +59,8 @@ def load_lsf(dataset, data_dir):
     mean = raw[:n_train].mean(0); std = raw[:n_train].std(0)          # sklearn StandardScaler (ddof=0)
     std = np.where(std == 0, 1.0, std)
     data = ((raw - mean) / std).astype(np.float32)
+    if split == "val":                                                  # validation origins: n_train .. n_val_end-H
+        return data[:n_val_end], n_train, raw.shape
     return data[:test_end], n_val_end, raw.shape
 
 
@@ -200,10 +202,11 @@ def main():
     ap.add_argument("--scales", default="1", help="comma list of k multipliers to ensemble, e.g. 1,2,4")
     ap.add_argument("--extra-models", default="", help="comma list of extra members ('visionts' or Route-B ckpt dirs) averaged with --model; each member's own MSE is also recorded")
     ap.add_argument("--limit", type=int, default=None, help="debug: first k origins only")
+    ap.add_argument("--split", default="test", choices=["test", "val"], help="val = recipe selection on the validation segment")
     ap.add_argument("--origin-range", default=None, help="a:b slice of the origin list (for splitting a dataset over GPUs); partial sums are saved and merged by summarize_lsf.py")
     args = ap.parse_args()
     t0 = time.time()
-    data, test_start, shape = load_lsf(args.dataset, args.data_dir)
+    data, test_start, shape = load_lsf(args.dataset, args.data_dir, args.split)
     N, C = data.shape
     H, P = args.pred_len, PERIOD[args.dataset]
     if args.mode == "auto":
@@ -214,7 +217,7 @@ def main():
         k_max = max(1, 96 // P)
         if H <= 4 * P:
             args.mode = "multiperiod"
-            args.scales = ",".join(str(s_) for s_ in (1, 2, 4) if s_ * P <= 96)
+            args.scales = ",".join(str(s_) for s_ in (1, 2, 4) if s_ * P <= 96) or "1"
         else:
             k_direct = int(math.ceil(H / (4 * P)))
             # hourly data (P=24): 2-pass rollout with 4 periods/frame beat 8 periods/frame direct
@@ -222,7 +225,8 @@ def main():
             # 2-pass rollout (ETTm2 H720 0.371 vs 0.409). Rule: rollout only when P < 96.
             passes = int(math.ceil(k_direct / k_max)) if P < 96 else 1
             args.mode = "multiperiod" if passes == 1 else f"rollout{passes}"
-            args.scales = "1"
+            # extra scales only where the frame stays at <= 96 samples (k*s*P <= 96)
+            args.scales = ",".join(str(s_) for s_ in (1, 2, 4) if passes == 1 and k_direct * s_ * P <= 96) or "1"
         print(f"[auto] mode={args.mode} scales={args.scales}", flush=True)
     L = args.context or VTS_CONTEXT[args.dataset]
     origins = np.arange(test_start, N - H + 1, args.stride)
@@ -264,7 +268,7 @@ def main():
             se_mb += float(((mb - tgt) ** 2).sum()); ae_mb += float(np.abs(mb - tgt).sum())
         if (s // args.origin_batch) % 20 == 0:
             print(f"  {s + len(ob)}/{len(origins)} origins  mse so far {se / cnt:.4f}  ({time.time() - t0:.0f}s)", flush=True)
-    res = {"dataset": args.dataset, "pred_len": H, "period": P, "context": L, "model": tag, "stride": args.stride, "mode": args.mode, "scales": args.scales,
+    res = {"dataset": args.dataset, "pred_len": H, "period": P, "context": L, "model": tag, "stride": args.stride, "mode": args.mode, "scales": args.scales, "split": args.split,
            "plan": list(RouteBForecaster.plan(P, H, L, args.mode)) if args.model != "visionts" else None,
            "n_origins": int(len(origins)), "n_origins_all": int(n_all), "origin_range": args.origin_range,
            "se": se, "ae": ae, "cnt": cnt, "n_channels": int(C), "mse": se / cnt, "mae": ae / cnt,
@@ -275,7 +279,7 @@ def main():
         res["extra_models"] = {m: se_x[m] / cnt for m, _ in extras}
         res["ensemble_mse"] = se_ens / cnt; res["ensemble_mae"] = ae_ens / cnt
     os.makedirs(args.out, exist_ok=True)
-    p = os.path.join(args.out, f"{args.dataset}_H{H}_{tag}{'_' + args.mode if args.model != 'visionts' else ''}{'_sc' + args.scales.replace(',', '') if args.scales != '1' else ''}{'_ens' + str(len(extras)) if extras else ''}{'_s' + str(args.stride) if args.stride != 1 else ''}{'_r' + args.origin_range.replace(':', '-') if args.origin_range else ''}.json")
+    p = os.path.join(args.out, f"{args.dataset}_H{H}_{tag}{'_' + args.mode if args.model != 'visionts' else ''}{'_sc' + args.scales.replace(',', '') if args.scales != '1' else ''}{'_ens' + str(len(extras)) if extras else ''}{'_s' + str(args.stride) if args.stride != 1 else ''}{'_r' + args.origin_range.replace(':', '-') if args.origin_range else ''}{'_val' if args.split == 'val' else ''}.json")
     json.dump(res, open(p, "w"), indent=1)
     print(json.dumps({k: (round(v, 4) if isinstance(v, float) else v) for k, v in res.items()}), flush=True)
 

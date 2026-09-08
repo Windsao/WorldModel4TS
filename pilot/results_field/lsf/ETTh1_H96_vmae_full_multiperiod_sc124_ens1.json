@@ -1,0 +1,32 @@
+{
+ "dataset": "ETTh1",
+ "pred_len": 96,
+ "period": 24,
+ "context": 2880,
+ "model": "vmae_full",
+ "stride": 1,
+ "mode": "multiperiod",
+ "scales": "1,2,4",
+ "plan": [
+  24,
+  4,
+  1,
+  12,
+  0
+ ],
+ "n_origins": 2785,
+ "n_channels": 7,
+ "mse": 0.3857764030874637,
+ "mae": 0.40316588401875963,
+ "wall_s": 1623.5,
+ "raw_shape": [
+  17420,
+  7
+ ],
+ "test_start": 11520,
+ "extra_models": {
+  "/nyx-storage1/hanliu/wm4ts/route_b/vmae_enc_d8_60k/step_40000": 0.3852533264466715
+ },
+ "ensemble_mse": 0.3832882034948792,
+ "ensemble_mae": 0.40536331311447904
+}
