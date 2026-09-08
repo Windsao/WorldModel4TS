@@ -35,9 +35,17 @@ class VideoForecaster:
     """frozen Route-B checkpoint -> forecast from the last periods of a context window."""
 
     def __init__(self, ckpt, device=DEV, batch=64):
+        self.device, self.batch = device, batch
+        self.kind = "j" if os.path.exists(os.path.join(ckpt, "route_j.json")) else "b"
+        if self.kind == "j":
+            import pretrain_route_j as J
+            self.wm, self.meta = J.load_ckpt(ckpt, device)
+            self.batch = min(batch, 16)
+            print(f"[route J world model] {ckpt} {self.meta}", flush=True)
+            self.enc_attn = "full"
+            return
         from transformers import VideoMAEForPreTraining
         self.model = VideoMAEForPreTraining.from_pretrained(ckpt).to(device).eval()
-        self.device, self.batch = device, batch
         rc = os.path.join(os.path.dirname(ckpt.rstrip("/")), "run_config.json")
         self.enc_attn = json.load(open(rc)).get("enc_attn", "full") if os.path.exists(rc) else "full"
         if self.enc_attn == "spatial":
@@ -71,12 +79,16 @@ class VideoForecaster:
             r = torch.from_numpy(rows[s:s + self.batch])
             m = mask[None].expand(r.shape[0], -1)
             vid = B.rows_to_video(r, self.device)
-            B.set_attn_bias(self.model, mask)
-            with torch.autocast("cuda", dtype=torch.bfloat16, enabled=self.device.startswith("cuda")):
-                logits = self.model(pixel_values=vid, bool_masked_pos=m.to(self.device)).logits
-            logits = logits.float()[:, -nf:]
-            c = logits.view(r.shape[0], hp // B.TS, B.GH, B.GH, B.TS, B.PS, B.PS, 3)
-            frames = c.permute(0, 1, 4, 7, 2, 5, 3, 6).reshape(r.shape[0], hp, 3, B.IMG, B.IMG)
+            if self.kind == "j":
+                with torch.autocast("cuda", dtype=torch.bfloat16, enabled=self.device.startswith("cuda")):
+                    frames = self.wm.forecast_pixels(vid, mask, hp).float()
+            else:
+                B.set_attn_bias(self.model, mask)
+                with torch.autocast("cuda", dtype=torch.bfloat16, enabled=self.device.startswith("cuda")):
+                    logits = self.model(pixel_values=vid, bool_masked_pos=m.to(self.device)).logits
+                logits = logits.float()[:, -nf:]
+                c = logits.view(r.shape[0], hp // B.TS, B.GH, B.GH, B.TS, B.PS, B.PS, 3)
+                frames = c.permute(0, 1, 4, 7, 2, 5, 3, 6).reshape(r.shape[0], hp, 3, B.IMG, B.IMG)
             zf = B.decode_frames_gray(frames.mean(2), P)                     # [b, hp, P]
             zf = zf.reshape(r.shape[0], hp * P)[:, :H].cpu().numpy()
             out[s:s + self.batch] = zf * sd[s:s + self.batch] + mu[s:s + self.batch]
@@ -171,6 +183,8 @@ def main():
         ck = os.path.join(args.ckpt_root, a, f"step_{args.step}")
         if not os.path.isdir(ck):
             print(f"[skip] {ck} missing", flush=True); continue
+        if a.startswith("vjepa2"):
+            fcs[f"video_{a}"] = VideoForecaster(ck); continue
         fcs[f"video_{a}"] = VideoForecaster(ck)
     bl = blend_with_extra(ctx, P, H, extra=fcs)
     assert np.allclose(bl["blend"], base_zl, atol=1e-5), "prior-only blend != ZL-051 combiner"
