@@ -1,0 +1,38 @@
+{
+ "dataset": "ETTm1",
+ "pred_len": 192,
+ "period": 96,
+ "context": 2304,
+ "model": "vmf_val_ens",
+ "stride": 1,
+ "mode": "multiperiod",
+ "scales": "1,2,4",
+ "split": "test",
+ "plan": [
+  96,
+  2,
+  1,
+  14,
+  0
+ ],
+ "n_origins": 11329,
+ "n_origins_all": 11329,
+ "origin_range": null,
+ "se": 5564864.955322266,
+ "ae": 5714494.144897461,
+ "cnt": 15226176,
+ "n_channels": 7,
+ "mse": 0.3654801412595169,
+ "mae": 0.3753072435848279,
+ "wall_s": 1639.2,
+ "raw_shape": [
+  69680,
+  7
+ ],
+ "test_start": 46080,
+ "extra_models": {
+  "visionts": 0.359758857051062
+ },
+ "ensemble_mse": 0.33229741679819336,
+ "ensemble_mae": 0.3523347378929563
+}

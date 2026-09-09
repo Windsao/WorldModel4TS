@@ -7,6 +7,7 @@
  "stride": 1,
  "mode": "multiperiod",
  "scales": "1",
+ "split": "test",
  "plan": [
   288,
   4,
@@ -23,7 +24,7 @@
  "n_channels": 21,
  "mse": 0.30556304370282145,
  "mae": 0.32351218978863255,
- "wall_s": 4885.9,
+ "wall_s": 3252.2,
  "raw_shape": [
   52696,
   21

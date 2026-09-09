@@ -1,0 +1,38 @@
+{
+ "dataset": "electricity",
+ "pred_len": 336,
+ "period": 24,
+ "context": 2880,
+ "model": "vmf_auto_ens",
+ "stride": 8,
+ "mode": "multiperiod",
+ "scales": "1",
+ "split": "test",
+ "plan": [
+  96,
+  4,
+  4,
+  12,
+  0
+ ],
+ "n_origins": 616,
+ "n_origins_all": 616,
+ "origin_range": null,
+ "se": 17218799.625,
+ "ae": 22324432.5625,
+ "cnt": 66439296,
+ "n_channels": 321,
+ "mse": 0.2591658952105694,
+ "mae": 0.33601247915841853,
+ "wall_s": 1524.6,
+ "raw_shape": [
+  26304,
+  321
+ ],
+ "test_start": 21044,
+ "extra_models": {
+  "visionts": 0.2073514548904913
+ },
+ "ensemble_mse": 0.21339152326546326,
+ "ensemble_mae": 0.30073451372814064
+}
