@@ -197,3 +197,137 @@ def test_spatial_attention_equals_per_tubelet_encoding():
         layer.attention.attention._attn_bias = None
         parts = torch.cat([layer(emb[:, idx == t])[0] for t in idx.unique()], 1)
         assert torch.allclose(full, parts, atol=1e-4), (full - parts).abs().max()
+
+
+# ------------------------------------------------------------------ novel pretraining designs (2026-09-10)
+def test_value_loss_zero_when_prediction_equals_label_and_recovers_z():
+    """the value-space loss is 0 for a perfect prediction and its column heights decode the rendered z."""
+    rng = np.random.default_rng(11)
+    P, hp = 24, 4
+    y = rng.normal(0, 1, B.NF * P).astype(np.float32)
+    rows, mu, sd = B.z_rows(y, P, ctx_periods=B.NF - hp)
+    vid = B.rows_to_video(torch.from_numpy(rows)[None], "cpu")
+    mask = B.forecast_mask(hp)[None]
+    labels = B.U.patchify(B.U.unnormalize(vid)).reshape(1, B.N_TOK, -1)[mask].view(1, -1, B.TS * B.PS * B.PS * 3)
+    nf = B.n_future_tokens(hp)
+    fut = labels[:, -nf:]
+    assert float(B.value_loss(fut, fut, hp)) < 1e-8
+    h = B.column_heights(B.future_frames_from_tokens(fut, hp))              # [1, hp, 224]
+    z = ((h - 0.5) / B.BAND * B.ZMAX)[0].numpy()
+    z_true = np.clip((y - mu) / sd, -3, 3).reshape(B.NF, P)[-hp:][:, B.col2phase(P)]
+    assert np.max(np.abs(z - z_true)) < 0.03
+    # a wrong prediction (future frames shifted up by 20 rows) costs about (20/223 * 3/0.4)^2 in z units
+    rows2 = rows.copy(); rows2[-hp:] = np.clip(rows2[-hp:] - 20, 0, B.IMG - 1)
+    vid2 = B.rows_to_video(torch.from_numpy(rows2)[None], "cpu")
+    lab2 = B.U.patchify(B.U.unnormalize(vid2)).reshape(1, B.N_TOK, -1)[mask].view(1, -1, B.TS * B.PS * B.PS * 3)
+    v = float(B.value_loss(lab2[:, -nf:], fut, hp))
+    expect = (20 / (B.IMG - 1) * B.ZMAX / B.BAND) ** 2
+    assert abs(v - expect) / expect < 0.15, (v, expect)
+
+
+def test_value_loss_is_differentiable_and_masked_loss_parts_add_up():
+    model = B.fresh_model(0).eval()
+    rng = np.random.default_rng(12)
+    P, hp = 12, 4
+    y = rng.normal(0, 1, B.NF * P).astype(np.float32)
+    rows, _, _ = B.z_rows(y, P, ctx_periods=B.NF - hp)
+    vid = B.rows_to_video(torch.from_numpy(rows)[None], "cpu")
+    mask = B.forecast_mask(hp)[None]
+    total, pix, val = B.masked_loss(model, vid, mask, hp, value_w=0.1, return_parts=True)
+    assert abs(float(total) - (float(pix) + 0.1 * float(val))) < 1e-6 and float(val) > 0
+    total.backward()
+    g = model.decoder.head.weight.grad
+    assert g is not None and torch.isfinite(g).all() and g.abs().sum() > 0
+    # value_w = 0 reproduces the old scalar behaviour
+    with torch.no_grad():
+        old = B.masked_loss(model, vid, mask, hp)
+    assert abs(float(old) - float(pix)) < 1e-6
+
+
+def test_scale_aug_frame_is_k_periods():
+    """with frame = k periods the rendered rows still have shape [16, 224] and phase k*P maps to 224 columns;
+    the k-period frame of a P-periodic signal shows k full cycles."""
+    P, k = 24, 4
+    t = np.arange(B.NF * k * P)
+    y = np.sin(2 * np.pi * t / P).astype(np.float32)
+    rows, _, _ = B.z_rows(y, k * P, ctx_periods=12)
+    assert rows.shape == (B.NF, B.IMG)
+    c2p = B.col2phase(k * P)
+    assert c2p.max() == k * P - 1 and len(np.unique(c2p)) == k * P
+    r0 = rows[0].astype(float)
+    # k cycles per frame -> the row profile repeats every 224/k columns
+    seg = B.IMG // k
+    assert np.abs(r0[:seg] - r0[seg:2 * seg]).mean() < 2.0
+
+
+def test_stream_scale_aug_and_hp_max(tmp_path):
+    """the stream honours hp_max (masks up to hp_max/2 tubelets) and scale_aug (multi-period frames) using synthetic data only."""
+    st = B.Stream(str(tmp_path), batch=4, seed=3, synth_frac=1.0, p_forecast=1.0, p_lead=0.0, scale_aug=True, hp_max=8)
+    corpus_stub = type("C", (), {"sample": lambda self, rng, n_p=B.NF: (None, None)})()
+    B.Corpus = lambda *a, **k: corpus_stub                                # no corpus on disk
+    it = iter(st)
+    hps = set()
+    for _ in range(12):
+        rows, mask, hp, lead = next(it)
+        assert rows.shape == (4, B.NF, B.IMG) and mask.shape == (4, B.N_TOK)
+        assert hp in (2, 4, 6, 8) and lead == 0
+        assert mask[0].reshape(B.TT, -1)[-hp // B.TS:].all() and not mask[0].reshape(B.TT, -1)[:B.TT - hp // B.TS].any()
+        hps.add(hp)
+    assert len(hps) >= 3
+
+
+def test_forecast_mask_hp8_and_n_future_tokens():
+    m = B.forecast_mask(8).reshape(B.TT, -1)
+    assert m[-4:].all() and not m[:-4].any()
+    assert B.n_future_tokens(8) == 4 * B.GH * B.GH
+
+
+def test_prior_anchor_pulls_toward_initial_weights():
+    """decoupled decay toward theta0: p <- p - lr*l2sp*(p - p0) moves every parameter toward its initial value."""
+    torch.manual_seed(0)
+    lin = torch.nn.Linear(8, 8)
+    theta0 = [p.detach().clone() for p in lin.parameters()]
+    with torch.no_grad():
+        for p in lin.parameters():
+            p.add_(torch.randn_like(p))
+    d_before = sum(float((p - p0).norm() ** 2) for p, p0 in zip(lin.parameters(), theta0))
+    lr, l2sp = 1e-1, 0.5
+    with torch.no_grad():
+        for p, p0 in zip(lin.parameters(), theta0):
+            p.sub_(lr * l2sp * (p - p0))
+    d_after = sum(float((p - p0).norm() ** 2) for p, p0 in zip(lin.parameters(), theta0))
+    assert abs(d_after - d_before * (1 - lr * l2sp) ** 2) < 1e-5 * d_before
+
+
+# ------------------------------------------------------------------ 32-frame clips (2026-09-10)
+@pytest.fixture
+def frames32():
+    B.set_frames(32)
+    yield
+    B.set_frames(16)
+
+
+def test_set_frames_updates_masks_and_tokens(frames32):
+    assert (B.NF, B.TT, B.N_TOK) == (32, 16, 16 * 196)
+    m = B.forecast_mask(4, lead_tubelets=2)
+    assert m.numel() == B.N_TOK and m.reshape(B.TT, -1)[-2:].all() and m.reshape(B.TT, -1)[:2].all() and not m.reshape(B.TT, -1)[2:-2].any()
+    assert B.n_future_tokens(4) == 2 * 196
+    rows, _, _ = B.z_rows(np.random.default_rng(0).normal(size=32 * 24).astype(np.float32), 24, ctx_periods=28)
+    assert rows.shape == (32, 224)
+
+
+def test_fresh_model_32_frames_forward_and_value_loss(frames32):
+    model = B.fresh_model(0).eval()
+    assert model.config.num_frames == 32
+    rng = np.random.default_rng(5); P, hp = 24, 4
+    rows, _, _ = B.z_rows(rng.normal(size=B.NF * P).astype(np.float32), P, ctx_periods=B.NF - hp)
+    vid = B.rows_to_video(torch.from_numpy(rows)[None], "cpu")
+    assert vid.shape == (1, 32, 3, 224, 224)
+    mask = B.forecast_mask(hp)[None]
+    with torch.no_grad():
+        total, pix, val = B.masked_loss(model, vid, mask, hp, value_w=0.1, return_parts=True)
+    assert torch.isfinite(total) and float(val) > 0
+
+
+def test_set_frames_restores_16():
+    assert (B.NF, B.TT, B.N_TOK) == (16, 8, 1568)

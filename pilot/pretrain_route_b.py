@@ -43,6 +43,14 @@ N_TOK = TT * GH * GH              # 1568
 DARK, LIGHT, GRID = 0.12, 0.92, 0.80
 GRID_EVERY = 28
 ZMAX, BAND = 3.0, 0.40            # z in [-3,3] -> height 0.5 +- 0.4
+
+
+def set_frames(n):
+    """switch the clip length (16 or 32 frames): NF / TT / N_TOK are module globals read at call time."""
+    global NF, TT, N_TOK
+    assert n % TS == 0 and n >= 8
+    NF, TT, N_TOK = n, n // TS, (n // TS) * GH * GH
+    return NF
 IMN_MEAN = torch.tensor([0.485, 0.456, 0.406]).view(1, 1, 3, 1, 1)
 IMN_STD = torch.tensor([0.229, 0.224, 0.225]).view(1, 1, 3, 1, 1)
 EXCLUDE_SUBSTR = ("electricity", "elec", "solar", "wind", "pems", "traffic", "loop", "energy",
@@ -78,13 +86,13 @@ def freq_to_period(freq):
 
 
 # ------------------------------------------------------------------ corpus
-def build_corpus(lotsa_dir, corpus_dir, min_periods=18, max_series_per_dataset=20000):
+def build_corpus(lotsa_dir, corpus_dir, min_periods=18, max_series_per_dataset=20000, domain_exclude=True):
     import pyarrow as pa
     os.makedirs(corpus_dir, exist_ok=True)
     chunks, offs, lens, Ps, dids, names = [], [], [], [], [], []
     total = 0
     for d in sorted(os.listdir(lotsa_dir)):
-        if any(s in d.lower() for s in EXCLUDE_SUBSTR):
+        if domain_exclude and any(s in d.lower() for s in EXCLUDE_SUBSTR):
             print(f"[corpus] EXCLUDED by domain rule: {d}"); continue
         files = sorted(glob.glob(os.path.join(lotsa_dir, d, "*.arrow")))
         if not files:
@@ -143,7 +151,8 @@ class Corpus:
         w = np.sqrt(obs); self.dw = w / w.sum()
         self.by_d = [self.ids[self.did[self.ids] == d] for d in range(nd)]
 
-    def sample(self, rng, n_p=NF, tries=10):
+    def sample(self, rng, n_p=None, tries=10):
+        n_p = n_p or NF                      # read the (possibly switched) clip length at call time
         for _ in range(tries):
             d = rng.choice(len(self.dw), p=self.dw)
             if len(self.by_d[d]) == 0: continue
@@ -222,10 +231,37 @@ def n_future_tokens(hp_frames):
     return (hp_frames // TS) * GH * GH
 
 
-def masked_loss(model, vid, mask, hp):
+def future_frames_from_tokens(tokens, hp):
+    """future tokens [B, n_future, TS*PS*PS*3] (HF packing, tubelet-major) -> frames [B, hp, 3, 224, 224]."""
+    B = tokens.shape[0]
+    cubes = tokens.reshape(B, tokens.shape[1], TS * PS * PS, 3)
+    return U.unpatchify(cubes, T=hp, H=IMG, W=IMG, tubelet_size=TS, patch_size=PS)
+
+
+def column_heights(frames):
+    """frames [B, T, 3, 224, 224] (pixel values, LIGHT background / DARK fill) -> boundary height
+    h in [0,1] per column [B, T, 224]. Differentiable soft row count (same rule as decode_frames_gray);
+    z = (h - 0.5) / BAND * ZMAX, so an MSE on h times (ZMAX/BAND)^2 is an MSE in z units."""
+    gray = frames.mean(2)
+    soft = ((GRID - gray) / (GRID - DARK)).clamp(0, 1)
+    rows = IMG - soft.sum(-2)
+    return 1.0 - rows / (IMG - 1)
+
+
+def value_loss(pred_tokens, label_tokens, hp):
+    """forecast-aligned objective: MSE between the DECODED future values (z units) of the predicted
+    and the true future frames, computed column-wise so it is independent of the period P."""
+    hp_pred = column_heights(future_frames_from_tokens(pred_tokens, hp))
+    with torch.no_grad():
+        hp_true = column_heights(future_frames_from_tokens(label_tokens, hp))
+    return F.mse_loss(hp_pred, hp_true) * (ZMAX / BAND) ** 2
+
+
+def masked_loss(model, vid, mask, hp, value_w=0.0, return_parts=False):
     """raw-pixel MSE on the FUTURE tokens only for forecast batches (masked tokens are ordered by
     token index, so the future tubelets are the last n_future tokens); all masked tokens for tube
-    batches. Labels use the exact HF packing via videomae_patch_utils."""
+    batches. Labels use the exact HF packing via videomae_patch_utils. With value_w > 0 a
+    forecast-aligned value-space term (see value_loss) is added for forecast batches."""
     set_attn_bias(model, mask[0])
     out = model(pixel_values=vid, bool_masked_pos=mask)
     logits = out.logits.float()
@@ -233,8 +269,12 @@ def masked_loss(model, vid, mask, hp):
     labels = U.patchify(U.unnormalize(vid)).reshape(B, N_TOK, -1)[mask].view(B, logits.shape[1], -1).float()
     if hp:
         nf = n_future_tokens(hp)
-        return F.mse_loss(logits[:, -nf:], labels[:, -nf:])
-    return F.mse_loss(logits, labels)
+        pix = F.mse_loss(logits[:, -nf:], labels[:, -nf:])
+        val = value_loss(logits[:, -nf:], labels[:, -nf:], hp) if value_w > 0 else torch.zeros((), device=vid.device)
+        total = pix + value_w * val
+    else:
+        pix = F.mse_loss(logits, labels); val = torch.zeros((), device=vid.device); total = pix
+    return (total, pix, val) if return_parts else total
 
 
 def tube_mask(rng, ratio=0.75):
@@ -302,9 +342,11 @@ class Stream(IterableDataset):
     With probability p_lead a forecast batch also hides the first `lead` tubelets, so the model
     learns to forecast from 8..12 context periods (needed at pseudo-origins in evaluation)."""
 
-    def __init__(self, corpus_dir, batch, seed, synth_frac=0.2, p_forecast=0.7, p_lead=0.3, split="train"):
+    def __init__(self, corpus_dir, batch, seed, synth_frac=0.2, p_forecast=0.7, p_lead=0.3, split="train",
+                 scale_aug=False, hp_max=4):
         self.corpus_dir, self.batch, self.seed = corpus_dir, batch, seed
         self.synth_frac, self.p_forecast, self.p_lead, self.split = synth_frac, p_forecast, p_lead, split
+        self.scale_aug, self.hp_max = scale_aug, hp_max      # scale_aug: frame = k periods, k in {1,2,4}
 
     def __iter__(self):
         from pretrain_vmae_ts import synth_series
@@ -314,23 +356,28 @@ class Stream(IterableDataset):
         corpus = Corpus(self.corpus_dir, split=self.split)
         while True:
             u = rng.random()
-            if u < self.p_forecast / 2: hp = 2
-            elif u < self.p_forecast: hp = 4
+            if u < self.p_forecast:                       # forecast batch: hp in {2, 4, ..., hp_max} frames
+                hp = int(rng.choice(np.arange(TS, self.hp_max + 1, TS)))
             else: hp = 0
             lead = 0
             if hp and rng.random() < self.p_lead:
                 kmax = (NF - hp - 8) // TS                # keep >= 8 visible context periods
-                lead = int(rng.integers(1, kmax + 1))
+                lead = int(rng.integers(1, kmax + 1)) if kmax >= 1 else 0
             mask = forecast_mask(hp, lead) if hp else tube_mask(rng)
             ctx_start = lead * TS
             ctx_periods = (NF - hp - ctx_start) if hp else NF - 4   # tube batches: first 12 periods
             rows = np.empty((self.batch, NF, IMG), np.int16)
             for b in range(self.batch):
-                y, P = (None, None) if rng.random() < self.synth_frac else corpus.sample(rng)
+                k = int(rng.choice([1, 2, 4], p=[0.5, 0.3, 0.2])) if self.scale_aug else 1
+                y, P = (None, None) if rng.random() < self.synth_frac else corpus.sample(rng, n_p=NF * k)
+                if y is not None and k * P > IMG:          # keep >= 1 pixel column per phase
+                    k = 1; y = y[:NF * P]
+                if y is None and k > 1 and rng.random() >= self.synth_frac:
+                    k = 1; y, P = corpus.sample(rng, n_p=NF)   # long window unavailable: fall back to k = 1
                 if y is None:
                     P = int(rng.choice([7, 12, 24, 48, 52, 96, 144]))
-                    y = synth_series(rng, NF, P)
-                rows[b], _, _ = z_rows(y, P, ctx_periods, ctx_start)
+                    y = synth_series(rng, NF * k, P)
+                rows[b], _, _ = z_rows(y, k * P, ctx_periods, ctx_start)   # frame = k periods
             yield torch.from_numpy(rows), mask.unsqueeze(0).expand(self.batch, -1).clone(), hp, lead
 
 
@@ -345,6 +392,7 @@ def fresh_model(seed, decoder="vmae"):
     from transformers import VideoMAEForPreTraining, VideoMAEConfig
     cfg = VideoMAEConfig.from_pretrained("MCG-NJU/videomae-base")
     cfg.norm_pix_loss = False
+    cfg.num_frames = NF
     if decoder == "mae":
         for k, v in MAE_DECODER.items():
             setattr(cfg, k, v)
@@ -443,7 +491,7 @@ def build_arm(arm, seed, mae_ckpt):
         if arm == "random_d8":
             return base, {"encoder_loaded": 0, "decoder": "fresh_8x512"}
         if arm == "vmae_enc_d8":
-            pt = VideoMAEForPreTraining.from_pretrained("MCG-NJU/videomae-base")
+            pt = VideoMAEForPreTraining.from_pretrained("MCG-NJU/videomae-base", num_frames=NF)
             n = _overwrite(base, {k: v for k, v in pt.state_dict().items() if k.startswith("videomae.")})
             return base, {"encoder_loaded": n, "decoder": "fresh_8x512"}
         mae_sd = _load_mae(mae_ckpt)
@@ -462,7 +510,7 @@ def build_arm(arm, seed, mae_ckpt):
     if arm == "random":
         return base, {"encoder_loaded": 0}
     if arm in ("vmae_full", "vmae_enc"):
-        pt = VideoMAEForPreTraining.from_pretrained("MCG-NJU/videomae-base")
+        pt = VideoMAEForPreTraining.from_pretrained("MCG-NJU/videomae-base", num_frames=NF)
         pt.config.norm_pix_loss = False
         if arm == "vmae_full":
             return pt, {"encoder_loaded": 1, "decoder": "pretrained"}
@@ -507,6 +555,7 @@ def forecast_z(model, rows, mask, hp, P_list, device):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--build-corpus", action="store_true")
+    ap.add_argument("--no-domain-exclude", action="store_true", help="keep the energy / traffic domains when building the corpus (v2 corpus)")
     ap.add_argument("--lotsa-dir", default="/nyx-storage1/hanliu/wm4ts/lotsa")
     ap.add_argument("--corpus-dir", default="/nyx-storage1/hanliu/wm4ts/route_b/corpus")
     ap.add_argument("--arm", choices=ARMS)
@@ -515,6 +564,7 @@ def main():
     ap.add_argument("--gpu", type=int, default=0)
     ap.add_argument("--steps", type=int, default=20000)
     ap.add_argument("--batch", type=int, default=32)
+    ap.add_argument("--accum", type=int, default=1, help="gradient-accumulation micro-batches per optimizer step (effective batch = batch * accum)")
     ap.add_argument("--lr", type=float, default=1e-4)
     ap.add_argument("--warmup", type=int, default=500)
     ap.add_argument("--wd", type=float, default=0.05)
@@ -523,15 +573,24 @@ def main():
     ap.add_argument("--save-every", type=int, default=2500)
     ap.add_argument("--val-every", type=int, default=1000)
     ap.add_argument("--val-batches", type=int, default=8)
+    ap.add_argument("--frames", type=int, default=16, help="clip length in frames (16 = VideoMAE default, 32 = doubled temporal window)")
+    ap.add_argument("--scale-aug", action="store_true", help="temporal scale augmentation: frame = k periods, k in {1,2,4}")
+    ap.add_argument("--hp-max", type=int, default=4, help="longest masked future in frames (2, 4, 6 or 8)")
+    ap.add_argument("--value-loss", type=float, default=0.0, help="weight of the forecast-aligned value-space loss (z-unit MSE on decoded future)")
+    ap.add_argument("--l2sp", type=float, default=0.0, help="decoupled decay toward the INITIAL weights (prior anchoring), same units as --wd")
     ap.add_argument("--enc-attn", choices=["full", "spatial"], default="full",
                     help="spatial: encoder attends only within each tubelet (decoder unchanged)")
     ap.add_argument("--tag", default="", help="suffix for the output dir, e.g. _spatial or _60k")
+    ap.add_argument("--resume", default=None, help="path to a resume.pt (model+optimizer+step) to continue from")
+    ap.add_argument("--time-budget-h", type=float, default=None,
+                    help="after 300 steps, shrink --steps so that training finishes within this many hours")
     args = ap.parse_args()
 
     if args.build_corpus:
-        build_corpus(args.lotsa_dir, args.corpus_dir)
+        build_corpus(args.lotsa_dir, args.corpus_dir, domain_exclude=not args.no_domain_exclude)
         return
 
+    set_frames(args.frames)
     dev = f"cuda:{args.gpu}"
     torch.cuda.set_device(args.gpu)
     model, info = build_arm(args.arm, args.seed, args.mae_ckpt)
@@ -551,7 +610,8 @@ def main():
         p = (s - args.warmup) / max(1, args.steps - args.warmup)
         return args.lr * 0.5 * (1 + math.cos(math.pi * p))
 
-    dl = DataLoader(Stream(args.corpus_dir, args.batch, seed=args.seed, split="train"), batch_size=None,
+    theta0 = [p.detach().clone() for p in model.parameters()] if args.l2sp > 0 else None
+    dl = DataLoader(Stream(args.corpus_dir, args.batch, seed=args.seed, split="train", scale_aug=args.scale_aug, hp_max=args.hp_max), batch_size=None,
                     num_workers=args.workers, prefetch_factor=4, persistent_workers=True)
     # fixed validation batches (held-out series, forecast masks only), identical across arms
     vstream = iter(Stream(args.corpus_dir, args.batch, seed=777, p_forecast=1.0, split="holdout"))
@@ -561,19 +621,43 @@ def main():
     log = open(os.path.join(out_dir, "train_log.jsonl"), "a")
     it = iter(dl)
     t0 = time.time()
-    for step in range(1, args.steps + 1):
-        rows, mask, hp, lead = next(it)
-        vid = rows_to_video(rows, dev)
+    start = 1
+    if args.resume and os.path.exists(args.resume):
+        st = torch.load(args.resume, map_location="cpu")
+        model.load_state_dict(st["model"]); opt.load_state_dict(st["opt"]); start = int(st["step"]) + 1
+        for _ in range((start - 1) * args.accum):   # replay the data stream so batches stay identical
+            next(it)
+        print(f"[resume] from step {start - 1}", flush=True)
+    step = start - 1
+    while step < args.steps:                 # while-loop so a mid-run cap of args.steps is honoured
+        step += 1
+        if args.time_budget_h and step == 300 and start == 1:
+            rate = (time.time() - t0) / 300.0
+            fit = int(args.time_budget_h * 3600 / rate)
+            if fit < args.steps:
+                print(f"[budget] {rate:.3f}s/step -> capping steps {args.steps} -> {fit}", flush=True)
+                args.steps = fit
+                json.dump({**vars(args), **info, "steps_capped_to": fit}, open(os.path.join(out_dir, "run_config.json"), "w"), indent=1)
         for pg in opt.param_groups:
             pg["lr"] = lr_at(step)
-        with torch.autocast("cuda", dtype=torch.bfloat16):
-            loss = masked_loss(model, vid, mask.to(dev), hp)
         opt.zero_grad(set_to_none=True)
-        loss.backward()
+        loss_sum = pix_sum = val_sum = 0.0
+        for _ in range(args.accum):          # gradient accumulation: accum micro-batches per optimizer step
+            rows, mask, hp, lead = next(it)
+            vid = rows_to_video(rows, dev)
+            with torch.autocast("cuda", dtype=torch.bfloat16):
+                total, pix, vloss = masked_loss(model, vid, mask.to(dev), hp, value_w=args.value_loss, return_parts=True)
+            (total / args.accum).backward()
+            loss_sum += float(total.detach()) / args.accum; pix_sum += float(pix.detach()) / args.accum; val_sum += float(vloss.detach()) / args.accum
         gn = torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
         opt.step()
+        if theta0 is not None:               # prior anchoring: decoupled decay toward the initial weights
+            with torch.no_grad():
+                for p, p0 in zip(model.parameters(), theta0):
+                    p.sub_(lr_at(step) * args.l2sp * (p - p0))
+        loss = torch.tensor(loss_sum)        # mean micro-batch loss; hp/lead below refer to the last micro-batch
         if step % 50 == 0:
-            rec = {"step": step, "loss": float(loss.detach()), "hp": int(hp), "lead": int(lead),
+            rec = {"step": step, "loss": float(loss.detach()), "pix": pix_sum, "val": val_sum, "hp": int(hp), "lead": int(lead),
                    "lr": lr_at(step), "gn": float(gn), "t": round(time.time() - t0, 1)}
             log.write(json.dumps(rec) + "\n"); log.flush()
             if step % 200 == 0:
@@ -582,16 +666,20 @@ def main():
             model.eval()
             vl = []
             with torch.no_grad(), torch.autocast("cuda", dtype=torch.bfloat16):
+                vv = []
                 for vrows, vmask, vhp, vlead in val:
-                    vl.append(float(masked_loss(model, rows_to_video(vrows, dev), vmask.to(dev), vhp)))
+                    _, vp, vz = masked_loss(model, rows_to_video(vrows, dev), vmask.to(dev), vhp, value_w=1.0, return_parts=True)
+                    vl.append(float(vp)); vv.append(float(vz))
             model.train()
-            rec = {"step": step, "val_pixel_loss": float(np.mean(vl))}
+            rec = {"step": step, "val_pixel_loss": float(np.mean(vl)), "val_value_loss": float(np.mean(vv))}
             log.write(json.dumps(rec) + "\n"); log.flush(); print(json.dumps(rec), flush=True)
         if step % args.save_every == 0 or step == args.steps:
             d = os.path.join(out_dir, f"step_{step}")
             model.save_pretrained(d)
+            torch.save({"model": model.state_dict(), "opt": opt.state_dict(), "step": step}, os.path.join(out_dir, "resume.pt"))
             print(f"[ckpt] {d}", flush=True)
     log.close()
+    open(os.path.join(out_dir, "DONE"), "w").write(str(args.steps))
 
 
 if __name__ == "__main__":

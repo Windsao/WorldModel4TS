@@ -71,6 +71,7 @@ class RouteBForecaster:
     def __init__(self, ckpt, device=DEV):
         from transformers import VideoMAEForPreTraining
         self.model = VideoMAEForPreTraining.from_pretrained(ckpt).to(device).eval()
+        B.set_frames(int(self.model.config.num_frames))          # 16- or 32-frame checkpoints
         rc = os.path.join(os.path.dirname(ckpt.rstrip("/")), "run_config.json")
         self.enc_attn = json.load(open(rc)).get("enc_attn", "full") if os.path.exists(rc) else "full"
         if self.enc_attn == "spatial":
@@ -165,6 +166,43 @@ class RouteBForecaster:
         return out
 
 
+class RouteJForecaster(RouteBForecaster):
+    """Route-J (V-JEPA 2 world model) checkpoint: same rendering / plan / decode as Route B, different model call."""
+
+    def __init__(self, ckpt, device=DEV):
+        import pretrain_route_j as J
+        self.wm, self.meta = J.load_ckpt(ckpt, device)          # also calls B.set_frames(meta['frames'])
+        self.enc_attn = "full"
+        self.device = device
+        self.c2p = {}
+
+    @torch.no_grad()
+    def _one_pass(self, ctx, P, hp, lead):
+        n = ctx.shape[0]
+        G_use = ctx.shape[1] // P
+        mu = ctx.mean(1, keepdim=True); sd = ctx.std(1, unbiased=False, keepdim=True) + 1e-6
+        z = ((ctx - mu) / sd).clamp(-B.ZMAX, B.ZMAX).view(n, G_use, P)
+        h = 0.5 + B.BAND * z / B.ZMAX
+        rows_ctx = torch.round((1.0 - h) * (B.IMG - 1)).to(torch.int16)[:, :, self._col2phase(P)]
+        rows = torch.full((n, B.NF, B.IMG), int(round(0.5 * (B.IMG - 1))), dtype=torch.int16, device=self.device)
+        rows[:, lead * B.TS: lead * B.TS + G_use] = rows_ctx
+        mask = B.forecast_mask(hp, lead)
+        vid = B.rows_to_video(rows, self.device)
+        with torch.autocast("cuda", dtype=torch.bfloat16, enabled=self.device.startswith("cuda")):
+            frames = self.wm.forecast_pixels(vid, mask, hp)                   # [n, hp, 3, IMG, IMG]
+        zf = B.decode_frames_gray(frames.float().mean(2), P).reshape(n, hp * P)
+        zf = torch.nan_to_num(zf, nan=0.0, posinf=B.ZMAX, neginf=-B.ZMAX)
+        return zf * sd + mu
+
+
+def make_forecaster(path, dataset, H):
+    if path == "visionts":
+        return VisionTSForecaster(dataset, H)
+    if os.path.exists(os.path.join(path, "route_j.json")):
+        return RouteJForecaster(path)
+    return RouteBForecaster(path)
+
+
 class VisionTSForecaster:
     def __init__(self, dataset, H, device=DEV):
         from visionts import VisionTS
@@ -236,10 +274,10 @@ def main():
         a, b = (int(x) for x in args.origin_range.split(":")); origins = origins[a:b]
     tag = args.tag or ("visionts" if args.model == "visionts" else os.path.basename(os.path.dirname(args.model.rstrip("/"))) + "_" + os.path.basename(args.model.rstrip("/")))
     print(f"[LSF] {args.dataset} H={H} P={P} C={C} origins={len(origins)} context={L} model={tag}", flush=True)
-    fc = VisionTSForecaster(args.dataset, H) if args.model == "visionts" else RouteBForecaster(args.model)
+    fc = make_forecaster(args.model, args.dataset, H)
     extras = []
     for m in [x for x in args.extra_models.split(",") if x]:
-        extras.append((m, VisionTSForecaster(args.dataset, H) if m == "visionts" else RouteBForecaster(m)))
+        extras.append((m, make_forecaster(m, args.dataset, H)))
     se_x = {m: 0.0 for m, _ in extras}; se_ens = 0.0; ae_ens = 0.0
     if args.blend:
         import zeroshot_loop as ZL
