@@ -1,0 +1,80 @@
+% Figure 1: the budget curve under the two objectives.
+% Numbers: PAPER_MATERIAL.md sections 7-8 (VIDEO_TS_RESCUE_RESULTS.md 1.10-1.13).
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+
+\begin{axis}[
+  name=left,
+  width=5.7cm, height=4.3cm,
+  xmode=log, log basis x=10,
+  xlabel={continual-pretraining steps},
+  ylabel={held-out pixel loss},
+  ylabel style={color=pixblue},
+  yticklabel style={color=pixblue},
+  ymin=0.0295, ymax=0.0382,
+  xmin=3500, xmax=260000,
+  xtick={5000,20000,60000,176000},
+  xticklabels={5k,20k,60k,176k},
+  ytick={0.031,0.033,0.035,0.037},
+  yticklabel style={/pgf/number format/fixed, /pgf/number format/precision=4},
+  scaled y ticks=false,
+  title={\small (a) native masked-pixel objective},
+  axis y line*=left, axis x line*=bottom,
+  tick label style={font=\scriptsize}, label style={font=\scriptsize},
+  every axis plot/.append style={thick},
+]
+\addplot[color=pixblue, mark=*, mark size=1.6pt]
+  coordinates {(5000,0.0366) (20000,0.0333) (60000,0.0329) (176000,0.0312)};
+\node[font=\scriptsize, color=pixblue, anchor=west] at (axis cs:23000,0.0361) {objective improves};
+\end{axis}
+
+\begin{axis}[
+  width=5.7cm, height=4.3cm,
+  at={(left.south east)}, anchor=south east,
+  xmode=log, log basis x=10,
+  ylabel={forecast MSE}, ylabel style={yshift=-2pt},
+  ylabel style={color=fcred},
+  yticklabel style={color=fcred},
+  ymin=0.330, ymax=0.390,
+  xmin=3500, xmax=260000,
+  axis y line*=right, axis x line=none,
+  ytick={0.34,0.35,0.36,0.37,0.38},
+  tick label style={font=\scriptsize}, label style={font=\scriptsize},
+]
+\addplot[color=fcred, mark=square*, mark size=1.5pt, dashed, thick]
+  coordinates {(5000,0.339) (20000,0.344) (176000,0.381)};
+\node[font=\scriptsize, color=fcred, anchor=north east] at (axis cs:190000,0.372) {forecasting degrades};
+\end{axis}
+
+\begin{axis}[
+  width=5.7cm, height=4.3cm,
+  at={(left.south east)}, anchor=south west, xshift=2.35cm,
+  xmode=log, log basis x=10,
+  xlabel={continual-pretraining steps},
+  ylabel={5-dataset mean MSE},
+  xmin=3500, xmax=90000, ymin=0.230, ymax=0.395,
+  xtick={5000,20000,60000}, xticklabels={5k,20k,60k},
+  title={\small (b) forecast-aligned value-space objective},
+  axis lines*=left,
+  tick label style={font=\scriptsize}, label style={font=\scriptsize},
+  legend style={font=\scriptsize, draw=none, fill=none, at={(0.99,0.30)}, anchor=east},
+  every axis plot/.append style={thick, mark size=1.6pt},
+]
+\addplot[color=fcred, mark=triangle*] coordinates {(5000,0.384) (20000,0.379) (60000,0.377)};
+\addlegendentry{$H{=}720$}
+\addplot[color=black!70, mark=square*] coordinates {(5000,0.337) (20000,0.330) (60000,0.329)};
+\addlegendentry{$H{=}336$}
+\addplot[color=pixblue, mark=*] coordinates {(5000,0.250) (20000,0.245) (60000,0.242)};
+\addlegendentry{$H{=}96$}
+\end{axis}
+
+\end{tikzpicture}
+\caption{The same backbone and corpus under two objectives. \textbf{(a)} VideoMAE's native
+masked-pixel objective: its own held-out loss falls monotonically while forecast error rises
+monotonically over a $35\times$ range of budget. The 60k checkpoint was not evaluated downstream.
+\textbf{(b)} The forecast-aligned value-space objective of Section~\ref{sec:objective}: the curve is
+monotonically improving at every horizon. Panel (a) uses 16-frame clips and panel (b) 32-frame
+clips; the ablation in Table~\ref{tab:ablation} compares the two objectives at matched clip length.}
+\label{fig:budget}
+\end{figure}

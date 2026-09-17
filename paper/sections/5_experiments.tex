@@ -157,7 +157,9 @@ Downstream mean MSE & \textbf{0.339} & 0.344 & -- & 0.381 \\
 \end{center}
 \end{table}
 
-Table~\ref{tab:diagnosis} is the result that produced the method. Continuing VideoMAE's own
+\input{figures/budget_curve}
+
+Table~\ref{tab:diagnosis} and Figure~\ref{fig:budget}a are the result that produced the method. Continuing VideoMAE's own
 objective on the rendered corpus improves its own held-out loss by $15\%$ while forecast error rises
 by $12\%$. Per cell, the 176k model is $5$--$60\%$ worse than the 20k model, with the damage
 concentrated at long horizons; ETTh2 at $H{=}720$ moves from $0.429$ to $0.617$.
