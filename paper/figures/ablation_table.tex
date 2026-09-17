@@ -1,0 +1,23 @@
+% Objective ablation and budget curve under the forecast-aligned objective.
+\begin{table}[t]
+\caption{Ablation of the transfer design. Five-dataset mean MSE (ETT$\times$4 and weather),
+32-frame clips, identical corpus, masking, schedule and inference rule; only the listed component
+changes.}
+\label{tab:ablation}
+\begin{center}
+\setlength{\tabcolsep}{6pt}
+\footnotesize
+\begin{tabular}{lccc}
+\toprule
+Configuration & $H{=}96$ & $H{=}336$ & $H{=}720$ \\
+\midrule
+Full framework, 20k updates & 0.245 & 0.330 & 0.379 \\
+\quad pixel-only supervision (no value-space term) & 0.257 & 0.347 & 0.411 \\
+\quad no prior anchoring & 0.244 & 0.330 & 0.378 \\
+\midrule
+Full framework, 5k updates & 0.250 & 0.337 & 0.384 \\
+Full framework, 60k updates & \textbf{0.242} & \textbf{0.329} & \textbf{0.377} \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{table}

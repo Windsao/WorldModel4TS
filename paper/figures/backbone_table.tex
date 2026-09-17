@@ -1,0 +1,30 @@
+% Initialisation study at two adaptation budgets: the 5k advantage and the 20k catch-up together.
+\begin{table}[t]
+\caption{Initialisation study. Rendering, objective, corpus, schedule and inference rule are held
+fixed; only the weights the model starts from change. Five-dataset mean MSE (ETT$\times$4 and
+weather) at $H{=}96/336/720$. Two seeds are listed where both were run. At a 5k-update budget both
+video initialisations lead the image initialisation; by 20k the image initialisation has caught up,
+which is why we claim adaptation efficiency rather than a higher ceiling. The V-JEPA arms are
+size-matched, not architecturally identical (see text).}
+\label{tab:backbone}
+\begin{center}
+\setlength{\tabcolsep}{4pt}
+\footnotesize
+\begin{tabular}{llcll}
+\toprule
+Initialisation & Pretraining signal & Params & 5k updates & 20k updates \\
+\midrule
+ImageNet MAE-B & images & 87M & 0.264 / 0.350 / 0.395
+  & 0.244 / 0.329 / \textbf{0.373} \\
+ & & & & 0.245 / 0.330 / \textbf{0.373} \\
+VideoMAE-B & video, reconstructive & 87M & \textbf{0.250} / 0.337 / 0.384
+  & 0.245 / 0.330 / 0.379 \\
+V-JEPA~2.1-B & video, predictive & 87M\,+\,23M & 0.252 / \textbf{0.335} / \textbf{0.382}
+  & not run \\
+\midrule
+V-JEPA~2-L & video, predictive & 300M & 0.245 / 0.329 / 0.379 & not run \\
+V-JEPA~2-L, random init & none & 300M & 0.280 / 0.369 / 0.418 & not run \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{table}

@@ -1,106 +1,139 @@
 %----------------------------------------------------------------------
-\section{A world model over rendered series}
+\section{A transfer framework from video pretraining to forecasting}
 \label{sec:method}
 %----------------------------------------------------------------------
 
-The model observes the first $F-h_p$ frames of a rendered clip and predicts the last $h_p$. Training
-supervises that prediction in the space where forecasts are scored. Everything else in this section
-exists to make those two sentences well defined.
+\input{figures/overview}
 
-\subsection{Rendering: one period per frame}
+\paragraph{Overview.} The framework is one pipeline, run in two directions
+(Figure~\ref{fig:overview}):
+\begin{center}
+\small
+observed series $\rightarrow$ context-only normalisation $\rightarrow$ period-aligned frames
+$\rightarrow$ visible past / masked future $\rightarrow$ video backbone $\rightarrow$ predicted
+frames $\rightarrow$ numeric read-out $\rightarrow$ \{forecasting loss, forecast\}.
+\end{center}
+During time-series continual pretraining the last step produces a loss; at test time it produces the
+forecast. The design question is what has to be true of the middle of that pipeline for weights
+learned on natural video to be worth anything at the end of it, and the three subsections below give
+our three answers: a representation in which frames carry temporal evolution
+(\S\ref{sec:render}), a training signal that is a forecast rather than a reconstruction
+(\S\ref{sec:objective}), and a match between the temporal scales seen in training and those used at
+inference (\S\ref{sec:scale}).
+
+\subsection{Three stages, and what zero-shot refers to}
+\label{sec:stages}
+
+\textbf{(i) Video pretraining} is inherited: a public VideoMAE-B checkpoint trained on Kinetics-400
+\citep{videomae}, and in the initialisation study V-JEPA checkpoints \citep{vjepa2}.
+\textbf{(ii) Time-series continual pretraining} is the stage this paper designs, on a corpus
+containing none of the evaluation datasets (\S\ref{sec:corpus}). \textbf{(iii) Zero-shot
+evaluation} applies the resulting checkpoint with no parameter update and no per-dataset tuning.
+Design decisions and checkpoint selection used held-out pretraining data only.
+
+\subsection{A. Period-aligned video representation}
 \label{sec:render}
 
-Let $x_{1:L}$ be a univariate series with dominant period $P$, taken from the sampling frequency as
-in \citet{visionts}. We render $L = 16 k P$ observations into $F$ frames of $224\times224$, where
-$k$ is the number of periods per frame. Values are standardised with the mean and standard deviation
-of the \emph{visible context only}, so no test-time statistic leaks into the input, then clipped to
-$z\in[-3,3]$ and mapped to a column height
+A series is turned into a video, not into an image. Let $P$ be the dominant period, taken from the
+sampling frequency as in \citet{visionts}, and let $k$ be the number of periods packed into one
+frame. A clip of $F$ frames covers $FkP$ observations: frame $f$ holds the observations of periods
+$[fk,(f+1)k)$, drawn as an area chart in a $224\times224$ frame. Within a frame the horizontal axis
+is phase inside the period and the vertical axis is value; \emph{across} frames the axis is time
+measured in periods. Consecutive frames therefore differ by whatever changed from one period to the
+next --- level, amplitude, shape --- and a seasonal series renders as an almost static video while a
+drifting or regime-switching one renders as a moving one.
+
+This is what separates the representation from image folding. Folding a series into a 2-D image also
+aligns periods, but the model then sees one static picture to complete. Here the period axis is the
+model's \emph{time} axis --- the axis a video backbone was pretrained to extrapolate along --- and
+the masked region is a block of future frames.
+
+Concretely, values are standardised with the mean and standard deviation of the visible context
+only, clipped to $z\in[-3,3]$, and mapped to a column height
 \begin{equation}
-h \;=\; 0.5 + 0.4\,\frac{z}{3} \;\in\; [0.1,\,0.9].
+h \;=\; 0.5 + 0.4\,\frac{z}{3}\;\in\;[0.1,\,0.9],
 \label{eq:height}
 \end{equation}
-Column $c$ of a frame is drawn as an area chart: row $\mathrm{round}\big((1-h)\cdot 223\big)$ is the
-boundary, rows below it are filled with gray level $0.12$, rows above hold background $0.92$, and
-horizontal grid lines every 28 rows carry $0.80$. Frame $f$ holds periods $[fk,(f+1)k)$. Vertical
-position therefore encodes value and horizontal position encodes phase within the period, so a
-seasonal series becomes a nearly static video and a trending or regime-changing one becomes a moving
-one. With $F=32$ and a tubelet size of 2, a clip is 16 temporal by $14\times14$ spatial tokens.
+with the column filled below the boundary row $\mathrm{round}\big((1-h)(\mathrm{IMG}-1)\big)$ and
+background above it. The drawing constants and the grid are given in Appendix~\ref{app:impl}. The
+main model uses $F=32$ frames with a tubelet size of 2, giving 16 temporal positions; $F$ is a
+context-length setting rather than a contribution, and we report what changes with it in
+Appendix~\ref{app:16f}.
 
-\subsection{Masking: the future, not a random subset}
-
-The last $h_p \in \{2,4\}$ frames are masked; these are the future. With probability $0.3$ the
-leading tubelets are hidden as well, so the model also trains on contexts shorter than the full
-window, which is the regime it meets at test time on short datasets. To retain some of the original
-pretraining signal, $30\%$ of batches instead use standard tube masking. The reconstruction loss is
-computed on the masked future tokens only.
-
-\subsection{The forecast-aligned objective}
+\subsection{B. Forecast-aligned prediction and supervision}
 \label{sec:objective}
 
-Pixel error is a poor surrogate for forecast error because the decoder that turns pixels into
-numbers is not in the loop. We put it there. For a predicted frame $\hat{x}$, define the per-pixel
-soft occupancy
+\paragraph{Predict a future block, not a random subset.} The trailing $h_p$ frames of the clip are
+masked and must be predicted from the visible past. This is the part of the formulation we call
+world-model-style: the model maps an observed past to a predicted future state, in the sense of
+\citet{lecun2022}, and unlike the backbone's native masked-reconstruction objective it never sees a
+neighbour on the far side of what it is predicting. With probability $0.3$ the leading tubelets are
+additionally hidden so that shorter contexts are also trained on, which is the regime the shorter
+evaluation datasets present at test time. A fraction of batches retains the backbone's original tube
+masking, as a regulariser; Appendix~\ref{app:impl} gives the exact schedule and which loss applies
+to which batch type.
+
+\paragraph{Supervise in value space.} A predicted frame is a picture, and the quantity the task is
+scored on is a number, so the decoder that converts one into the other belongs inside the loss. For
+a predicted frame $\hat{x}$ we compute a differentiable soft occupancy per pixel and sum it down
+each column,
 \begin{equation}
-s(\hat{x}_{r,c}) \;=\; \mathrm{clamp}\!\left(\frac{0.80 - \hat{x}_{r,c}}{0.80-0.12},\,0,\,1\right),
+s(\hat{x}_{r,c}) = \mathrm{clamp}\!\left(\frac{g_{\mathrm{grid}} - \hat{x}_{r,c}}
+{g_{\mathrm{grid}}-g_{\mathrm{fill}}},\,0,\,1\right),
 \qquad
-\hat{h}_c \;=\; 1 - \frac{224 - \sum_{r} s(\hat{x}_{r,c})}{223},
+\hat{h}_c = 1 - \frac{\mathrm{IMG} - \sum_{r} s(\hat{x}_{r,c})}{\mathrm{IMG}-1},
 \label{eq:readout}
 \end{equation}
-which counts, differentiably, how much of column $c$ is filled. The thresholds are the fill level
-and the grid-line level from Section~\ref{sec:render}, so grid lines contribute a bounded, constant
-offset rather than gradient noise. Inverting Equation~\ref{eq:height} gives
-$z = (h-0.5)\cdot 3/0.4$, and the training objective is
+which inverts the drawing rule of Equation~\ref{eq:height} up to rounding: the thresholds are chosen
+so that background and grid pixels contribute zero and filled pixels contribute one, and partially
+filled boundary pixels contribute fractionally. Inverting Equation~\ref{eq:height} gives
+$z=(h-0.5)\cdot 3/0.4$, and the training objective is
 \begin{equation}
-\mathcal{L} \;=\; \underbrace{\mathrm{MSE}(\hat{x}, x)}_{\text{pixel}}
-\;+\;
-\lambda \left(\tfrac{3}{0.4}\right)^{2}
-\underbrace{\mathrm{MSE}\big(\hat{h}_c,\,h_c\big)}_{\text{value}},
-\qquad \lambda = 0.1 ,
+\mathcal{L} \;=\; \mathrm{MSE}(\hat{x}, x)\;+\;\lambda\left(\tfrac{3}{0.4}\right)^{2}
+\mathrm{MSE}\big(\hat{h}_c,\,h_c\big),\qquad \lambda=0.1 .
 \label{eq:loss}
 \end{equation}
-where the constant $(3/0.4)^2$ converts height units into standardised value units, so the second
-term is an MSE in exactly the units the benchmark reports. It is computed column-wise and is
-therefore independent of $P$, of the dataset, and of the number of periods packed into a frame. The
-pixel term is kept because it stabilises early training, when the read-out of a blurry prediction is
-uninformative; $\lambda=0.1$ was the first value we tried and $0.3$ is worse
-(Appendix~\ref{app:failed}).
+The constant converts height units into the units of the context-standardised series, so the second
+term is a squared error on values rather than on gray levels. It is computed column-wise and is
+therefore independent of $P$ and of how many periods a frame holds. The pixel term is retained
+because early in training the read-out of a blurry prediction carries little signal.
 
-This is the whole of the method's gain. It is also what makes the model a world model over rendered
-series rather than an inpainter: the quantity being optimised is the future state of the series, in
-the units of the series.
+One clarification about units: this error is in the \emph{context-instance} z-scale, since each
+window is standardised by its own visible statistics, while the benchmark reports errors in a scale
+fitted on the target dataset's training split. The two differ by the ratio of those standard
+deviations, which varies per window. The objective is therefore an error on values rather than on
+pixels, which is the property we need, but it is not numerically identical to the benchmark
+metric.
 
-\subsection{Frame-scale augmentation and prior anchoring}
+\subsection{C. Temporal-scale alignment}
+\label{sec:scale}
 
-At test time a long horizon is covered by packing more periods into each frame, so the model must
-work at several values of $k$. During training we sample $k \in \{1,2,4\}$ with probability
-$0.5/0.3/0.2$, matching the inference rule below. Independently, we can decay weights toward their
-initial values $\theta_0$ rather than toward zero, $p \leftarrow p - \eta\lambda_{\mathrm{sp}}(p -
-\theta_0)$ with $\lambda_{\mathrm{sp}}=0.05$ and weight decay off \citep{l2sp}. This matters at
-16-frame clips and is inert at 32 (Table~\ref{tab:ablation}), which we read as evidence that one
-thing the video prior supplies is long-range temporal context --- something a longer window supplies
-directly.
+A forecaster must cover horizons from one period to many, and in this representation the horizon a
+single predicted block can cover is $h_p k P$. Inference therefore varies $k$ with the requested
+horizon (\S\ref{sec:inference}), and training must cover the same range or the model meets
+resolutions it never saw. We sample $k\in\{1,2,4\}$ during training with probabilities
+$0.5/0.3/0.2$, which is the distribution the inference rule draws from. This is a
+training--inference consistency property of the framework rather than a generic augmentation: the
+set of scales is determined by the inference rule, not chosen for diversity.
 
 \subsection{Inference}
 \label{sec:inference}
 
-One checkpoint and one rule produce every number we report. Given period $P$ and horizon $H$: if
-$H \le 4P$, a single pass with $h_p=4$, averaged over the scales $k$ with $kPs \le 96$; otherwise
-$k = \lceil H/4P \rceil$ periods per frame, followed by $\lceil k/(96/P)\rceil$ autoregressive
-rollout passes when $P<96$ and a single direct pass when $P \ge 96$. There is no per-dataset
-tuning, no ensembling over checkpoints and no blending with statistical baselines anywhere in the
-paper.
+Given the period $P$ and the requested horizon $H$, the rule selects the number of periods per frame
+and the number of forward passes, with no per-dataset tuning and no checkpoint selection. Short
+horizons are covered by a single predicted block whose outputs are averaged over the admissible
+scales; long horizons increase $k$ and, when one block still cannot span $H$, roll the prediction
+forward autoregressively. The resulting forecast is truncated to $H$. Multi-scale averaging and
+rollout both cost additional forward passes, so the system is single-\emph{checkpoint} and
+single-\emph{rule} but not single-pass; Appendix~\ref{app:inference} gives the configuration and the
+pass count for each of the 24 evaluation cells.
 
-\subsection{Backbone, optimisation and corpus}
+\subsection{Pretraining corpus}
+\label{sec:corpus}
 
-The main model continues VideoMAE-B pretrained on Kinetics-400 \citep{videomae} with
-\texttt{norm\_pix\_loss} disabled. VideoMAE's position embeddings are sinusoidal, so moving from 16
-to 32 frames rebuilds the tables and loads the pretrained weights unchanged. We use AdamW
-\citep{adamw} ($\beta = 0.9/0.95$, learning rate $10^{-4}$ with cosine decay and 500 warm-up steps),
-batch 32 as micro-batch 8 with 4-step accumulation, and bf16; 60k steps take about 20 hours on one
-A40.
-
-The corpus is 98 LOTSA subsets \citep{moirai}: 184{,}013 series and 654.2M observations, with $20\%$
-synthetic series mixed in and subsets sampled in proportion to the square root of their size. None
-of the six evaluation datasets appears in it. We note one constraint this creates: the corpus
-contains Monash \texttt{traffic\_hourly} \citep{monash}, which is the same data as the LSF traffic
+The corpus is built from LOTSA \citep{moirai}: 98 subsets, 184{,}013 series, 654.2M observations,
+with synthetic series mixed in during sampling and subsets drawn in proportion to the square root of
+their size. None of ETTh1, ETTh2, ETTm1, ETTm2, electricity or weather is included. The corpus does
+contain Monash \texttt{traffic\_hourly} \citep{monash}, which is the same data as the LSF traffic
 benchmark, so traffic is excluded from our evaluation rather than reported as a zero-shot result.
+Appendix~\ref{app:impl} lists the subset composition and the synthetic-mixing rule.

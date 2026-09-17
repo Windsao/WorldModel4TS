@@ -33,6 +33,31 @@ and MAE are computed on standardised values over stride-1 test origins.
 \label{app:perhorizon}
 %----------------------------------------------------------------------
 
+\begin{table}[t]
+\caption{Our model, per horizon; same checkpoint and inference rule as Table~\ref{tab:main}. Six-dataset means in the last row.}
+\label{tab:perhorizon}
+\begin{center}
+\setlength{\tabcolsep}{4pt}
+\footnotesize
+\begin{tabular}{lcccccccccc}
+\toprule
+\multirow{2}{*}{Dataset} & \multicolumn{2}{c}{$H{=}96$} & \multicolumn{2}{c}{$H{=}192$} & \multicolumn{2}{c}{$H{=}336$} & \multicolumn{2}{c}{$H{=}720$} & \multicolumn{2}{c}{\textbf{Avg}} \\
+\cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-7} \cmidrule(lr){8-9} \cmidrule(lr){10-11}
+ & MSE & MAE & MSE & MAE & MSE & MAE & MSE & MAE & MSE & MAE \\
+\midrule
+ETTm1   & 0.292 & 0.332 & 0.332 & 0.357 & 0.363 & 0.377 & 0.423 & 0.409 & 0.352 & 0.369 \\
+ETTm2   & 0.160 & 0.245 & 0.214 & 0.283 & 0.264 & 0.318 & 0.328 & 0.362 & 0.241 & 0.302 \\
+ETTh1   & 0.352 & 0.380 & 0.396 & 0.408 & 0.424 & 0.425 & 0.446 & 0.449 & 0.404 & 0.416 \\
+ETTh2   & 0.266 & 0.324 & 0.333 & 0.369 & 0.361 & 0.395 & 0.379 & 0.415 & 0.335 & 0.376 \\
+ECL     & 0.128 & 0.219 & 0.148 & 0.239 & 0.170 & 0.262 & 0.207 & 0.294 & 0.163 & 0.254 \\
+Weather & 0.139 & 0.183 & 0.181 & 0.226 & 0.232 & 0.266 & 0.308 & 0.331 & 0.215 & 0.252 \\
+\midrule
+Mean    & 0.223 & 0.281 & 0.267 & 0.314 & 0.302 & 0.341 & 0.349 & 0.377 & 0.285 & 0.328 \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{table}
+
 \begin{table}[h]
 \caption{MSE per dataset and horizon against VisionTS, the only baseline that publishes per-horizon
 numbers on this protocol. \textbf{Bold}: better of the two. We win 18 of 24 cells; the six losses
@@ -85,6 +110,57 @@ together with the anchoring ablation (inert at 32 frames, essential at 16), this
 of what video pretraining supplies is long-range temporal context, which a longer window supplies
 directly. The matched-size comparison in Table~\ref{tab:backbone} therefore uses the 5k-step budget,
 where the prior is still doing work.
+
+%----------------------------------------------------------------------
+\section{Inference configuration and cost}
+\label{app:inference}
+%----------------------------------------------------------------------
+
+The rule of Section~\ref{sec:inference} maps $(P, H)$ to a configuration with no per-dataset tuning.
+Table~\ref{tab:passes} lists the configuration it selects for each evaluation cell and the number of
+forward passes that configuration costs. \texttt{mp} (multiperiod) predicts one block of frames with $k$
+periods per frame; the \texttt{sc} suffix lists the frame scales that are averaged, each of which is
+a separate pass; \texttt{rollout2} feeds the prediction back and predicts twice. The system uses one
+checkpoint and one rule for all cells, but it is not single-pass everywhere.
+
+\begin{table}[h]
+\caption{Inference configuration and forward passes per evaluation cell.}
+\label{tab:passes}
+\begin{center}
+\setlength{\tabcolsep}{5pt}
+\footnotesize
+\begin{tabular}{llcccc}
+\toprule
+Dataset & $P$ & $H{=}96$ & $H{=}192$ & $H{=}336$ & $H{=}720$ \\
+\midrule
+ETTh1 / ETTh2 & 24 & \texttt{sc124} (3) & \texttt{sc12} (2) & \texttt{mp} (1) & \texttt{rollout2} (2) \\
+ETTm1 / ETTm2 & 96 & \texttt{mp} (1) & \texttt{mp} (1) & \texttt{mp} (1) & \texttt{mp} (1) \\
+ECL & 24 & \texttt{mp} (1) & \texttt{mp} (1) & \texttt{mp} (1) & \texttt{mp} (1) \\
+Weather & 144 & \texttt{mp} (1) & \texttt{mp} (1) & \texttt{mp} (1) & \texttt{mp} (1) \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{table}
+
+A 32-frame clip costs roughly $8\times$ a 16-frame clip per pass on the largest dataset, so the
+inference cost of the reported system is higher than that of a 16-frame configuration even where the
+pass count is one.
+
+%----------------------------------------------------------------------
+\section{Checks on the objective-mismatch result}
+\label{app:diagnosis}
+%----------------------------------------------------------------------
+
+The degradation in Figure~\ref{fig:budget}a survives the following checks. Checkpoint key sets,
+the \texttt{transformers} version, the attention configuration and dataloader warnings were excluded
+by re-evaluating every checkpoint under matched software. The training loss is flat across the range
+($0.0092 \to 0.0089$), so the model is not overfitting the pixel objective. Per cell, the 176k-step
+model is $5$--$60\%$ worse than the 20k-step model, with the largest gaps at the longest horizons
+(ETTh2 at $H{=}720$: $0.429 \to 0.617$). The one quantity that moves monotonically with the
+schedule is the weight norm, which shrinks by roughly $30\%$ over the $9\times$ longer run under
+decoupled weight decay; this is consistent with the prior-anchoring ablation helping in the
+short-clip regime, though we did not isolate it as the cause. The 60k native-objective checkpoint
+was never evaluated downstream, so no value is reported for it.
 
 %----------------------------------------------------------------------
 \section{Alternatives that did not work}

@@ -1,0 +1,70 @@
+% Figure 1: method overview. Pure TikZ, no external assets.
+% series -> context-only normalisation -> period-aligned frames -> visible past / masked future
+%        -> video backbone -> predicted frames -> numeric read-out -> loss (train) / forecast (test)
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+  font=\scriptsize, x=1cm, y=1cm,
+  box/.style={draw, rounded corners=1.5pt, align=center, inner sep=3.5pt},
+  frm/.style={draw, minimum width=5.6mm, minimum height=5.6mm, inner sep=0pt, fill=black!6},
+  fut/.style={frm, fill=fcred!10, draw=fcred, densely dashed},
+  prd/.style={frm, fill=pixblue!10, draw=pixblue},
+  flow/.style={-latex, semithick, draw=black!65},
+  grad/.style={-latex, semithick, draw=fcred, densely dashed},
+  outp/.style={-latex, semithick, draw=pixblue},
+]
+
+% ---------------- row A: series -> rendering -> clip
+\node[box, align=center] (series) at (1.05,0) {observed series $x_{1:L}$\\[1pt]
+  \tikz[baseline]{\draw[black!70, line width=0.5pt] plot[smooth, tension=0.7]
+    coordinates {(0,0.05) (0.15,0.14) (0.3,0.02) (0.45,0.16) (0.6,0.06) (0.75,0.2) (0.9,0.1)};}};
+\node[box, align=center, fill=black!2] (render) at (4.15,0)
+  {context-only normalisation\\ period-aligned rendering\\ (one frame $=k$ periods)};
+\draw[flow] (series) -- (render);
+
+\begin{scope}[shift={(6.45,0)}]
+  \foreach \i in {0,1,2,3} \node[frm] at (\i*0.63,0) {};
+  \node[fut] at (4*0.63,0) {}; \node[fut] at (5*0.63,0) {};
+  \draw[decorate] (0,0) -- (0,0);
+  \node[anchor=north, font=\tiny] at (0.95,-0.36) {visible past};
+  \node[anchor=north, font=\tiny, text=fcred] at (2.83,-0.36) {masked future};
+\end{scope}
+\draw[flow] (render.east) -- ++(0.25,0);
+
+% ---------------- row B: backbone -> predicted -> read-out
+\node[box, align=center, minimum height=8mm] (bb) at (1.5,-2.15) {video backbone\\ (VideoMAE-B)};
+\begin{scope}[shift={(3.72,-2.15)}]
+  \node[prd] at (0,0) {}; \node[prd] at (0.63,0) {};
+  \node[anchor=north, font=\tiny, text=pixblue] at (0.32,-0.36) {predicted frames};
+\end{scope}
+\node[box, align=center, minimum height=8mm] (ro) at (6.55,-2.15)
+  {differentiable\\ numeric read-out};
+\node[box, align=center, draw=fcred, text=fcred] (loss) at (9.9,-1.72)
+  {forecast-aligned loss\\ in value units};
+\node[box, align=center, draw=pixblue, text=pixblue] (fc) at (9.9,-2.72)
+  {forecast $\hat{x}_{L+1:L+H}$};
+
+\draw[flow] (6.45+5*0.63+0.32,-0.30) -- ++(0,-0.55) -| (bb.north);
+\draw[flow] (bb.east) -- (3.42,-2.15);
+\draw[flow] (4.05,-2.15) -- (ro.west);
+\draw[grad] (ro.east) -- ++(0.35,0) |- (loss.west);
+\draw[outp] (ro.east) -- ++(0.35,0) |- (fc.west);
+\draw[grad] (loss.north) -- ++(0,0.42) -| (bb.north east);
+\node[font=\tiny, text=fcred, fill=white, inner sep=1pt] at (5.15,-1.30)
+  {gradient, time-series continual pretraining only};
+
+\node[anchor=west, font=\tiny, text=fcred]  at (0.05,-3.30) {$--$ training path};
+\node[anchor=west, font=\tiny, text=pixblue] at (2.10,-3.30) {$-$ inference path};
+\node[anchor=west, font=\tiny] at (4.20,-3.30)
+  {no parameter update on the target dataset};
+
+\end{tikzpicture}
+\caption{The transfer framework. A series is normalised with the statistics of its visible context
+only and rendered so that one frame holds $k$ periods, which puts value on the vertical axis and
+phase on the horizontal one; the trailing frames are masked. A video backbone predicts those frames,
+and a differentiable read-out decodes them back into values. During time-series continual
+pretraining the loss is taken on the decoded values (Section~\ref{sec:objective}); at test time the
+same read-out emits the forecast and no parameter is updated on the target dataset. The backbone
+enters this pipeline with weights from video pretraining, which is the only stage that sees video.}
+\label{fig:overview}
+\end{figure}
