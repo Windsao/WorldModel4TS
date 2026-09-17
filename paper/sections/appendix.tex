@@ -29,6 +29,36 @@ cells use the same checkpoint. Multi-channel datasets are forecast channel by ch
 and MAE are computed on standardised values over stride-1 test origins.
 
 %----------------------------------------------------------------------
+\section{Per-cell comparison against VisionTS}
+\label{app:perhorizon}
+%----------------------------------------------------------------------
+
+\begin{table}[h]
+\caption{MSE per dataset and horizon against VisionTS, the only baseline that publishes per-horizon
+numbers on this protocol. \textbf{Bold}: better of the two. We win 18 of 24 cells; the six losses
+are all mid-to-long horizons on the hourly ETT sets.}
+\label{tab:perhorizon-vts}
+\begin{center}
+\setlength{\tabcolsep}{4pt}
+\footnotesize
+\begin{tabular}{lcccccccc}
+\toprule
+\multirow{2}{*}{Dataset} & \multicolumn{2}{c}{$H{=}96$} & \multicolumn{2}{c}{$H{=}192$} & \multicolumn{2}{c}{$H{=}336$} & \multicolumn{2}{c}{$H{=}720$} \\
+\cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-7} \cmidrule(lr){8-9}
+ & Ours & VisionTS & Ours & VisionTS & Ours & VisionTS & Ours & VisionTS \\
+\midrule
+ETTm1   & \textbf{0.292} & 0.341 & \textbf{0.332} & 0.360 & \textbf{0.363} & 0.377 & 0.423 & \textbf{0.416} \\
+ETTm2   & \textbf{0.160} & 0.228 & \textbf{0.214} & 0.262 & \textbf{0.264} & 0.293 & \textbf{0.328} & 0.343 \\
+ETTh1   & \textbf{0.352} & 0.353 & 0.396 & \textbf{0.392} & 0.424 & \textbf{0.407} & 0.446 & \textbf{0.406} \\
+ETTh2   & \textbf{0.266} & 0.271 & 0.333 & \textbf{0.328} & 0.361 & \textbf{0.345} & \textbf{0.379} & 0.388 \\
+ECL     & \textbf{0.128} & 0.177 & \textbf{0.148} & 0.188 & \textbf{0.170} & 0.207 & \textbf{0.207} & 0.256 \\
+Weather & \textbf{0.139} & 0.220 & \textbf{0.181} & 0.244 & \textbf{0.232} & 0.280 & \textbf{0.308} & 0.330 \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{table}
+
+%----------------------------------------------------------------------
 \section{Initialisation at two clip lengths}
 \label{app:16f}
 %----------------------------------------------------------------------

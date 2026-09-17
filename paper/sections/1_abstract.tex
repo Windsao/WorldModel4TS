@@ -1,23 +1,19 @@
 \begin{abstract}
 
-Visual foundation models forecast time series well: render the series as an image, hand it to an
-ImageNet masked autoencoder, read the completion back as numbers. Video backbones look like the
-obvious next step, since they are pretrained on how things change rather than on how they look. They
-are not, at least not as shipped. Continuing VideoMAE's masked-pixel objective on rendered series
-drives the held-out pixel loss down monotonically, from $0.0366$ to $0.0312$, while forecast error
-climbs monotonically over the same range, from $0.339$ to $0.381$; at nine times the budget
-individual benchmark cells degrade by $5$--$60\%$. Pretraining and forecasting are not merely
-loosely coupled here, they point in opposite directions. We remove the mismatch by training the
-backbone as a world model over rendered series: the model sees past frames, predicts future frames,
-and a differentiable read-out decodes those frames back to values so that the loss is measured in
-standardised value units rather than in gray levels. Combined with period-aligned rendering,
-frame-scale augmentation and a 32-frame clip, the budget curve inverts and becomes monotonically
-improving. The resulting zero-shot forecaster reaches a six-dataset mean MSE of $0.285$ on the
-standard long-sequence benchmark, against $0.289$ for VisionTS++ large and $0.291$ for its base
-model, using about $1/13$ of their continual-pretraining steps and $0.3\%$ of the data. At matched
-size and matched budget, two video backbones beat an image backbone by $3$--$5\%$ at every horizon
-and tie with each other, while the same architecture trained from scratch is the worst arm we ran:
-what transfers from video is a prior over dynamics, not a particular pretraining objective and not
-capacity.
+Rendering a time series as an image and forecasting it by inpainting is the recipe behind the
+strongest published zero-shot forecasters, all of which inpaint with an ImageNet autoencoder. A
+video backbone, pretrained on how signals evolve rather than on how they look, ought to be the
+better prior. We find that it is, but only once the transfer objective is changed. Continuing
+VideoMAE's masked-pixel pretraining on a corpus of rendered series improves its own held-out loss
+monotonically while making forecasts monotonically worse over a $35\times$ range of training budget.
+The two never meet, because the read-out that converts pixels back into numbers sits outside the
+loss. We put it inside: the backbone is trained as a world model over rendered series, observing
+past frames, predicting future ones, and scored by a differentiable read-out that decodes those
+frames into standardised values. The budget curve inverts. With period-aligned rendering,
+frame-scale augmentation and 32-frame clips, a single checkpoint under a single inference rule
+attains $0.285$ mean MSE across the six standard long-sequence benchmarks, ahead of VisionTS++
+($0.289$) and VisionTS ($0.315$), using $1/13$ of VisionTS++'s continual-pretraining steps and
+$0.3\%$ of its data. Swapping only the initialisation, between image, video and none at all, shows
+that what transfers is a prior over dynamics, not capacity and not any particular video objective.
 
 \end{abstract}

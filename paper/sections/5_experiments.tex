@@ -23,41 +23,7 @@ seed replication.
 \subsection{Main results}
 \label{sec:main}
 
-\begin{table}[t]
-\caption{Zero-shot long-sequence forecasting, four-horizon average MSE/MAE. One checkpoint and one
-inference rule for all cells. Baselines are quoted from \citet{visiontspp} and \citet{visionts};
-`--' means the source does not report that dataset. Best per column in bold.}
-\label{tab:main}
-\begin{center}
-\footnotesize
-\setlength{\tabcolsep}{2.6pt}
-\begin{tabular}{lccccccc}
-\toprule
-Model & ETTm1 & ETTm2 & ETTh1 & ETTh2 & Electricity & Weather & Avg \\
-\midrule
-\textbf{Ours} (VideoMAE-B, 32f, 60k) & \textbf{.352}/\textbf{.369} & \textbf{.241}/.302 & .404/.416 & .335/.376 & \textbf{.163}/\textbf{.254} & \textbf{.215}/.252 & \textbf{.285}/.328 \\
-Ours (20k steps, 6.3 GPU-h) & .360/.371 & .242/.304 & .400/.417 & .342/.381 & .169/.261 & .217/.253 & .288/.331 \\
-Ours (20k, two-seed average) & .351/-- & .242/-- & .401/-- & .338/-- & .168/-- & .215/-- & .286/-- \\
-\midrule
-VisionTS++ large (ViT-L) & .354/.369 & .244/\textbf{.298} & .403/.418 & \textbf{.327}/\textbf{.365} & .181/.264 & .226/.243 & .289/\textbf{.326} \\
-VisionTS++ base (ViT-B) & .360/.372 & .244/\textbf{.298} & .402/.416 & .333/.370 & .184/.265 & .222/\textbf{.241} & .291/.327 \\
-VisionTS & .374/.372 & .318/.366 & \textbf{.390}/\textbf{.414} & .333/.375 & .207/.294 & .269/.292 & .315/.352 \\
-\midrule
-Moirai small & .448/.410 & .272/.321 & .400/.424 & .341/.379 & .233/.320 & .242/.267 & .323/.353 \\
-Moirai base & .382/.388 & .276/.320 & .434/.439 & .346/.382 & .188/.274 & .238/.261 & .311/.344 \\
-Moirai large & .390/.389 & .317/.366 & .510/.469 & .354/.377 & .188/.273 & .260/.275 & .337/.358 \\
-Chronos small & .640/.500 & .310/.350 & .545/.472 & .424/.430 & .220/.284 & .300/.318 & .407/.392 \\
-Chronos base & .646/.500 & .295/.338 & .591/.468 & .406/.411 & .215/.279 & .293/.315 & .408/.385 \\
-Chronos large & .556/.465 & .300/.341 & .589/.466 & .455/.427 & .204/.274 & .279/.306 & .397/.380 \\
-Time-MoE small & .394/.416 & .316/.361 & .400/.424 & .367/.404 & --/-- & .266/.297 & --/-- \\
-Time-MoE base & .376/.406 & .349/.380 & .394/.420 & .405/.415 & --/-- & .270/.300 & --/-- \\
-Timer 28B & .487/.457 & .328/.347 & .444/.457 & .358/.407 & --/-- & .304/.331 & --/-- \\
-TimesFM & .433/.419 & --/-- & .473/.444 & .392/.406 & --/-- & --/-- & --/-- \\
-MOMENT & .670/.537 & .316/.371 & .684/.566 & .362/.410 & .765/.687 & .294/.326 & .515/.483 \\
-\bottomrule
-\end{tabular}
-\end{center}
-\end{table}
+\input{figures/main_table}
 
 Table~\ref{tab:main} places the model at the top of the published zero-shot table by mean MSE,
 $0.285$ against $0.289$ for VisionTS++ large and $0.291$ for its base model. Four of six datasets
@@ -66,37 +32,42 @@ and ETTh2, which goes to VisionTS++ large ($0.327$ against $0.335$); both are ho
 mid-to-long horizons, where a longer tuned context helps and our window is capped at 32 frames of at
 most four periods. On mean MAE we tie rather than win, $0.328$ against $0.326$. The margin on
 electricity ($0.163$ against $0.181$) and weather ($0.215$ against $0.222$) is where the aggregate
-gain comes from.
+gain comes from. Trained for 20k steps instead of 60k --- 6.3 GPU-hours --- the same recipe already
+reaches $0.288/0.331$, which would still lead the table.
 
 \begin{table}[t]
-\caption{Per-horizon MSE/MAE for our 60k model, and the per-cell comparison against VisionTS, the
-only baseline that publishes per-horizon numbers on this protocol. $\Delta$ is relative MSE, negative
-means we are better.}
+\caption{Our model, per horizon. Same checkpoint and inference rule as Table~\ref{tab:main}.
+The head-to-head against VisionTS, the only baseline that publishes per-horizon numbers on this
+protocol, is in Appendix~\ref{app:perhorizon}: we win 18 of its 24 cells.}
 \label{tab:perhorizon}
 \begin{center}
+\setlength{\tabcolsep}{4pt}
 \footnotesize
-\setlength{\tabcolsep}{3.4pt}
-\begin{tabular}{lcccc|cccc}
+\begin{tabular}{lcccccccccc}
 \toprule
- & \multicolumn{4}{c|}{Ours, MSE/MAE} & \multicolumn{4}{c}{$\Delta$ vs.\ VisionTS, MSE} \\
-Dataset & $H{=}96$ & $192$ & $336$ & $720$ & $96$ & $192$ & $336$ & $720$ \\
+\multirow{2}{*}{Dataset} & \multicolumn{2}{c}{$H{=}96$} & \multicolumn{2}{c}{$H{=}192$} & \multicolumn{2}{c}{$H{=}336$} & \multicolumn{2}{c}{$H{=}720$} & \multicolumn{2}{c}{\textbf{Avg}} \\
+\cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-7} \cmidrule(lr){8-9} \cmidrule(lr){10-11}
+ & MSE & MAE & MSE & MAE & MSE & MAE & MSE & MAE & MSE & MAE \\
 \midrule
-ETTm1       & .292/.332 & .332/.357 & .363/.377 & .423/.409 & $-14.5\%$ & $-7.7\%$ & $-3.8\%$ & $+1.7\%$ \\
-ETTm2       & .160/.245 & .214/.283 & .264/.318 & .328/.362 & $-29.8\%$ & $-18.3\%$ & $-10.0\%$ & $-4.4\%$ \\
-ETTh1       & .352/.380 & .396/.408 & .424/.425 & .446/.449 & $-0.3\%$ & $+1.1\%$ & $+4.1\%$ & $+9.8\%$ \\
-ETTh2       & .266/.324 & .333/.369 & .361/.395 & .379/.415 & $-1.7\%$ & $+1.7\%$ & $+4.7\%$ & $-2.4\%$ \\
-Electricity & .128/.219 & .148/.239 & .170/.262 & .207/.294 & $-27.8\%$ & $-21.5\%$ & $-18.0\%$ & $-19.1\%$ \\
-Weather     & .139/.183 & .181/.226 & .232/.266 & .308/.331 & $-36.9\%$ & $-25.8\%$ & $-17.3\%$ & $-6.7\%$ \\
+ETTm1   & 0.292 & 0.332 & 0.332 & 0.357 & 0.363 & 0.377 & 0.423 & 0.409 & 0.352 & 0.369 \\
+ETTm2   & 0.160 & 0.245 & 0.214 & 0.283 & 0.264 & 0.318 & 0.328 & 0.362 & 0.241 & 0.302 \\
+ETTh1   & 0.352 & 0.380 & 0.396 & 0.408 & 0.424 & 0.425 & 0.446 & 0.449 & 0.404 & 0.416 \\
+ETTh2   & 0.266 & 0.324 & 0.333 & 0.369 & 0.361 & 0.395 & 0.379 & 0.415 & 0.335 & 0.376 \\
+ECL     & 0.128 & 0.219 & 0.148 & 0.239 & 0.170 & 0.262 & 0.207 & 0.294 & 0.163 & 0.254 \\
+Weather & 0.139 & 0.183 & 0.181 & 0.226 & 0.232 & 0.266 & 0.308 & 0.331 & 0.215 & 0.252 \\
+\midrule
+Mean    & 0.223 & 0.281 & 0.267 & 0.314 & 0.302 & 0.341 & 0.349 & 0.377 & 0.285 & 0.328 \\
 \bottomrule
 \end{tabular}
 \end{center}
 \end{table}
 
-Table~\ref{tab:perhorizon} breaks the aggregate down. We take 18 of 24 cells. The six losses are all
+Table~\ref{tab:perhorizon} breaks the aggregate down, and the head-to-head in
+Appendix~\ref{app:perhorizon} gives us 18 of VisionTS's 24 cells. The six losses are all
 mid-to-long horizons on hourly ETT, and they share a cause with the ETTh1/ETTh2 column losses above:
 at $H{=}720$ with $P{=}24$, covering the horizon requires either eight periods per frame or several
 rollout passes, and both cost resolution. The wins are large and systematic elsewhere: every
-electricity cell improves by $18$--$28\%$, and weather at $H{=}96$ by $37\%$.
+electricity cell improves by $18$--$28\%$ over VisionTS, and weather at $H{=}96$ by $37\%$.
 
 \subsection{What the objective buys}
 \label{sec:ablation}
@@ -224,8 +195,8 @@ Two seeds of the 20k model agree to within $0.002$ on the five-dataset means
 ($0.245/0.330/0.379$ and $0.243/0.330/0.378$), and on the full six-dataset grid they agree on five
 of six datasets, with ETTm1 the only visible spread ($0.351$ against $0.360$). Averaging the two
 seeds in \emph{prediction} space is worth a further $0.6\%$ and is never worse on any cell, giving
-$0.286$; we report it as a secondary row in Table~\ref{tab:main} rather than as the headline, since
-it doubles the training cost.
+$0.286$ against the single-seed $0.288$ at 20k steps. We leave it out of Table~\ref{tab:main}, since
+it doubles the training cost for a gain smaller than the step from 20k to 60k.
 
 \begin{table}[t]
 \caption{Pretraining budget. Steps are counted in windows seen; we do not claim a FLOP comparison,
