@@ -1,0 +1,20 @@
+%----------------------------------------------------------------------
+\section{Conclusion}
+\label{sec:conclusion}
+%----------------------------------------------------------------------
+
+Video backbones do help time-series forecasting, but not through the objective they were trained
+with. Continuing masked-pixel pretraining on rendered series improves that objective and degrades
+forecasting at the same time, monotonically, over a $35\times$ range of budget. Training the same
+backbone as a world model over rendered series --- past frames in, future frames out, supervised
+through a differentiable read-out in value space --- inverts the curve and produces the best mean
+MSE in the published zero-shot table with a small fraction of the pretraining budget of the models
+it displaces. A matched-size comparison with a random-init control locates the transferable
+ingredient in a prior over dynamics rather than in capacity or in any one video objective.
+
+The practical reading is that the rendering detour is not the interesting design decision; the loop
+between prediction and read-out is. Anything that turns a visual model into a forecaster eventually
+converts pixels into numbers, and our results suggest that conversion belongs inside the training
+objective rather than after it. The obvious next steps are a second benchmark, a longer effective
+context to recover the hourly ETT cells, and porting the value-space loss into the image-model
+pipeline it was diagnosed on.

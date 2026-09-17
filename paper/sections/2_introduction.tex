@@ -1,0 +1,76 @@
+%----------------------------------------------------------------------
+\section{Introduction}
+\label{sec:intro}
+%----------------------------------------------------------------------
+
+A time series can be drawn. Once drawn, an image model can finish the drawing, and the finished
+drawing can be read back as numbers. VisionTS \citep{visionts} showed that this detour beats most
+purpose-built forecasters in the zero-shot setting, and VisionTS++ \citep{visiontspp} showed that
+continuing the image model's pretraining on a large corpus of rendered series makes it the strongest
+zero-shot forecaster published. Both use an ImageNet masked autoencoder \citep{mae}. Neither has
+ever seen anything move.
+
+Video backbones are the natural next candidate. They are pretrained on how signals evolve, which is
+what forecasting asks about, and the recent ones are explicitly built as world models: V-JEPA~2
+\citep{vjepa2} predicts the latent state of the future from the past and is used for planning. If a
+prior over dynamics is worth anything for forecasting, a video backbone should be where it lives.
+
+We started from that premise and it failed, in a way that turned out to be the interesting part of
+the story. Taking VideoMAE \citep{videomae} and continuing its native masked-pixel objective on a
+654M-observation corpus of rendered series does improve the pretraining objective --- held-out pixel
+loss falls from $0.0366$ at 5k steps to $0.0312$ at 176k --- while downstream forecast error rises
+over exactly the same range, from $0.339$ to $0.381$ (Section~\ref{sec:diagnosis}). This is not
+noise and not overfitting: the training loss stays flat, and the degradation is largest at the
+longest horizons, where one benchmark cell moves from $0.429$ to $0.617$. More pretraining on more
+data, with the objective the backbone was designed around, makes the forecaster worse every time we
+spend more compute on it.
+
+The reason is that the native objective never asks the question we care about. Masked pixel
+reconstruction is bidirectional and interpolative: a token is recovered from neighbours on both
+sides, and the model is free to spend capacity on grid lines, anti-aliasing and fill boundaries,
+none of which carry value information. The mapping from pixels back to numbers --- the step that
+actually determines forecast error --- is applied only at test time and is never trained against.
+Two models can differ by $8\%$ in gray-level error and by $12\%$ in the opposite direction in
+forecast error, because the losses measure different things.
+
+Our fix is to make the pretraining task the forecasting task. We train the backbone as a world model
+over rendered series: the last frames of a clip are masked, the model predicts them from the visible
+past, and a differentiable soft row-count decodes the predicted frames back into values so that the
+training loss includes an error term in standardised value units. Nothing about the backbone
+changes, only what it is asked to be right about. Around this we place three choices that matter
+at the level of a percent or two each: rendering one period per frame so that vertical position
+encodes value and horizontal position encodes phase, sampling the periods-per-frame scale during
+training to match the multi-scale inference rule, and using 32-frame clips instead of 16.
+
+The budget curve inverts. Under the aligned objective, five-dataset mean MSE improves monotonically
+with training --- $0.250$ at 5k steps, $0.245$ at 20k, $0.242$ at 60k --- where the pixel objective
+degraded monotonically over the same range. The final model reaches a six-dataset mean MSE of
+$0.285$ on the standard long-sequence forecasting protocol, ahead of VisionTS++ large ($0.289$) and
+base ($0.291$), Moirai base ($0.311$) and VisionTS ($0.315$), at roughly $1/13$ of VisionTS++'s
+continual-pretraining steps and $0.3\%$ of its data. Against the only baseline that publishes
+per-horizon numbers on this protocol, we win 18 of 24 cells.
+
+A matched-size study then asks what the video backbone was contributing in the first place. Holding
+the recipe, corpus, budget and inference rule fixed and swapping only the initialisation, an
+ImageNet MAE-B reaches $0.264$ at $H{=}96$, VideoMAE-B $0.250$, V-JEPA~2.1-B $0.252$, and the same
+V-JEPA architecture initialised randomly $0.280$ --- worse than an image backbone $3.5\times$
+smaller. The two video objectives, one reconstructive and one predictive, are indistinguishable from
+each other while both beat the image backbone. What transfers is a prior over dynamics; the
+particular objective that produced it is not what matters, and capacity does not explain it.
+
+\paragraph{Contributions.}
+\begin{itemize}
+\item A diagnosis: on rendered time series, masked-pixel continual pretraining and forecasting
+      accuracy move in opposite directions across a $35\times$ range of training budget
+      (Section~\ref{sec:diagnosis}).
+\item A forecast-aligned world-model objective that removes the mismatch by decoding predicted
+      frames back to values with a differentiable read-out and training on the value-space error
+      (Section~\ref{sec:method}). It accounts for the entire gain in our ablation, and the gap grows
+      with horizon.
+\item State of the art on the standard zero-shot long-sequence benchmark at a fraction of the
+      pretraining budget: $0.285$ mean MSE with one checkpoint and one inference rule for all 24
+      cells (Section~\ref{sec:main}).
+\item Evidence that the transferable ingredient is a dynamics prior rather than a specific video
+      objective or model capacity, from a matched-size backbone comparison with a random-init
+      control (Section~\ref{sec:backbone}).
+\end{itemize}

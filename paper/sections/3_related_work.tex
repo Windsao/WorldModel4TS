@@ -1,0 +1,42 @@
+%----------------------------------------------------------------------
+\section{Related work}
+\label{sec:related}
+%----------------------------------------------------------------------
+
+\paragraph{Visual backbones as forecasters.}
+VisionTS \citep{visionts} renders a univariate series into a periodicity-aligned image, masks the
+right-hand portion, and lets a frozen ImageNet masked autoencoder \citep{mae} inpaint it; decoding
+the completion gives a forecast that is competitive zero-shot with dedicated time-series models.
+VisionTS++ \citep{visiontspp} keeps the construction and continues pretraining the backbone on
+LOTSA \citep{moirai}, with colourised multivariate rendering and a multi-quantile head; the
+continual-pretraining stage is what moves it to the top of the zero-shot table. We share the premise
+that a visual backbone is a reasonable prior for forecasting, and we change the objective that the
+continual-pretraining stage optimises. To our knowledge this is the first report that the native
+masked-reconstruction objective degrades forecasting monotonically as its own loss improves.
+Adjacent evidence points the same way: SVTime \citep{svtime} matches VisionTS with a 215k-parameter
+model carrying three inductive biases, suggesting the transferable visual prior is small; RoMAE
+\citep{romae} and OccamVTS \citep{occamvts} argue that bidirectional masked autoencoders interpolate
+rather than extrapolate and that only low-level visual features survive the transfer.
+
+\paragraph{Time-series foundation models.}
+Moirai \citep{moirai}, Chronos \citep{chronos}, Time-MoE \citep{timemoe}, Timer \citep{timer},
+TimesFM \citep{timesfm} and MOMENT \citep{moment} pretrain directly on time-series corpora with
+tokenisation, quantisation or patching schemes designed for the modality. They are our baselines,
+and the comparison is deliberately unequal in their favour on data: LOTSA in full is 231B
+observations, and we use $0.3\%$ of it.
+
+\paragraph{Video models as world models.}
+A world model predicts the future state of an environment from its past and an action
+\citep{lecun2022,dreamer}. V-JEPA \citep{vjepa} and V-JEPA~2 \citep{vjepa2} instantiate this in
+video by predicting the latent representation of masked future regions, and are used downstream for
+planning. VideoMAE \citep{videomae} is not a world model in this sense --- it is a bidirectional
+masked autoencoder whose prior over dynamics is implicit --- but the distinction turns out to matter
+less than the objective it is fine-tuned with. We use both families as backbones and, once the
+forecast-aligned objective is applied, both become world models over rendered series in the literal
+sense: past frames in, future frames out, supervised on the decoded values.
+
+\paragraph{Transfer and anchoring.}
+Continual pretraining of a strong backbone on a narrow corpus risks erasing the prior it was chosen
+for. L2-SP \citep{l2sp} regularises toward the initial weights instead of toward zero. We use it as
+an ablation arm and report where it matters (16-frame clips) and where it is inert (32-frame clips),
+which is itself informative about what the video prior supplies.

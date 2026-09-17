@@ -1,0 +1,90 @@
+%----------------------------------------------------------------------
+\section{Implementation details}
+\label{app:impl}
+%----------------------------------------------------------------------
+
+\paragraph{Rendering.} Frames are $224\times224$ grayscale, replicated to three channels. Fill level
+$0.12$, background $0.92$, grid lines every 28 rows at $0.80$. Values are standardised with the
+statistics of the visible context, clipped to $z\in[-3,3]$ and mapped to height by
+Equation~\ref{eq:height}. A clip holds $16kP$ observations in $F$ frames; tubelet size is 2, giving
+$16\times14\times14 = 3136$ tokens at $F=32$.
+
+\paragraph{Training.} VideoMAE-B initialised from Kinetics-400, \texttt{norm\_pix\_loss} off, AdamW
+($\beta_1{=}0.9$, $\beta_2{=}0.95$), learning rate $10^{-4}$ with cosine decay and 500 warm-up
+steps, weight decay $0.05$ (or $0$ with prior anchoring at $\lambda_{\mathrm{sp}}=0.05$), bf16,
+micro-batch 8 with 4-step gradient accumulation for an effective batch of 32. Masked future length
+$h_p$ is sampled from $\{2,4\}$; with probability $0.3$ the leading tubelets are additionally
+hidden; $30\%$ of batches use tube masking instead. Frame scale $k\in\{1,2,4\}$ with probability
+$0.5/0.3/0.2$. Learning rate $2\times10^{-4}$ is worse and $5\times10^{-5}$ ties $10^{-4}$.
+
+\paragraph{Corpus.} 98 LOTSA subsets, 184{,}013 series, 654.2M observations, with $20\%$ synthetic
+series (sinusoids with trend, noise and regime changes) mixed in. Subsets are sampled with
+probability proportional to the square root of their observation count. We verified that none of
+ETTh1, ETTh2, ETTm1, ETTm2, electricity or weather is present; the nearest same-domain entries are
+Monash \texttt{weather} (daily Australian stations, not the Jena 10-minute set) and
+\texttt{traffic\_hourly}, which is why traffic is excluded from the evaluation.
+
+\paragraph{Evaluation.} \texttt{--mode auto} as described in Section~\ref{sec:inference}. All 24
+cells use the same checkpoint. Multi-channel datasets are forecast channel by channel. Reported MSE
+and MAE are computed on standardised values over stride-1 test origins.
+
+%----------------------------------------------------------------------
+\section{Initialisation at two clip lengths}
+\label{app:16f}
+%----------------------------------------------------------------------
+
+\begin{table}[h]
+\caption{Video against image initialisation at two clip lengths, two seeds each where available.
+Five-dataset mean MSE at $H{=}96/336/720$.}
+\label{tab:16f}
+\begin{center}
+\small
+\begin{tabular}{lll}
+\toprule
+Clip length & Video init & Image init \\
+\midrule
+16 frames & 0.257/0.350/0.383, \; 0.256/0.348/0.384 & 0.268/0.359/0.400, \; 0.265/0.353/0.400 \\
+32 frames & 0.245/0.330/0.379 & 0.244/0.329/0.373, \; 0.245/0.330/0.373 \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{table}
+
+At 16 frames the video prior is worth $3$--$4\%$; at 32 frames the two initialisations tie. Read
+together with the anchoring ablation (inert at 32 frames, essential at 16), this suggests that part
+of what video pretraining supplies is long-range temporal context, which a longer window supplies
+directly. The matched-size comparison in Table~\ref{tab:backbone} therefore uses the 5k-step budget,
+where the prior is still doing work.
+
+%----------------------------------------------------------------------
+\section{Alternatives that did not work}
+\label{app:failed}
+%----------------------------------------------------------------------
+
+We list these so that the obvious questions have answers, not because any of them is a finding.
+
+\begin{table}[h]
+\caption{Attempts that did not improve on the recipe in Section~\ref{sec:method}.}
+\label{tab:failed}
+\begin{center}
+\footnotesize
+\begin{tabular}{p{0.52\textwidth}p{0.40\textwidth}}
+\toprule
+Attempt & Outcome \\
+\midrule
+$9\times$ budget under the pixel objective (176k steps) & $5$--$60\%$ worse per cell \\
+Larger batch (128, 256 via accumulation) & equal or worse at every horizon \\
+$4\times$ more in-domain data (buildings\_900k, LargeST, Q-Traffic, Azure) & ties the corpus we use \\
+Longer masked future (8 of 16 frames) & slightly worse \\
+Value-loss weight $0.3$ instead of $0.1$ & worse \\
+Three-checkpoint ensemble & no gain \\
+Blending with a zero-parameter statistical prior & validation selection does not transfer \\
+Weight-space averaging of two seeds & better on ETT, $16\%$ worse on electricity, net worse \\
+Cross-corpus weight averaging & worse than either parent \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{table}
+
+Prediction-space averaging of two seeds is the one combination that helps, by $0.6\%$ and never
+worse on any cell; it appears as a secondary row in Table~\ref{tab:main}.

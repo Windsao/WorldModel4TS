@@ -1,0 +1,67 @@
+\documentclass{article} % For LaTeX2e
+\usepackage{iclr2027_conference,times}
+
+% Optional math commands from https://github.com/goodfeli/dlbook_notation.
+\input{math_commands.tex}
+
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{multirow}
+\usepackage{xcolor}
+
+\title{World Models Are Better Time-Series Learners:\\ Forecast-Aligned Pretraining of a Video Backbone}
+
+% Authors must not appear in the submitted version.
+\author{Anonymous authors\\
+Paper under double-blind review}
+
+%\iclrfinalcopy % Uncomment for camera-ready version, but NOT for submission.
+\begin{document}
+
+\maketitle
+
+\input{sections/1_abstract}
+\input{sections/2_introduction}
+\input{sections/3_related_work}
+\input{sections/4_method}
+\input{sections/5_experiments}
+\input{sections/6_analysis}
+\input{sections/7_conclusion}
+
+\subsubsection*{Reproducibility statement}
+
+Every number in this paper comes from one publicly documented pipeline. The renderer, the
+value-space read-out, the trainer and all command-line flags used for each arm are described in
+Section~\ref{sec:method} and Appendix~\ref{app:impl}; the evaluation follows the protocol of
+\citet{visionts} and was checked against their released checkpoint to three decimals
+(Section~\ref{sec:setup}). One checkpoint and one inference rule produce all 24 evaluation cells:
+no per-dataset tuning, no checkpoint ensembling, no blending with statistical baselines. The
+pretraining corpus is built from public LOTSA subsets \citep{moirai} with a documented subset list,
+and none of the six evaluation datasets appears in it. Code, corpus manifest and checkpoints will be
+released.
+
+\subsubsection*{Ethics statement}
+
+The work uses public forecasting benchmarks and a public pretraining corpus; no human subjects, no
+personally identifying data. Electricity and traffic-like series describe aggregate consumption at
+substation level. The main risk we see is the usual one for forecasting models sold as general
+purpose: the reported zero-shot accuracy is measured on six datasets in two domains and should not
+be read as a guarantee on safety-critical deployments.
+
+\subsubsection*{Use of large language models}
+
+Large language models were used for copy-editing and for scripting routine experiment
+orchestration. All experimental design, analysis and claims are the authors'; every number reported
+here was produced by the pipeline described above.
+
+\bibliography{sections/references}
+\bibliographystyle{iclr2027_conference}
+
+\appendix
+\input{sections/appendix}
+
+\end{document}

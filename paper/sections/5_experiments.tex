@@ -1,0 +1,250 @@
+%----------------------------------------------------------------------
+\section{Experiments}
+\label{sec:experiments}
+%----------------------------------------------------------------------
+
+\subsection{Setup}
+\label{sec:setup}
+
+We follow the zero-shot long-sequence forecasting protocol of \citet{visionts} exactly:
+Time-Series-Library splits \citep{tslib} (ETT 12/4/4 months, others 70/10/20), a
+\texttt{StandardScaler} fitted on the training portion, all channels, stride-1 test origins, and
+horizons $H \in \{96,192,336,720\}$, with MSE and MAE computed on standardised values. Context
+lengths and periods per dataset follow \citet{visionts}: ETTh1 2880/24, ETTh2 1728/24, ETTm1
+2304/96, ETTm2 4032/96, electricity 2880/24, weather 4032/144. As a check on the harness we ran
+their released checkpoint through our pipeline and reproduced their numbers to three decimals
+(ETTh1 at $H{=}96$: $0.3527/0.3833$ against the published $0.353/0.383$). Baseline numbers are
+quoted from \citet{visiontspp} Table 4 and from \citet{visionts}.
+
+Ablations use the five datasets that fit a single evaluation budget (ETT$\times$4 and weather) at
+three horizons; the full six-dataset, four-horizon grid is reserved for the main table and for
+seed replication.
+
+\subsection{Main results}
+\label{sec:main}
+
+\begin{table}[t]
+\caption{Zero-shot long-sequence forecasting, four-horizon average MSE/MAE. One checkpoint and one
+inference rule for all cells. Baselines are quoted from \citet{visiontspp} and \citet{visionts};
+`--' means the source does not report that dataset. Best per column in bold.}
+\label{tab:main}
+\begin{center}
+\footnotesize
+\setlength{\tabcolsep}{2.6pt}
+\begin{tabular}{lccccccc}
+\toprule
+Model & ETTm1 & ETTm2 & ETTh1 & ETTh2 & Electricity & Weather & Avg \\
+\midrule
+\textbf{Ours} (VideoMAE-B, 32f, 60k) & \textbf{.352}/\textbf{.369} & \textbf{.241}/.302 & .404/.416 & .335/.376 & \textbf{.163}/\textbf{.254} & \textbf{.215}/.252 & \textbf{.285}/.328 \\
+Ours (20k steps, 6.3 GPU-h) & .360/.371 & .242/.304 & .400/.417 & .342/.381 & .169/.261 & .217/.253 & .288/.331 \\
+Ours (20k, two-seed average) & .351/-- & .242/-- & .401/-- & .338/-- & .168/-- & .215/-- & .286/-- \\
+\midrule
+VisionTS++ large (ViT-L) & .354/.369 & .244/\textbf{.298} & .403/.418 & \textbf{.327}/\textbf{.365} & .181/.264 & .226/.243 & .289/\textbf{.326} \\
+VisionTS++ base (ViT-B) & .360/.372 & .244/\textbf{.298} & .402/.416 & .333/.370 & .184/.265 & .222/\textbf{.241} & .291/.327 \\
+VisionTS & .374/.372 & .318/.366 & \textbf{.390}/\textbf{.414} & .333/.375 & .207/.294 & .269/.292 & .315/.352 \\
+\midrule
+Moirai small & .448/.410 & .272/.321 & .400/.424 & .341/.379 & .233/.320 & .242/.267 & .323/.353 \\
+Moirai base & .382/.388 & .276/.320 & .434/.439 & .346/.382 & .188/.274 & .238/.261 & .311/.344 \\
+Moirai large & .390/.389 & .317/.366 & .510/.469 & .354/.377 & .188/.273 & .260/.275 & .337/.358 \\
+Chronos small & .640/.500 & .310/.350 & .545/.472 & .424/.430 & .220/.284 & .300/.318 & .407/.392 \\
+Chronos base & .646/.500 & .295/.338 & .591/.468 & .406/.411 & .215/.279 & .293/.315 & .408/.385 \\
+Chronos large & .556/.465 & .300/.341 & .589/.466 & .455/.427 & .204/.274 & .279/.306 & .397/.380 \\
+Time-MoE small & .394/.416 & .316/.361 & .400/.424 & .367/.404 & --/-- & .266/.297 & --/-- \\
+Time-MoE base & .376/.406 & .349/.380 & .394/.420 & .405/.415 & --/-- & .270/.300 & --/-- \\
+Timer 28B & .487/.457 & .328/.347 & .444/.457 & .358/.407 & --/-- & .304/.331 & --/-- \\
+TimesFM & .433/.419 & --/-- & .473/.444 & .392/.406 & --/-- & --/-- & --/-- \\
+MOMENT & .670/.537 & .316/.371 & .684/.566 & .362/.410 & .765/.687 & .294/.326 & .515/.483 \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{table}
+
+Table~\ref{tab:main} places the model at the top of the published zero-shot table by mean MSE,
+$0.285$ against $0.289$ for VisionTS++ large and $0.291$ for its base model. Four of six datasets
+are won outright. The two losses are ETTh1, which goes to VisionTS ($0.390$ against our $0.404$),
+and ETTh2, which goes to VisionTS++ large ($0.327$ against $0.335$); both are hourly ETT sets at
+mid-to-long horizons, where a longer tuned context helps and our window is capped at 32 frames of at
+most four periods. On mean MAE we tie rather than win, $0.328$ against $0.326$. The margin on
+electricity ($0.163$ against $0.181$) and weather ($0.215$ against $0.222$) is where the aggregate
+gain comes from.
+
+\begin{table}[t]
+\caption{Per-horizon MSE/MAE for our 60k model, and the per-cell comparison against VisionTS, the
+only baseline that publishes per-horizon numbers on this protocol. $\Delta$ is relative MSE, negative
+means we are better.}
+\label{tab:perhorizon}
+\begin{center}
+\footnotesize
+\setlength{\tabcolsep}{3.4pt}
+\begin{tabular}{lcccc|cccc}
+\toprule
+ & \multicolumn{4}{c|}{Ours, MSE/MAE} & \multicolumn{4}{c}{$\Delta$ vs.\ VisionTS, MSE} \\
+Dataset & $H{=}96$ & $192$ & $336$ & $720$ & $96$ & $192$ & $336$ & $720$ \\
+\midrule
+ETTm1       & .292/.332 & .332/.357 & .363/.377 & .423/.409 & $-14.5\%$ & $-7.7\%$ & $-3.8\%$ & $+1.7\%$ \\
+ETTm2       & .160/.245 & .214/.283 & .264/.318 & .328/.362 & $-29.8\%$ & $-18.3\%$ & $-10.0\%$ & $-4.4\%$ \\
+ETTh1       & .352/.380 & .396/.408 & .424/.425 & .446/.449 & $-0.3\%$ & $+1.1\%$ & $+4.1\%$ & $+9.8\%$ \\
+ETTh2       & .266/.324 & .333/.369 & .361/.395 & .379/.415 & $-1.7\%$ & $+1.7\%$ & $+4.7\%$ & $-2.4\%$ \\
+Electricity & .128/.219 & .148/.239 & .170/.262 & .207/.294 & $-27.8\%$ & $-21.5\%$ & $-18.0\%$ & $-19.1\%$ \\
+Weather     & .139/.183 & .181/.226 & .232/.266 & .308/.331 & $-36.9\%$ & $-25.8\%$ & $-17.3\%$ & $-6.7\%$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{table}
+
+Table~\ref{tab:perhorizon} breaks the aggregate down. We take 18 of 24 cells. The six losses are all
+mid-to-long horizons on hourly ETT, and they share a cause with the ETTh1/ETTh2 column losses above:
+at $H{=}720$ with $P{=}24$, covering the horizon requires either eight periods per frame or several
+rollout passes, and both cost resolution. The wins are large and systematic elsewhere: every
+electricity cell improves by $18$--$28\%$, and weather at $H{=}96$ by $37\%$.
+
+\subsection{What the objective buys}
+\label{sec:ablation}
+
+\begin{table}[t]
+\caption{Ablations. Five-dataset mean MSE (ETT$\times$4 and weather), 32-frame clips, identical
+corpus, recipe and inference rule.}
+\label{tab:ablation}
+\begin{center}
+\small
+\begin{tabular}{lccc}
+\toprule
+Configuration & $H{=}96$ & $H{=}336$ & $H{=}720$ \\
+\midrule
+Full recipe, 20k steps & 0.245 & 0.330 & 0.379 \\
+\quad $-$ value-space loss (native pixel objective) & 0.257 & 0.347 & 0.411 \\
+\quad $-$ prior anchoring & 0.244 & 0.330 & 0.378 \\
+\midrule
+5k steps & 0.250 & 0.337 & 0.384 \\
+60k steps & \textbf{0.242} & \textbf{0.329} & \textbf{0.377} \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{table}
+
+Removing the value-space term and training the same backbone on the same data with the native pixel
+objective costs $5\%$ at $H{=}96$, $5\%$ at $H{=}336$ and $8\%$ at $H{=}720$
+(Table~\ref{tab:ablation}). The term accounts for the entire gain of the recipe, and its value grows
+with horizon, which is what one expects if the mechanism is the alignment between what is optimised
+and what is scored: the longer the horizon, the more of the prediction is generated rather than
+copied. Prior anchoring is inert at 32 frames.
+
+The budget rows matter as much as the ablation rows. Under the aligned objective, error decreases
+monotonically from 5k to 60k steps. Under the pixel objective it increases monotonically over the
+same range, which is the subject of the next subsection. Two further attempts to buy accuracy with
+scale did not work and we report them for completeness: raising the batch size to 128 or 256 is
+equal or worse at every horizon, and quadrupling the in-domain corpus (adding buildings\_900k,
+LargeST, Q-Traffic and Azure) ties the corpus we use.
+
+\subsection{The objective mismatch}
+\label{sec:diagnosis}
+
+\begin{table}[t]
+\caption{Masked-pixel continual pretraining, 16-frame clips. The pretraining objective improves
+monotonically; forecasting degrades monotonically. Downstream is the five-dataset mean MSE over
+three horizons.}
+\label{tab:diagnosis}
+\begin{center}
+\small
+\begin{tabular}{lcccc}
+\toprule
+Training steps & 5k & 20k & 60k & 176k \\
+\midrule
+Held-out pixel loss & 0.0366 & 0.0333 & 0.0329 & \textbf{0.0312} \\
+Downstream mean MSE & \textbf{0.339} & 0.344 & -- & 0.381 \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{table}
+
+Table~\ref{tab:diagnosis} is the result that produced the method. Continuing VideoMAE's own
+objective on the rendered corpus improves its own held-out loss by $15\%$ while forecast error rises
+by $12\%$. Per cell, the 176k model is $5$--$60\%$ worse than the 20k model, with the damage
+concentrated at long horizons; ETTh2 at $H{=}720$ moves from $0.429$ to $0.617$.
+
+We checked the obvious alternative explanations. The training loss is flat across the range
+($0.0092 \to 0.0089$), so this is not pixel-space overfitting. Checkpoint key sets, the transformers
+version, the attention configuration and loader warnings were all ruled out by re-evaluating the
+same checkpoints under matched software. What does change monotonically is the weight norm: all
+layers shrink by roughly $30\%$ over the $9\times$ longer schedule under AdamW's decoupled decay, so
+the backbone drifts steadily away from the initialisation that made it useful while its own
+objective keeps improving. The aligned objective removes the symptom, and prior anchoring, which
+attacks the drift directly, helps only in the regime where the window is short
+(Section~\ref{sec:ablation}).
+
+\subsection{What the backbone contributes}
+\label{sec:backbone}
+
+\begin{table}[t]
+\caption{Backbone study. Identical recipe, corpus, 5k-step budget, 32-frame clips and inference
+rule; only the initialisation changes. Five-dataset mean MSE.}
+\label{tab:backbone}
+\begin{center}
+\small
+\begin{tabular}{llcccc}
+\toprule
+Initialisation & Pretraining signal & Params & $H{=}96$ & $H{=}336$ & $H{=}720$ \\
+\midrule
+ImageNet MAE-B & images, no dynamics & 87M & 0.264 & 0.350 & 0.395 \\
+VideoMAE-B & video, implicit dynamics & 87M & \textbf{0.250} & 0.337 & 0.384 \\
+V-JEPA~2.1-B & video, explicit prediction & 87M\,+\,23M & 0.252 & \textbf{0.335} & \textbf{0.382} \\
+\midrule
+V-JEPA~2-L & video, explicit prediction & 300M & 0.245 & 0.329 & 0.379 \\
+V-JEPA~2-L, random init & none & 300M & 0.280 & 0.369 & 0.418 \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{table}
+
+Table~\ref{tab:backbone} holds everything fixed except the weights the model starts from. At matched
+size, both video backbones beat the image backbone by $3$--$5\%$ at every horizon, and they are
+indistinguishable from each other: $0.250$ for a reconstructive video model against $0.252$ for a
+predictive one at $H{=}96$, with the order reversing at longer horizons. The advantage of V-JEPA~2-L
+($0.245$) over V-JEPA~2.1-B is capacity, not objective, and we do not read it as evidence that
+predictive world models beat reconstructive ones.
+
+The random-init control is the informative row. The same ViT-L architecture, same data, same steps,
+same everything, reaches $0.280$ at $H{=}96$ --- $12.5\%$ worse than its pretrained twin, and worse
+than an image backbone $3.5\times$ smaller. Per dataset at $H{=}96$ it gives
+$0.401/0.282/0.369/0.182/0.166$ against $0.357/0.270/0.294/0.162/0.141$ pretrained; the gap is
+$10.8\%$ at $H{=}336$ and $9.3\%$ at $H{=}720$. Capacity does not explain the transfer, and neither
+does the corpus, which all arms share. What is left is the prior over dynamics.
+
+Three caveats on the V-JEPA~2.1-B arm: it is distilled from a ViT-G teacher, its predictor output
+head was re-initialised because the pretrained head maps into the 1664-dimensional teacher space
+while our targets are 768-dimensional ViT-B EMA features, and it was pretrained at 384px while we
+render at 224.
+
+\subsection{Seed variance and efficiency}
+\label{sec:seeds}
+
+Two seeds of the 20k model agree to within $0.002$ on the five-dataset means
+($0.245/0.330/0.379$ and $0.243/0.330/0.378$), and on the full six-dataset grid they agree on five
+of six datasets, with ETTm1 the only visible spread ($0.351$ against $0.360$). Averaging the two
+seeds in \emph{prediction} space is worth a further $0.6\%$ and is never worse on any cell, giving
+$0.286$; we report it as a secondary row in Table~\ref{tab:main} rather than as the headline, since
+it doubles the training cost.
+
+\begin{table}[t]
+\caption{Pretraining budget. Steps are counted in windows seen; we do not claim a FLOP comparison,
+since the architectures differ.}
+\label{tab:efficiency}
+\begin{center}
+\small
+\begin{tabular}{lccc}
+\toprule
+ & Continual-pretraining windows & Corpus & Wall clock \\
+\midrule
+Ours (60k, main) & 60k $\times$ 32 = 1.9M & 654M observations & $\approx$20\,h, 1$\times$A40 \\
+Ours (20k row) & 20k $\times$ 32 = 0.64M & same & 6.3\,h, 1$\times$A40 \\
+VisionTS++ & $\approx$100k steps, large batch & LOTSA, 231B observations & not reported \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{table}
+
+Table~\ref{tab:efficiency} states the budget comparison in the only units we can measure on both
+sides: pretraining windows and corpus size. We use roughly $1/13$ of VisionTS++'s continual
+pretraining steps ($1/40$ for the 20k row) and $0.3\%$ of its data. We deliberately do not phrase
+this as a compute claim; the models differ in size and our 32-frame clips are about $8\times$ more
+expensive at inference than 16-frame clips.

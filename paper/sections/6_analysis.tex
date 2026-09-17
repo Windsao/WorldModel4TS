@@ -1,0 +1,49 @@
+%----------------------------------------------------------------------
+\section{Discussion}
+\label{sec:analysis}
+%----------------------------------------------------------------------
+
+\paragraph{The objective, not the architecture.}
+The same backbone, the same corpus and the same number of steps produce either a forecaster that
+improves with training or one that degrades with training, depending only on what the loss measures.
+That is a stronger statement than "our loss is better": it says the usual practice of continuing a
+vision model's native objective on rendered series is not a neutral default but an active liability
+at scale, and that the community's instinct to buy accuracy with more pretraining will be punished
+here. It also explains why the visual prior found by prior work looks small \citep{svtime}: when the
+read-out is outside the loop, most of the capacity being transferred is being spent on things the
+read-out discards.
+
+\paragraph{What a video prior actually supplies.}
+Two independent observations suggest the answer is long-range temporal context rather than anything
+specific to video semantics. First, at 16-frame clips the video initialisation beats the image
+initialisation by $3$--$4\%$, and at 32 frames the two converge (Appendix~\ref{app:16f}); lengthen
+the window and part of the prior becomes redundant. Second, prior anchoring is essential at 16
+frames and inert at 32. Both point at the same thing: the prior is worth most exactly where the
+input does not already contain the structure. The matched-size comparison at a short budget
+(Table~\ref{tab:backbone}) is where the video prior is visible, and the random-init control shows it
+is real rather than an artefact of capacity.
+
+We are careful about what this does not say. It does not say video backbones beat image backbones in
+general; at 20k steps under the aligned objective the gap closes. It does not say predictive world
+models beat reconstructive ones; at matched size they tie. The defensible claim is narrower and, we
+think, more useful: a prior over dynamics transfers to forecasting, several pretraining objectives
+produce one, and the objective used during transfer decides whether any of it survives.
+
+\paragraph{Why the value-space term grows with horizon.}
+At short horizons a correct completion is largely determined by the visible context, and pixel error
+and value error rank candidate completions similarly. As the horizon grows, more of the prediction
+is generated rather than interpolated, and the two metrics diverge: a prediction can be smooth,
+plausible and pixel-cheap while being wrong by a constant offset in value. The ablation matches this
+reading, with the gap growing from $5\%$ at $H{=}96$ to $8\%$ at $H{=}720$.
+
+\paragraph{Limitations.}
+Mid-to-long horizons on the hourly ETT sets remain behind VisionTS and VisionTS++, and the cause is
+structural: our context is capped at 32 frames of at most four periods, so at $H{=}720$ with
+$P{=}24$ we trade resolution for coverage. Mean MAE ties rather than beats the strongest baseline
+($0.328$ against $0.326$), which is worth stating plainly since we lead with MSE. The evaluation is
+the six-dataset LSF protocol only; GIFT-Eval \citep{gifteval} and Monash \citep{monash} results are
+not yet in. Our budget comparison is in pretraining windows and observations, not FLOPs. The main
+result uses one backbone family, with the V-JEPA arms serving as 5k-step controls rather than as
+full models. Finally, the pretraining corpus contains Monash \texttt{traffic\_hourly}, so the
+traffic benchmark cannot be added without rebuilding the corpus, and we exclude it rather than
+report a contaminated number.

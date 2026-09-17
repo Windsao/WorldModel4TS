@@ -1,0 +1,106 @@
+%----------------------------------------------------------------------
+\section{A world model over rendered series}
+\label{sec:method}
+%----------------------------------------------------------------------
+
+The model observes the first $F-h_p$ frames of a rendered clip and predicts the last $h_p$. Training
+supervises that prediction in the space where forecasts are scored. Everything else in this section
+exists to make those two sentences well defined.
+
+\subsection{Rendering: one period per frame}
+\label{sec:render}
+
+Let $x_{1:L}$ be a univariate series with dominant period $P$, taken from the sampling frequency as
+in \citet{visionts}. We render $L = 16 k P$ observations into $F$ frames of $224\times224$, where
+$k$ is the number of periods per frame. Values are standardised with the mean and standard deviation
+of the \emph{visible context only}, so no test-time statistic leaks into the input, then clipped to
+$z\in[-3,3]$ and mapped to a column height
+\begin{equation}
+h \;=\; 0.5 + 0.4\,\frac{z}{3} \;\in\; [0.1,\,0.9].
+\label{eq:height}
+\end{equation}
+Column $c$ of a frame is drawn as an area chart: row $\mathrm{round}\big((1-h)\cdot 223\big)$ is the
+boundary, rows below it are filled with gray level $0.12$, rows above hold background $0.92$, and
+horizontal grid lines every 28 rows carry $0.80$. Frame $f$ holds periods $[fk,(f+1)k)$. Vertical
+position therefore encodes value and horizontal position encodes phase within the period, so a
+seasonal series becomes a nearly static video and a trending or regime-changing one becomes a moving
+one. With $F=32$ and a tubelet size of 2, a clip is 16 temporal by $14\times14$ spatial tokens.
+
+\subsection{Masking: the future, not a random subset}
+
+The last $h_p \in \{2,4\}$ frames are masked; these are the future. With probability $0.3$ the
+leading tubelets are hidden as well, so the model also trains on contexts shorter than the full
+window, which is the regime it meets at test time on short datasets. To retain some of the original
+pretraining signal, $30\%$ of batches instead use standard tube masking. The reconstruction loss is
+computed on the masked future tokens only.
+
+\subsection{The forecast-aligned objective}
+\label{sec:objective}
+
+Pixel error is a poor surrogate for forecast error because the decoder that turns pixels into
+numbers is not in the loop. We put it there. For a predicted frame $\hat{x}$, define the per-pixel
+soft occupancy
+\begin{equation}
+s(\hat{x}_{r,c}) \;=\; \mathrm{clamp}\!\left(\frac{0.80 - \hat{x}_{r,c}}{0.80-0.12},\,0,\,1\right),
+\qquad
+\hat{h}_c \;=\; 1 - \frac{224 - \sum_{r} s(\hat{x}_{r,c})}{223},
+\label{eq:readout}
+\end{equation}
+which counts, differentiably, how much of column $c$ is filled. The thresholds are the fill level
+and the grid-line level from Section~\ref{sec:render}, so grid lines contribute a bounded, constant
+offset rather than gradient noise. Inverting Equation~\ref{eq:height} gives
+$z = (h-0.5)\cdot 3/0.4$, and the training objective is
+\begin{equation}
+\mathcal{L} \;=\; \underbrace{\mathrm{MSE}(\hat{x}, x)}_{\text{pixel}}
+\;+\;
+\lambda \left(\tfrac{3}{0.4}\right)^{2}
+\underbrace{\mathrm{MSE}\big(\hat{h}_c,\,h_c\big)}_{\text{value}},
+\qquad \lambda = 0.1 ,
+\label{eq:loss}
+\end{equation}
+where the constant $(3/0.4)^2$ converts height units into standardised value units, so the second
+term is an MSE in exactly the units the benchmark reports. It is computed column-wise and is
+therefore independent of $P$, of the dataset, and of the number of periods packed into a frame. The
+pixel term is kept because it stabilises early training, when the read-out of a blurry prediction is
+uninformative; $\lambda=0.1$ was the first value we tried and $0.3$ is worse
+(Appendix~\ref{app:failed}).
+
+This is the whole of the method's gain. It is also what makes the model a world model over rendered
+series rather than an inpainter: the quantity being optimised is the future state of the series, in
+the units of the series.
+
+\subsection{Frame-scale augmentation and prior anchoring}
+
+At test time a long horizon is covered by packing more periods into each frame, so the model must
+work at several values of $k$. During training we sample $k \in \{1,2,4\}$ with probability
+$0.5/0.3/0.2$, matching the inference rule below. Independently, we can decay weights toward their
+initial values $\theta_0$ rather than toward zero, $p \leftarrow p - \eta\lambda_{\mathrm{sp}}(p -
+\theta_0)$ with $\lambda_{\mathrm{sp}}=0.05$ and weight decay off \citep{l2sp}. This matters at
+16-frame clips and is inert at 32 (Table~\ref{tab:ablation}), which we read as evidence that one
+thing the video prior supplies is long-range temporal context --- something a longer window supplies
+directly.
+
+\subsection{Inference}
+\label{sec:inference}
+
+One checkpoint and one rule produce every number we report. Given period $P$ and horizon $H$: if
+$H \le 4P$, a single pass with $h_p=4$, averaged over the scales $k$ with $kPs \le 96$; otherwise
+$k = \lceil H/4P \rceil$ periods per frame, followed by $\lceil k/(96/P)\rceil$ autoregressive
+rollout passes when $P<96$ and a single direct pass when $P \ge 96$. There is no per-dataset
+tuning, no ensembling over checkpoints and no blending with statistical baselines anywhere in the
+paper.
+
+\subsection{Backbone, optimisation and corpus}
+
+The main model continues VideoMAE-B pretrained on Kinetics-400 \citep{videomae} with
+\texttt{norm\_pix\_loss} disabled. VideoMAE's position embeddings are sinusoidal, so moving from 16
+to 32 frames rebuilds the tables and loads the pretrained weights unchanged. We use AdamW
+\citep{adamw} ($\beta = 0.9/0.95$, learning rate $10^{-4}$ with cosine decay and 500 warm-up steps),
+batch 32 as micro-batch 8 with 4-step accumulation, and bf16; 60k steps take about 20 hours on one
+A40.
+
+The corpus is 98 LOTSA subsets \citep{moirai}: 184{,}013 series and 654.2M observations, with $20\%$
+synthetic series mixed in and subsets sampled in proportion to the square root of their size. None
+of the six evaluation datasets appears in it. We note one constraint this creates: the corpus
+contains Monash \texttt{traffic\_hourly} \citep{monash}, which is the same data as the LSF traffic
+benchmark, so traffic is excluded from our evaluation rather than reported as a zero-shot result.

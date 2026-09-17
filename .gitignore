@@ -3,3 +3,10 @@ pilot/data/
 __pycache__/
 .DS_Store
 *.pyc
+paper/*.aux
+paper/*.log
+paper/*.out
+paper/*.blg
+paper/*.bbl
+paper/.DS_Store
+paper/figures/.DS_Store
