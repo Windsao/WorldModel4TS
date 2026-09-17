@@ -1,0 +1,45 @@
+% Figure 2: rendering -> prediction -> decoded values, one ETTh1 test window at H=96.
+% Assets produced by pilot/make_qual_fig.py (qual_context.png, qual_future.png, qual_values.csv).
+\begin{figure}[t]
+\centering
+\begin{minipage}[t]{0.56\textwidth}
+  \centering
+  \includegraphics[width=\linewidth]{figures/qual_context.png}\\[1pt]
+  {\scriptsize (a) the last six context frames, one period each}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.40\textwidth}
+  \centering
+  \includegraphics[width=\linewidth]{figures/qual_future.png}\\[1pt]
+  {\scriptsize (b) future: ground truth (top), predicted (bottom)}
+\end{minipage}
+
+\vspace{4pt}
+
+\begin{tikzpicture}
+\begin{axis}[
+  width=12.2cm, height=3.6cm,
+  xlabel={time step (0 = forecast origin)},
+  ylabel={standardised value},
+  xmin=-48, xmax=96,
+  axis lines*=left,
+  tick label style={font=\scriptsize}, label style={font=\scriptsize},
+  legend style={font=\scriptsize, draw=none, fill=none, at={(0.02,0.04)}, anchor=south west,
+                legend columns=2},
+  every axis plot/.append style={line width=0.8pt},
+]
+\addplot[color=black!75] table[x=t, y=truth, col sep=comma] {figures/qual_values.csv};
+\addlegendentry{ground truth}
+\addplot[color=fcred, dashed] table[x=t, y=pred, col sep=comma] {figures/qual_values.csv};
+\addlegendentry{decoded prediction}
+\draw[gray, dashed, line width=0.4pt] (axis cs:0,\pgfkeysvalueof{/pgfplots/ymin})
+  -- (axis cs:0,\pgfkeysvalueof{/pgfplots/ymax});
+\end{axis}
+\end{tikzpicture}
+
+\caption{The pipeline on one ETTh1 test window at $H{=}96$. The series is drawn one period per
+frame, so the model reads a video whose vertical axis is value and whose horizontal axis is phase
+(a). The last frames are masked and predicted (b); the prediction is a picture, not a number. The
+differentiable read-out of Equation~\ref{eq:readout} turns each predicted column back into a value,
+and it is this decoded quantity --- not the pixels --- that the training loss scores.}
+\label{fig:qualitative}
+\end{figure}
