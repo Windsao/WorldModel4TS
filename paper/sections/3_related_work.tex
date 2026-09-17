@@ -14,9 +14,12 @@ that a visual backbone is a reasonable prior for forecasting, and we change the 
 continual-pretraining stage optimises. To our knowledge this is the first report that the native
 masked-reconstruction objective degrades forecasting monotonically as its own loss improves.
 Adjacent evidence points the same way: SVTime \citep{svtime} matches VisionTS with a 215k-parameter
-model carrying three inductive biases, suggesting the transferable visual prior is small; RoMAE
-\citep{romae} and OccamVTS \citep{occamvts} argue that bidirectional masked autoencoders interpolate
-rather than extrapolate and that only low-level visual features survive the transfer.
+model carrying three inductive biases, and OccamVTS \citep{occamvts} distils a vision forecaster
+into $1\%$ of its parameters. If most of the transferred capacity can be removed without cost, most
+of it was not being used, which is what one expects when the objective that selects the capacity is
+not the one that scores the output. RoMAE \citep{romae} is the complementary case: a masked
+autoencoder made to work on irregular time series by changing the positional representation it sees
+rather than the architecture around it.
 
 \paragraph{Time-series foundation models.}
 Moirai \citep{moirai}, Chronos \citep{chronos}, Time-MoE \citep{timemoe}, Timer \citep{timer},

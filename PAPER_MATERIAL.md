@@ -254,8 +254,13 @@ Ratio: ~1/13 of the steps (1/40 for the 20k row) and 0.3% of the data. Inference
 - **V-JEPA 2 / 2.1** — predictive latent world models for video; we use them as backbones and as the
   "explicit dynamics" end of the prior spectrum.
 - **VideoMAE** — masked spatiotemporal reconstruction; implicit dynamics, bidirectional, interpolative.
-- **RoMAE**, **OccamVTS** — evidence that bidirectional MAEs interpolate rather than extrapolate and that
-  only low-level visual features matter for TS; consistent with our diagnosis.
+- **OccamVTS** (arXiv 2508.01727, AAAI 2026) — distils a vision forecaster to 1% of its parameters;
+  read it as "most of the transferred capacity is not being used", not as a claim about extrapolation.
+- **RoMAE** (arXiv 2505.20535, NeurIPS 2025, "Rotary Masked Autoencoders are Versatile Learners") —
+  CORRECTED 2026-09-17: this paper does **not** claim MAEs interpolate rather than extrapolate. It is an
+  MAE with rotary continuous positional embeddings for *irregular* time series, and it does not evaluate
+  LSF forecasting. Cite it only as the complementary "change the representation, not the architecture"
+  case. The earlier note here was wrong; do not restore it.
 - **SVTime** — a 215k-parameter model with three inductive biases matches VisionTS, i.e. the transferable
   visual prior is small; motivates asking what *else* a video prior buys.
 
