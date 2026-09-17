@@ -119,8 +119,12 @@ set of scales is determined by the inference rule, not chosen for diversity.
 \subsection{Inference}
 \label{sec:inference}
 
-Given the period $P$ and the requested horizon $H$, the rule selects the number of periods per frame
-and the number of forward passes, with no per-dataset tuning and no checkpoint selection. Short
+Given the period $P$ and the requested horizon $H$, a closed-form rule selects the number of periods
+per frame and the number of forward passes. The rule contains no dataset identity and is applied
+unchanged to all 24 cells, but its two thresholds were chosen by comparing configurations on
+development runs over four of the six datasets, so it is dataset-agnostic in form rather than
+selected without reference to the benchmark; we flag this as a limitation in
+Section~\ref{sec:analysis}. Short
 horizons are covered by a single predicted block whose outputs are averaged over the admissible
 scales; long horizons increase $k$ and, when one block still cannot span $H$, roll the prediction
 forward autoregressively. The resulting forecast is truncated to $H$. Multi-scale averaging and
@@ -131,9 +135,19 @@ pass count for each of the 24 evaluation cells.
 \subsection{Pretraining corpus}
 \label{sec:corpus}
 
-The corpus is built from LOTSA \citep{moirai}: 98 subsets, 184{,}013 series, 654.2M observations,
-with synthetic series mixed in during sampling and subsets drawn in proportion to the square root of
-their size. None of ETTh1, ETTh2, ETTm1, ETTm2, electricity or weather is included. The corpus does
-contain Monash \texttt{traffic\_hourly} \citep{monash}, which is the same data as the LSF traffic
-benchmark, so traffic is excluded from our evaluation rather than reported as a zero-shot result.
-Appendix~\ref{app:impl} lists the subset composition and the synthetic-mixing rule.
+The corpus is built from LOTSA \citep{moirai}: 98 subset directories, of which 74 contribute at
+least one qualifying series, giving 184{,}013 series and 654.2M observations; a 5\% holdout leaves
+621.9M reachable by training. Subsets are drawn in proportion to the square root of their size, and
+with probability $0.2$ a window is replaced by a synthetic series generated on the fly, so the
+synthetic data sits on top of the 654.2M rather than inside it. Sampling is with replacement, so the
+60k-update run draws 1.92M windows of $\approx$2.9k observations each, about seven passes over the
+reachable corpus, while the 5k-update run of Section~\ref{sec:backbone} sees less than one.
+
+Two facts about the corpus deserve to be stated rather than buried. No ETT data of any kind is in it.
+But it is not domain-filtered: it contains Monash \texttt{weather} (a daily Australian dataset, not
+the 10-minute Jena set used as the LSF weather benchmark) and Monash \texttt{traffic\_hourly}, which
+is the same freeway-occupancy source as the LSF traffic benchmark. Traffic is therefore excluded from
+every table in this paper. An exact-match leakage screen over the benchmark files returned no
+matches, but it was run against an earlier, domain-excluded build of the corpus rather than this one,
+so we report it as a screen we have not yet repeated on the corpus actually used
+(Appendix~\ref{app:impl}).

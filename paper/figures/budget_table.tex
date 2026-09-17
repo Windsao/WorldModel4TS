@@ -16,11 +16,13 @@ inherited by both and excluded. VisionTS++ figures are as reported in \citet{vis
  & Ours (main) & Ours (20k) & VisionTS++ \\
 \midrule
 Time-series corpus (observations) & 654.2M & 654.2M & LOTSA archive, 231B \\
+\quad reachable after the 5\% holdout & 621.9M & 621.9M & not reported \\
 Optimizer updates & 60{,}000 & 20{,}000 & 100{,}000 \\
 Effective batch (windows/update) & 32 & 32 & 512 \\
 Sample presentations & 1.92M & 0.64M & 51.2M \\
 Backbone & ViT-B (87M) & ViT-B (87M) & ViT-B / ViT-L \\
-Measured wall clock & $\approx$20\,h, 1$\times$A40 & 6.3\,h, 1$\times$A40 & not reported \\
+Effective passes over the corpus & $\approx$6.8 & $\approx$2.3 & not reported \\
+Measured training time & 18.9\,h, 1$\times$A40 & 6.3\,h, 1$\times$A40 & not reported \\
 \bottomrule
 \end{tabular}
 \end{center}

@@ -19,24 +19,22 @@ VisionTS++ \citep{visiontspp} keeps the image construction and continues pretrai
 on LOTSA \citep{moirai}, with colourised multivariate rendering and a multi-quantile head, and
 reports the strongest zero-shot numbers on this protocol.
 
-Two points of contrast matter for what follows. First, the visual prior that survives this transfer
-appears to be small: SVTime \citep{svtime} matches VisionTS with a 215k-parameter model carrying
-three inductive biases, and OccamVTS \citep{occamvts} distils a vision forecaster into $1\%$ of its
-parameters. Second, and contrary to a natural reading of our own results, VisionTS++ does not
-optimise pixel reconstruction alone: it trains against a multi-quantile (pinball) objective on the
-forecast. The objective mismatch we report in Section~\ref{sec:diagnosis} is therefore a statement
-about the configuration we tested --- VideoMAE's native masked-pixel objective continued on rendered
-series --- and not a criticism of the image-based systems we compare with.
+Two points of contrast matter here. The visual prior that survives this transfer appears to be
+small: SVTime \citep{svtime} matches VisionTS with a 215k-parameter model and OccamVTS
+\citep{occamvts} distils a vision forecaster into $1\%$ of its parameters. And VisionTS++ does not
+optimise pixel reconstruction alone --- it trains a multi-quantile (pinball) objective on the
+forecast --- so the objective mismatch we report in Section~\ref{sec:diagnosis} is a statement about
+the configuration we tested, VideoMAE's native masked-pixel objective continued on rendered series,
+not a criticism of the image-based systems we compare with.
 
 \paragraph{Video pretraining and future prediction.}
-VideoMAE \citep{videomae} reconstructs masked spatiotemporal tubes; the temporal structure it
-acquires is implicit in the representation rather than expressed as a forward model. V-JEPA
-\citep{vjepa} and V-JEPA~2 \citep{vjepa2} predict the latent representation of masked regions from
-context and are used downstream for planning, which is closer to the world-model formulation in the
-sense of \citet{lecun2022} and \citet{dreamer}. We use both families as initialisations. Our
-training stage is world-model-\emph{style} in one specific sense --- the model maps an observed past
-to a predicted future and is scored on that prediction --- and we make no claim about action
-conditioning, planning or physical reasoning, none of which we test.
+VideoMAE \citep{videomae} reconstructs masked spatiotemporal tubes, so its temporal structure is
+implicit rather than a forward model; V-JEPA \citep{vjepa} and V-JEPA~2 \citep{vjepa2} predict
+latent representations of masked regions and are used for planning, closer to the world-model
+formulation of \citet{lecun2022} and \citet{dreamer}. We use both as initialisations. Our training
+stage is world-model-\emph{style} in one sense only, that it maps an observed past to a predicted
+future and is scored on that prediction; we claim nothing about action conditioning, planning or
+physical reasoning, none of which we test.
 
 \paragraph{Transfer regularisation.}
 Continual pretraining of a strong backbone on a narrow corpus can erase the prior that motivated

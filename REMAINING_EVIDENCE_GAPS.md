@@ -1,66 +1,68 @@
 # Remaining evidence gaps
 
 Only items that affect a conclusion in the paper. Each says whether it needs a *source or code
-check* (cheap, no compute) or a *new experiment* (and if so, the minimal version). Nothing here has
-been started; the paper states each of these conservatively today.
+check* (cheap, no compute) or a *new experiment* (and if so, the minimal version). Nothing here has been
+started; the paper states each of these conservatively today. Three items from the first pass of this
+file were closed by the audits and are no longer listed: the VisionTS ETTm2 inconsistency (resolved
+and corrected in the tables), the availability of VisionTS++ per-horizon numbers (now used), and the
+synthetic-share and step-semantics questions about our own runs (both settled from the code).
 
 ---
 
 ## Needs a source or code check only
 
-**G1. Per-horizon comparison against VisionTS++.**
-The previous draft justified comparing per-horizon only against VisionTS by claiming nobody else
-publishes per-horizon numbers on this protocol. VisionTS++ v3 does (Appendix C.2 / Table 4). The
-paper no longer makes the false claim, but it also does not yet contain the stronger comparison.
-*To close:* transcribe their per-horizon MSE/MAE for the six datasets, confirm their splits, context
-lengths and channel handling match ours, and extend Appendix B to three methods. No compute.
-*Affects:* the strength of Appendix B, not any headline number.
+**G1. Leakage screen against the corpus actually used. (Most important open item.)**
+The exact-match anchor screen (`pilot/audit_paper_corpus_overlap.py`) reports zero benchmark matches,
+but it was run against a corpus of 278.2M observations — the earlier, domain-*excluded* build — while
+every model in this paper was trained on `corpus_v2` (654.2M), which was built with
+`--no-domain-exclude` and re-admits Monash `weather`, `traffic_hourly`, `PEMS_*`, `LOOP_SEATTLE`,
+`lcl` and `london_smart_meters`. No ETT data is present in either build, so the ETT results are not
+at risk; the exposure is weather (a different source, but the same name) and anything traffic-derived
+(which is why traffic appears nowhere in this paper).
+*To close:* rerun the existing script with `--corpus /nyx-storage1/hanliu/wm4ts/route_b/corpus_v2`.
+This is an evaluation job on existing data, not a new experiment; it was not run here because the
+audit was read-only. The script's own caveat still applies: it cannot detect rescaled, aggregated or
+interpolated copies. *Affects:* the strength of the "no evaluation dataset is in the corpus"
+statement, which the paper currently makes only for ETT while disclosing the rest.
 
-**G2. VisionTS baseline numbers are internally inconsistent.**
-Our main table lists VisionTS ETTm2 four-horizon average MSE as 0.318; the per-horizon VisionTS
-values used in Appendix B are 0.228/0.262/0.293/0.343, whose mean is 0.2815. One of the two is from
-a different source revision or a different protocol variant. We have not resolved which, and we did
-not silently replace either: both are still the numbers the corresponding source gave us.
-*To close:* locate each number in the VisionTS and VisionTS++ papers, record the version and table,
-and use one consistent source. *Affects:* the size of our margin on ETTm2 in Table 1, and possibly
-the first-place count. This is the most important open item in the paper.
+**G2. Inference-rule thresholds were set with benchmark knowledge.**
+The rule is a closed-form function of period and horizon with no dataset identity in it, and all 24
+main-table cells were produced by it. But its two thresholds (keep $kP \le 96$; roll out only when
+$P<96$) were chosen by comparing configurations on development runs over four of the six datasets,
+and the inline justification quotes H=720 numbers. This is disclosed in §3.7 and §5.
+*To close:* re-derive the thresholds on validation splits only and confirm the rule is unchanged, or
+report the comparison that fixed them. No new training. *Affects:* how strong "no per-dataset tuning"
+can be stated.
 
-**G3. Synthetic-series share of the corpus.**
-We report 654.2M observations over 98 LOTSA subsets and say synthetic series are mixed in during
-sampling. Whether the 20% figure in our records is a fraction of series, of drawn windows or of
-per-sample probability, and whether the synthetic data is counted inside 654.2M, is unresolved.
-*To close:* read the corpus builder and the sampler. *Affects:* the precise corpus figure, not the
-order of magnitude, and therefore not the ≈0.3% statement.
+**G3. Step semantics on the baseline side.**
+Ours is settled: the counter is an optimizer update, effective batch 32, single GPU. VisionTS++
+reports 100k steps at batch 512 without saying whether that batch spans devices or accumulation, so
+the sample-presentation ratio assumes their number is a global batch. *To close:* their released
+config, if any. *Affects:* the wording of an already-hedged claim.
 
-**G4. Step semantics on both sides.**
-Our step counter is an optimizer update with gradient accumulation folded in (batch 8 × accum 4 = 32
-windows per update), on a single device. VisionTS++ reports 100k steps at batch 512 without stating
-whether that batch spans devices or accumulation. The paper therefore reports the two as separate
-rows and never divides one by the other except as "sample presentations", with the caveat in the
-caption. *To close:* their released config, if any. *Affects:* the wording of the efficiency claim,
-which is already hedged.
+**G4. Seeding bug in the V-JEPA 2.1 random-init arm.**
+`pilot/pretrain_route_j.py` calls `torch.manual_seed(0)` *after* constructing the encoder and
+predictor in `WorldModel21`, so a ViT-B random-init control from that class is not seed-controlled.
+The random-init row the paper reports comes from `WorldModel` (V-JEPA 2-L), which seeds correctly, so
+no reported number is affected. *To close:* move the seed call before construction if a ViT-B
+random-init control is ever run. *Affects:* nothing in the current paper; recorded so it is not
+rediscovered later.
 
-**G5. Grid-line offset in the read-out.**
-The soft occupancy is constructed so that grid and background pixels contribute zero, but we have
-not shown algebraically that the resulting offset is independent of where the column boundary sits.
-*To close:* a short numerical check over the height range, comparing `decode(encode(h))` against `h`.
-A five-line script, no GPU. *Affects:* the strength of the "inverts the drawing rule" statement in
-§3.4, which is currently hedged with "up to rounding".
-
-**G6. Page limit.**
+**G5. Page limit.**
 The main text through the conclusion fits in 9 pages with the current ICLR template; we did not
 verify what the 2027 call actually allows, since it is not published. No font, margin or table
 compression was used to fit.
 
 ## Needs a new experiment
 
-**G7. Seed replication of the 60k main model.**
-Both existing seeds are 20k runs, so the headline 0.285 has no error bar and the paper says so.
-*Minimal version:* one additional 60k run with a different seed, evaluated on the six-dataset grid
-(≈20 GPU-hours training plus the evaluation grid). A seed-1 60k run and its evaluation are in
-progress in the project but were not complete at the time of writing, so nothing from it is used.
+**G6. The last four cells of the 60k second seed.**
+A second seed of the 60k model exists and agrees with seed 0 to ~0.5% on the five datasets it has
+(0.3079/0.3418 against 0.3096/0.3428), but its four electricity cells were still evaluating, so the
+six-dataset headline is reported from one seed. *Minimal version:* finish those four evaluation
+cells, which are queued; no training needed. *Affects:* whether the headline number can carry a
+two-seed range.
 
-**G8. Pixel-objective budget curve at 32 frames.**
+**G7. Pixel-objective budget curve at 32 frames.**
 Figure 2 compares a 16-frame pixel-objective curve with a 32-frame value-objective curve, so the two
 panels differ in two respects. The controlled objective comparison exists only at 20k updates
 (Table 4). *Minimal version:* two pixel-objective 32-frame runs, at 5k and 60k updates, reusing the
@@ -68,7 +70,7 @@ existing 20k point, then the five-dataset three-horizon evaluation. About one da
 *Affects:* whether Figure 2 can be presented as a single controlled comparison instead of as two
 curves with a caveat.
 
-**G9. The read-out on an image backbone.**
+**G8. The read-out on an image backbone.**
 The paper claims the framework makes a video initialisation usable, and separately that the image
 initialisation catches up by 20k updates. It does not test whether the value-space read-out would
 also improve an image-backbone pipeline such as VisionTS, which is the natural question a reviewer
@@ -76,7 +78,7 @@ will ask about how specific the design is to video. *Minimal version:* our objec
 VisionTS codebase, evaluated on the same six-dataset grid. About one day of work plus one training
 run. *Affects:* the scope of the method claim, not its correctness.
 
-**G10. A second benchmark.**
+**G9. A second benchmark.**
 All results come from one six-dataset protocol. GIFT-Eval or Monash would test whether the
 low-budget result generalises. *Minimal version:* GIFT-Eval zero-shot with the existing checkpoint,
 no retraining, roughly two days of evaluation. *Affects:* external validity, stated as a limitation.

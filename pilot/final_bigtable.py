@@ -1,3 +1,7 @@
+# NOTE 2026-09-17: the ETTm2 column of these baselines was corrected. VisionTS++ Table 4's ETTm2
+# 'avg' row is typeset one column to the left from the VisionTS column onward, so the value we had
+# copied for each method actually belonged to the next one. Cross-checked against each source's
+# own Average row and against VisionTS arXiv 2408.17253v4 Table 9.
 """Final comparison table under the VisionTS LSF protocol: our checkpoint(s) vs published zero-shot baselines.
 
 usage: python pilot/final_bigtable.py <tag> [<tag> ...] [--names "Ours (32f)" ...] [--dir /nyx-storage1/hanliu/wm4ts/lsf]
@@ -11,17 +15,17 @@ DS = ["ETTm1", "ETTm2", "ETTh1", "ETTh2", "electricity", "weather"]
 HS = [96, 192, 336, 720]
 BASELINES = [  # name -> {dataset: (mse, mae)}
     ("VisionTS++ base", {"ETTm1": (0.360, 0.372), "ETTm2": (0.244, 0.298), "ETTh1": (0.402, 0.416), "ETTh2": (0.333, 0.370), "electricity": (0.184, 0.265), "weather": (0.222, 0.241)}),
-    ("VisionTS", {"ETTm1": (0.374, 0.372), "ETTm2": (0.318, 0.366), "ETTh1": (0.390, 0.414), "ETTh2": (0.333, 0.375), "electricity": (0.207, 0.294), "weather": (0.269, 0.292)}),
-    ("Moirai small", {"ETTm1": (0.448, 0.410), "ETTm2": (0.272, 0.321), "ETTh1": (0.400, 0.424), "ETTh2": (0.341, 0.379), "electricity": (0.233, 0.320), "weather": (0.242, 0.267)}),
-    ("Moirai base", {"ETTm1": (0.382, 0.388), "ETTm2": (0.276, 0.320), "ETTh1": (0.434, 0.439), "ETTh2": (0.346, 0.382), "electricity": (0.188, 0.274), "weather": (0.238, 0.261)}),
-    ("Moirai large", {"ETTm1": (0.390, 0.389), "ETTm2": (0.317, 0.366), "ETTh1": (0.510, 0.469), "ETTh2": (0.354, 0.377), "electricity": (0.188, 0.273), "weather": (0.260, 0.275)}),
-    ("Chronos small", {"ETTm1": (0.640, 0.500), "ETTm2": (0.310, 0.350), "ETTh1": (0.545, 0.472), "ETTh2": (0.424, 0.430), "electricity": (0.220, 0.284), "weather": (0.300, 0.318)}),
-    ("Chronos base", {"ETTm1": (0.646, 0.500), "ETTm2": (0.295, 0.338), "ETTh1": (0.591, 0.468), "ETTh2": (0.406, 0.411), "electricity": (0.215, 0.279), "weather": (0.293, 0.315)}),
-    ("Chronos large", {"ETTm1": (0.556, 0.465), "ETTm2": (0.300, 0.341), "ETTh1": (0.589, 0.466), "ETTh2": (0.455, 0.427), "electricity": (0.204, 0.274), "weather": (0.279, 0.306)}),
-    ("Time-MoE small", {"ETTm1": (0.394, 0.416), "ETTm2": (0.316, 0.361), "ETTh1": (0.400, 0.424), "ETTh2": (0.367, 0.404), "weather": (0.266, 0.297)}),
-    ("Time-MoE base", {"ETTm1": (0.376, 0.406), "ETTm2": (0.349, 0.380), "ETTh1": (0.394, 0.420), "ETTh2": (0.405, 0.415), "weather": (0.270, 0.300)}),
-    ("MOMENT", {"ETTm1": (0.670, 0.537), "ETTm2": (0.316, 0.371), "ETTh1": (0.684, 0.566), "ETTh2": (0.362, 0.410), "electricity": (0.765, 0.687), "weather": (0.294, 0.326)}),
-    ("Timer 28B", {"ETTm1": (0.487, 0.457), "ETTm2": (0.328, 0.347), "ETTh1": (0.444, 0.457), "ETTh2": (0.358, 0.407), "weather": (0.304, 0.331)}),
+    ("VisionTS", {"ETTm1": (0.374, 0.372), "ETTm2": (0.282, 0.321), "ETTh1": (0.390, 0.414), "ETTh2": (0.333, 0.375), "electricity": (0.207, 0.294), "weather": (0.269, 0.292)}),
+    ("Moirai small", {"ETTm1": (0.448, 0.410), "ETTm2": (0.300, 0.341), "ETTh1": (0.400, 0.424), "ETTh2": (0.341, 0.379), "electricity": (0.233, 0.320), "weather": (0.242, 0.267)}),
+    ("Moirai base", {"ETTm1": (0.382, 0.388), "ETTm2": (0.272, 0.321), "ETTh1": (0.434, 0.439), "ETTh2": (0.346, 0.382), "electricity": (0.188, 0.274), "weather": (0.238, 0.261)}),
+    ("Moirai large", {"ETTm1": (0.390, 0.389), "ETTm2": (0.276, 0.320), "ETTh1": (0.510, 0.469), "ETTh2": (0.354, 0.377), "electricity": (0.188, 0.273), "weather": (0.260, 0.275)}),
+    ("Chronos small", {"ETTm1": (0.640, 0.500), "ETTm2": (0.349, 0.380), "ETTh1": (0.545, 0.472), "ETTh2": (0.424, 0.430), "electricity": (0.220, 0.284), "weather": (0.300, 0.318)}),
+    ("Chronos base", {"ETTm1": (0.646, 0.500), "ETTm2": (0.310, 0.350), "ETTh1": (0.591, 0.468), "ETTh2": (0.406, 0.411), "electricity": (0.215, 0.279), "weather": (0.293, 0.315)}),
+    ("Chronos large", {"ETTm1": (0.556, 0.465), "ETTm2": (0.295, 0.338), "ETTh1": (0.589, 0.466), "ETTh2": (0.455, 0.427), "electricity": (0.204, 0.274), "weather": (0.279, 0.306)}),
+    ("Time-MoE small", {"ETTm1": (0.394, 0.416), "ETTm2": (0.318, 0.366), "ETTh1": (0.400, 0.424), "ETTh2": (0.367, 0.404), "weather": (0.266, 0.297)}),
+    ("Time-MoE base", {"ETTm1": (0.376, 0.406), "ETTm2": (0.316, 0.361), "ETTh1": (0.394, 0.420), "ETTh2": (0.405, 0.415), "weather": (0.270, 0.300)}),
+    ("MOMENT", {"ETTm1": (0.670, 0.537), "ETTm2": (0.317, 0.366), "ETTh1": (0.684, 0.566), "ETTh2": (0.362, 0.410), "electricity": (0.765, 0.687), "weather": (0.294, 0.326)}),
+    ("Timer 28B", {"ETTm1": (0.487, 0.457), "ETTm2": (0.316, 0.371), "ETTh1": (0.444, 0.457), "ETTh2": (0.358, 0.407), "weather": (0.304, 0.331)}),
     ("TimesFM", {"ETTm1": (0.433, 0.419), "ETTh1": (0.473, 0.444), "ETTh2": (0.392, 0.406)}),
 ]
 

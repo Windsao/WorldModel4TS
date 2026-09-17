@@ -3,9 +3,9 @@
 \label{sec:experiments}
 %----------------------------------------------------------------------
 
-The experiments answer four questions in order: what accuracy the framework reaches under a small
-time-series pretraining budget (\S\ref{sec:main}, \S\ref{sec:budget}); what the video initialisation
-contributes and where that contribution stops (\S\ref{sec:backbone}); what the transfer design
+The experiments answer four questions in order: the accuracy the framework reaches under a small
+time-series pretraining budget (\S\ref{sec:main}--\S\ref{sec:budget}); what the video
+initialisation contributes and where that stops (\S\ref{sec:backbone}); what the transfer design
 contributes (\S\ref{sec:design}); and why the naive alternative fails (\S\ref{sec:diagnosis}).
 
 \subsection{Setup}
@@ -46,9 +46,9 @@ a third of the training.
 
 
 Averaged over the six datasets, error grows from $0.223/0.281$ at $H{=}96$ to $0.349/0.377$ at
-$H{=}720$; the full per-horizon breakdown is Table~\ref{tab:perhorizon} in
-Appendix~\ref{app:perhorizon}, and the two datasets we lose overall are lost at the mid-to-long
-horizons rather than uniformly.
+$H{=}720$ (Table~\ref{tab:perhorizon} in Appendix~\ref{app:perhorizon}). Per cell we win 18 of 24
+against VisionTS on both metrics, and 17 of 24 against VisionTS++ base on MSE but only 11 of 24 on
+MAE, the MAE losses falling mostly on weather; Appendix~\ref{app:perhorizon} gives every cell.
 
 \subsection{Pretraining budget}
 \label{sec:budget}
@@ -68,23 +68,22 @@ than pay for, exactly as the image-based systems inherit ImageNet pretraining.
 
 \input{figures/backbone_table}
 
-Table~\ref{tab:backbone} holds the rendering, objective, corpus, schedule and inference rule fixed
-and changes only the weights the model starts from. At a 5k-step adaptation budget, both video
-initialisations lead the ImageNet initialisation by $3$--$5\%$ at every horizon, and they are within
-$0.002$ of each other, so the reconstructive and predictive video objectives are not distinguishable
-here. The random-init control is the informative row: the same ViT-L architecture, same data, same
-schedule, reaches $0.280$ at $H{=}96$ against $0.245$ for its pretrained twin, and is worse than an
-image-pretrained backbone $3.5\times$ smaller. Whatever transfers is not capacity.
+Table~\ref{tab:backbone} is split into two panels, because only one kind of comparison here is an
+initialisation control. In the upper panel the rendering, objective, corpus, schedule and inference
+rule are identical and only the starting weights differ: at a 5k-update budget the video
+initialisation leads the ImageNet one by $3$--$5\%$ at every horizon. In the lower panel the arms
+run a different trainer --- a latent-prediction objective with an added predictor, an EMA target
+encoder and no tube-masked batches --- on a larger backbone, so those rows are a system comparison
+and not evidence that a predictive video objective beats a reconstructive one. What the lower panel
+does support is the random-init control, which shares its trainer and architecture exactly with the
+pretrained V-JEPA~2-L arm and reaches $0.280$ at $H{=}96$ against $0.245$: worse than an
+image-pretrained backbone $3.5\times$ smaller, so what transfers is not capacity.
 
-Two qualifications belong with this table. First, the V-JEPA arms are size-matched rather than
-architecturally identical: they carry an additional predictor, use EMA targets, and their predictor
-output head is re-initialised because the pretrained head maps into a teacher space our targets do
-not use. Second, the advantage is budget-dependent. The right-hand column runs the same comparison
-at 20k updates, where the image initialisation has caught up and is level or slightly ahead at the
-longest horizon, so what the video prior buys is adaptation efficiency and not a higher ceiling.
-Note also that the image-initialised arm is an initialisation control, not a reimplementation of
-VisionTS++, which is a different system with a different rendering and a multi-quantile training
-objective.
+The advantage is also budget-dependent. The right-hand column repeats the upper panel at 20k
+updates, where the image initialisation has caught up and is slightly ahead at the longest horizon.
+What the video prior buys is adaptation efficiency, not a higher ceiling. The image-initialised arm
+is an initialisation control and not a reimplementation of VisionTS++, which uses a different
+rendering and a multi-quantile objective.
 
 \subsection{What the transfer design contributes}
 \label{sec:design}
@@ -117,10 +116,8 @@ $H{=}720$ moves from $0.429$ to $0.617$. We did not evaluate the 60k native-obje
 downstream, so that point is missing rather than interpolated, and we describe this as a trend over
 the checkpoints we measured rather than as a scaling law.
 
-Alternative explanations were excluded by re-evaluation under matched software, and the training
-loss is flat over the range, so this is not pixel-space overfitting; what does move monotonically is
-the weight norm, which shrinks by roughly $30\%$ under decoupled weight decay over the $9\times$
-longer schedule. Appendix~\ref{app:diagnosis} gives the checks.
+Alternative explanations were excluded by re-evaluating under matched software, and the training loss
+is flat, so this is not pixel-space overfitting (Appendix~\ref{app:diagnosis}).
 
 Figure~\ref{fig:budget}b shows the corresponding curve under our objective. The panels differ in clip
 length as well as objective (16 frames against 32), so they are not a controlled comparison; the
@@ -130,9 +127,10 @@ curve.
 \subsection{Robustness and inference cost}
 \label{sec:seeds}
 
-Two seeds of the 20k model agree to within $0.002$ on the five-dataset means and on five of six
-datasets of the full grid, ETTm1 being the only visible spread ($0.351$ against $0.360$); no second
-seed of the 60k model exists, so the headline number carries no error bar. Inference is not
+A second seed of the 60k model reaches a five-dataset mean of $0.3079/0.3418$ against seed 0's
+$0.3096/0.3428$, a spread of about $0.5\%$; its four electricity cells were still evaluating at the
+time of writing, so no six-dataset mean is available for it and the headline number in
+Table~\ref{tab:main} is a single seed. Inference is not
 single-pass everywhere, since the rule of Section~\ref{sec:inference} averages frame scales on
 short-horizon cells and rolls out beyond one prediction block. Appendix~\ref{app:inference} gives
 the per-cell pass counts, and Appendix~\ref{app:failed} the variants that did not improve on the

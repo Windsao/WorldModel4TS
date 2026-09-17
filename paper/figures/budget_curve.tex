@@ -6,7 +6,7 @@
 
 \begin{axis}[
   name=left,
-  width=5.7cm, height=4.3cm,
+  width=5.7cm, height=3.7cm,
   xmode=log, log basis x=10,
   xlabel={continual-pretraining steps},
   ylabel={held-out pixel loss},
@@ -30,7 +30,7 @@
 \end{axis}
 
 \begin{axis}[
-  width=5.7cm, height=4.3cm,
+  width=5.7cm, height=3.7cm,
   at={(left.south east)}, anchor=south east,
   xmode=log, log basis x=10,
   ylabel={forecast MSE}, ylabel style={yshift=-2pt},
@@ -48,7 +48,7 @@
 \end{axis}
 
 \begin{axis}[
-  width=5.7cm, height=4.3cm,
+  width=5.7cm, height=3.7cm,
   at={(left.south east)}, anchor=south west, xshift=2.35cm,
   xmode=log, log basis x=10,
   xlabel={continual-pretraining steps},

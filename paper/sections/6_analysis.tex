@@ -9,8 +9,10 @@ answered by Section~\ref{sec:backbone}: yes at a 5k-update budget, where both vi
 lead the image one and all three lead random initialisation by a wide margin. Whether a transfer
 design is needed to realise it is answered by Sections~\ref{sec:design} and~\ref{sec:diagnosis}:
 yes, since the same backbone under its native objective gets worse at forecasting as that objective
-improves. Our experiments support the two separately; none isolates their interaction, so we do not
-attribute the end-to-end accuracy to the initialisation alone.
+improves. Our experiments support the two separately; none isolates their interaction, so we do not attribute
+the end-to-end accuracy to the initialisation alone. The value-space term's benefit also grows with
+horizon ($5\%$ at $H{=}96$, $8\%$ at $H{=}720$), consistent with long horizons being generated
+rather than interpolated, though the ablation does not establish that mechanism.
 
 \paragraph{Where the initialisation advantage stops.}
 The advantage does not persist. At 5k updates video initialisation leads by $3$--$5\%$ at every
@@ -21,20 +23,17 @@ being better in general. The comparison also answers a question about initialisa
 image-initialised arm is not a stand-in for VisionTS++, which differs in rendering, head and
 schedule.
 
-\paragraph{Why the forecast-aligned objective helps more at long horizons.}
-Removing the value-space term costs $5\%$ at $H{=}96$ and $8\%$ at $H{=}720$
-(Table~\ref{tab:ablation}). A plausible reading is that short horizons are largely fixed by the
-visible context, so both criteria rank completions similarly, while longer ones are generated rather
-than interpolated and a completion can be smooth and pixel-cheap while sitting at the wrong level.
-The ablation is consistent with this and does not establish it.
-
 \paragraph{Limitations.}
-Mid-to-long horizons on the hourly ETT sets remain behind the strongest baselines: the context is
-capped at 32 frames of at most four periods, so covering $H{=}720$ with $P{=}24$ trades resolution
-for coverage. Mean MAE is $0.328$ against $0.326$, which is worse, not equal, and we have no
-uncertainty estimate that would justify calling it a tie. The evaluation covers one six-dataset protocol; GIFT-Eval
-\citep{gifteval} and Monash \citep{monash} are not run. Seed replication exists for the 20k model only, so the headline number carries no error bar; budget
-is reported in corpus size, updates and sample presentations, not FLOPs or wall-clock, and excludes
-the inherited video pretraining; and the ViT-B backbone comparison is size-matched rather than
-architecturally exact. Finally, the corpus contains Monash \texttt{traffic\_hourly}, the same data
-as the LSF traffic benchmark, so traffic is excluded from our evaluation.
+Our advantage is metric-dependent: against the same-size VisionTS++ base we win 17 of 24 cells on
+MSE but only 11 on MAE, and the mean MAE is $0.328$ against $0.326$, which is worse, not equal.
+Mid-to-long horizons on the hourly ETT sets remain behind, because the context is capped at 32
+frames of at most four periods. The second seed of the 60k model was still missing its electricity
+cells at the time of writing, so the headline number is a single seed. The inference rule carries no
+dataset identity, but its two thresholds were chosen on development runs over four of the six
+datasets, so it was not selected blind to the benchmark. The exact-match leakage screen that returned
+no matches was run against an earlier, domain-excluded build of the corpus rather than the one these
+models used; that corpus contains Monash \texttt{weather} (a different source from the LSF weather
+benchmark) and \texttt{traffic\_hourly} (the same source as the LSF traffic benchmark, which is why
+traffic appears nowhere here). Finally, the evaluation is one six-dataset protocol, budget is
+reported in corpus size, updates and sample presentations rather than FLOPs, and the ViT-B backbone
+comparison is size-matched rather than architecturally exact.

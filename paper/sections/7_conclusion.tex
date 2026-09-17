@@ -3,13 +3,12 @@
 \label{sec:conclusion}
 %----------------------------------------------------------------------
 
-A backbone pretrained on video is a useful starting point for forecasting but not a usable one:
+A video-pretrained backbone is a useful starting point for forecasting but not a usable one:
 continuing its own objective on rendered series improves that objective while degrading forecasts.
 What makes the transfer work is a framework built around the forecasting task --- period-aligned
 frames, prediction of a masked future block, a differentiable read-out that puts the loss in value
-space, and a training scale distribution matched to the inference rule. With it, one checkpoint and
-one rule reach the lowest mean MSE among the models we compare on the six-dataset zero-shot
-protocol, after 60k updates on 654M observations. Two results bound that claim: the video
-initialisation's lead closes by 20k updates, so what we show is adaptation efficiency rather than a
-higher ceiling, and the transfer design is what makes any initialisation usable at all. Next steps: a second benchmark, a longer effective
-context for the ETT horizons we lose, and the same read-out on an image backbone.
+space, and a training scale distribution matched to the inference rule --- which reaches the lowest
+mean MSE among the models we compare on the six-dataset zero-shot protocol after 60k updates on 654M
+observations. Two results bound that claim: the video initialisation's lead closes by 20k updates,
+so what we show is adaptation efficiency rather than a higher ceiling, and the transfer design is
+what makes any initialisation usable at all.

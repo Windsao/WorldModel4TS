@@ -1,29 +1,31 @@
-% Initialisation study at two adaptation budgets: the 5k advantage and the 20k catch-up together.
+% Initialisation study. Split into two panels because only within a panel is the contrast
+% initialisation-only; across panels the trainer itself differs.
 \begin{table}[t]
-\caption{Initialisation study. Rendering, objective, corpus, schedule and inference rule are held
-fixed; only the weights the model starts from change. Five-dataset mean MSE (ETT$\times$4 and
-weather) at $H{=}96/336/720$. Two seeds are listed where both were run. At a 5k-update budget both
-video initialisations lead the image initialisation; by 20k the image initialisation has caught up,
-which is why we claim adaptation efficiency rather than a higher ceiling. The V-JEPA arms are
-size-matched, not architecturally identical (see text).}
+\caption{Initialisation study, five-dataset mean MSE (ETT$\times$4 and weather) at
+$H{=}96/336/720$. \emph{Within} each panel the arms differ only in the weights the model starts
+from; \emph{across} panels they do not, because the latent-prediction arms use a different trainer
+(an added predictor, an EMA target encoder, a latent loss term, and no tube-masked batches) and a
+larger backbone. Two seeds are listed where both were run. The video prior is worth $3$--$5\%$ at a
+5k-update budget and the image initialisation has caught up by 20k.}
 \label{tab:backbone}
 \begin{center}
-\setlength{\tabcolsep}{4pt}
+\setlength{\tabcolsep}{3pt}
 \footnotesize
 \begin{tabular}{llcll}
 \toprule
 Initialisation & Pretraining signal & Params & 5k updates & 20k updates \\
 \midrule
+\multicolumn{5}{l}{\emph{Masked-pixel trainer, ViT-B: identical apart from the initialisation}} \\
 ImageNet MAE-B & images & 87M & 0.264 / 0.350 / 0.395
   & 0.244 / 0.329 / \textbf{0.373} \\
  & & & & 0.245 / 0.330 / \textbf{0.373} \\
-VideoMAE-B & video, reconstructive & 87M & \textbf{0.250} / 0.337 / 0.384
+VideoMAE-B & video, reconstructive & 87M & \textbf{0.250} / \textbf{0.337} / \textbf{0.384}
   & 0.245 / 0.330 / 0.379 \\
-V-JEPA~2.1-B & video, predictive & 87M\,+\,23M & 0.252 / \textbf{0.335} / \textbf{0.382}
-  & not run \\
 \midrule
-V-JEPA~2-L & video, predictive & 300M & 0.245 / 0.329 / 0.379 & not run \\
-V-JEPA~2-L, random init & none & 300M & 0.280 / 0.369 / 0.418 & not run \\
+\multicolumn{5}{l}{\emph{Latent-prediction trainer: different objective and architecture, not an initialisation control}} \\[1pt]
+V-JEPA~2.1-B & video, predictive & 87M\,+\,23M & 0.252 / 0.335 / 0.382 & not run \\
+V-JEPA~2-L & video, predictive & 300M\,+\,22M & \textbf{0.245} / \textbf{0.329} / \textbf{0.379} & not run \\
+V-JEPA~2-L, random & none & 300M\,+\,22M & 0.280 / 0.369 / 0.418 & not run \\
 \bottomrule
 \end{tabular}
 \end{center}
