@@ -33,7 +33,8 @@ the worst arm of all.
 ## 2. Claims
 
 **Supported (write these):**
-- C1 Diagnosis: masked-pixel continual pretraining on rendered series decouples from forecasting —
+- C1 Diagnosis (main text, motivates everything): masked-pixel continual pretraining on rendered series
+  decouples from forecasting —
   held-out pixel loss falls monotonically (0.0366 → 0.0312) while forecast error rises (0.339 → 0.381)
   from 5k to 176k steps.
 - C2 Method: a forecast-aligned value-space loss (plus scale augmentation and a 32-frame window) turns
@@ -155,7 +156,11 @@ The value-space loss accounts for the entire gain and the gap grows with horizon
 inert at 32 frames. The budget curve is monotonically improving, which is the opposite of the pixel
 objective (§8).
 
-## 8. The diagnosis (16-frame clips, pixel objective) — motivating result
+## 8. The diagnosis (16-frame clips, pixel objective) — MAIN TEXT, the motivation for the method
+
+This is not a "negative result" to be hidden: it is the finding that motivates the contribution
+(pretraining loss and forecasting error move in opposite directions), and §7 shows the method fixes it.
+Keep it in the introduction and in the experiments.
 
 | steps | 5k | 20k | 60k | 176k |
 |---|---:|---:|---:|---:|
@@ -206,7 +211,12 @@ differences ≤ 0.002. On the full 6×4 table, seed 0 = 0.288 and seed 1 matches
 (ETTm1 0.351 vs 0.360, ETTh1 0.405 vs 0.400, ETTh2 0.336 vs 0.342, ETTm2 0.245 vs 0.242, weather 0.216 vs
 0.217; electricity *pending*). A second seed of the 60k main model is training (*pending*, ~3 h left).
 
-## 11. Negative results worth a paragraph each
+## 11. Appendix only — alternatives that did not work
+
+Do **not** give these a section in the main text. Keep them as an appendix table (or drop them
+entirely); their only job is to answer a reviewer who asks "why not just train longer / on more data?".
+Two of them are worth one sentence each in the main text, inside the ablation discussion:
+more steps under the pixel objective hurt, and 4× more in-domain data changes nothing.
 
 | attempt | outcome |
 |---|---|
@@ -220,7 +230,8 @@ differences ≤ 0.002. On the full 6×4 table, seed 0 = 0.288 and seed 1 matches
 | weight-space soup of two seeds | better on ETT, 16% worse on electricity, net worse (0.291) |
 | cross-corpus weight soup (v1+v2) | worse than both parents |
 
-Prediction-space averaging of two seeds *does* help (+0.6%, never worse): 0.286 on the full table.
+Prediction-space averaging of two seeds *does* help (+0.6%, never worse): 0.286 on the full table —
+that one is a positive result and belongs in the main table as a secondary row.
 
 ## 12. Efficiency
 
@@ -286,6 +297,8 @@ Ratio: ~1/13 of the steps (1/40 for the 20k row) and 0.3% of the data. Inference
 ## 17. Writing guidance
 
 - Lead the introduction with the diagnosis (§8), not with "video models are good at dynamics".
+- Do not write a "negative results" section. §11 is appendix material at most; the failed alternatives
+  are answers to reviewer questions, not part of the story.
 - Define "time-series world model" explicitly as the trained model (past frames → future frames) and
   "dynamics prior" as what the backbone brings; do not call VideoMAE a world model.
 - Report MSE and MAE together everywhere; never report only the metric we win.
