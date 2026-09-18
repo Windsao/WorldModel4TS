@@ -30,7 +30,9 @@ ETTh1, ETTh2, ETTm1, ETTm2, electricity or weather is present; the nearest same-
 Monash \texttt{weather} (daily Australian stations, not the Jena 10-minute set) and
 \texttt{traffic\_hourly}, which is why traffic is excluded from the evaluation.
 
-\paragraph{Evaluation.} \texttt{--mode auto} as described in Section~\ref{sec:inference}. All 24
+\paragraph{Evaluation.} Context length $L$ and period $P$ per dataset, following \citet{visionts}:
+ETTh1 $2880/24$, ETTh2 $1728/24$, ETTm1 $2304/96$, ETTm2 $4032/96$, electricity $2880/24$, weather
+$4032/144$. The inference rule of Section~\ref{sec:inference} is applied to these values. All 24
 cells use the same checkpoint. Multi-channel datasets are forecast channel by channel. Reported MSE
 and MAE are computed on standardised values over stride-1 test origins.
 

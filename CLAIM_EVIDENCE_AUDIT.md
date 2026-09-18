@@ -139,3 +139,23 @@ error in the paper's own appendix table.
 7. **Two omissions that blocked reimplementation** are now stated: Equation 2 is applied to the mean
    of the three replicated channels, and the inverse transform back to the dataset scale is written
    out.
+
+8. **Symbols and conventions that blocked reimplementation.** $\mathrm{IMG}$, $g_{\mathrm{fill}}$,
+   $g_{\mathrm{grid}}$, the row-index origin and $L$ were used before being defined; the per-dataset
+   context lengths had been dropped from the paper entirely when Section 4.1 was compressed. All are
+   now in Section 3.2 and Appendix A.
+9. **The fill convention was stated wrongly, with a measurable consequence.** The paper said the
+   column is filled "below the boundary row"; the renderer includes the boundary row. The reader
+   computed that the excluded reading would bias every decoded value by $-0.034$ in $z$ — twice the
+   rounding error the paper acknowledged. `paper/check_readout.py` confirms it exactly:
+   $-0.0336$ under the excluded convention, versus a mean error of $-8\times10^{-6}$ and a maximum of
+   $0.0168$ (the $\pm0.5$-row quantisation bound) under the implemented one. The wording is corrected
+   and the measured numbers are now in the paper.
+10. **One finding did not survive checking.** The reader reasoned that if grid lines were painted over
+    the fill, decoded values would carry an error growing to $0.22\sigma$ at the extremes. The
+    renderer draws grid lines on the background only (`(row % 28 == 0) & ~fill`), so the effect does
+    not occur. The paper now states the draw order in the method section rather than only in the
+    appendix, since that omission is what made the worst case readable into the text, and it reports
+    the counterfactual magnitude so the reader can see why the order matters.
+11. **Loss support.** Both terms are taken over the masked future tokens only; this was not stated and
+    now is, along with the tube-batch schedule and ratio.

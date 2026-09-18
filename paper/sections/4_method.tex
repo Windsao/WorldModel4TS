@@ -34,9 +34,9 @@ Design decisions and checkpoint selection used held-out pretraining data only.
 \subsection{A. Period-aligned video representation}
 \label{sec:render}
 
-A series is turned into a video, not into an image. Let $P$ be the dominant period, taken from the
-sampling frequency as in \citet{visionts}, and let $k$ be the number of periods packed into one
-frame. A clip of $F$ frames covers $FkP$ observations: frame $f$ holds the $kP$ consecutive observations of
+A series is turned into a video, not into an image. Let $x_{1:L}$ be the observed context of length $L$, $P$ the dominant period taken from the sampling
+frequency as in \citet{visionts}, and $k$ the number of periods packed into one frame; $L$ per
+dataset follows \citet{visionts} and is listed in Appendix~\ref{app:impl}. A clip of $F$ frames covers $FkP$ observations: frame $f$ holds the $kP$ consecutive observations of
 periods $[fk,(f+1)k)$, drawn side by side as an area chart in a $224\times224$ frame. Within a frame
 the horizontal axis is position inside that block of $k$ periods --- phase, when $k=1$ --- and the
 vertical axis is value; \emph{across} frames the axis is time measured in blocks of $k$ periods. The
@@ -57,8 +57,11 @@ only, clipped to $z\in[-3,3]$, and mapped to a column height
 h \;=\; 0.5 + 0.4\,\frac{z}{3}\;\in\;[0.1,\,0.9],
 \label{eq:height}
 \end{equation}
-with the column filled below the boundary row $\mathrm{round}\big((1-h)(\mathrm{IMG}-1)\big)$ and
-background above it. The drawing constants and the grid are given in Appendix~\ref{app:impl}. The
+where rows are indexed from the top of a frame of $\mathrm{IMG}=224$ rows. The boundary row
+$b=\mathrm{round}\big((1-h)(\mathrm{IMG}-1)\big)$ \emph{and every row below it} are filled at gray
+level $g_{\mathrm{fill}}=0.12$, the rows above are background at $0.92$, and horizontal grid lines at
+$g_{\mathrm{grid}}=0.80$ are drawn every 28 rows \emph{on the background only}, so a filled pixel is
+never a grid pixel. The
 main model uses $F=32$ frames with a tubelet size of 2, giving 16 temporal positions; $F$ is a
 context-length setting rather than a contribution, and we report what changes with it in
 Appendix~\ref{app:16f}.
@@ -88,17 +91,25 @@ s(\hat{x}_{r,c}) = \mathrm{clamp}\!\left(\frac{g_{\mathrm{grid}} - \hat{x}_{r,c}
 \hat{h}_c = 1 - \frac{\mathrm{IMG} - \sum_{r} s(\hat{x}_{r,c})}{\mathrm{IMG}-1},
 \label{eq:readout}
 \end{equation}
-which inverts the drawing rule of Equation~\ref{eq:height} up to rounding: the thresholds are chosen
-so that background and grid pixels contribute zero and filled pixels contribute one, and partially
-filled boundary pixels contribute fractionally. Inverting Equation~\ref{eq:height} gives
+where $r$ runs over all $\mathrm{IMG}$ rows of the column. The thresholds are the drawing levels
+themselves, so background ($0.92$) and grid ($g_{\mathrm{grid}}$) pixels contribute exactly zero,
+filled pixels contribute one, and a blurred boundary pixel contributes fractionally; $\sum_r s$ is
+then the filled height of the column. Sweeping the full range of $h$, the decode reproduces
+the encode with a maximum error of $0.0168$ in $z$ units and a mean error of $-8\times10^{-6}$; the
+maximum is exactly the $\pm0.5$-row quantisation of $b$, so the read-out is unbiased and the
+inversion is exact up to rounding (\texttt{paper/check\_readout.py} reproduces this in a second).
+The two conventions matter: were the boundary row excluded from the fill instead of included, the
+read-out would carry a systematic $-0.034$ bias in $z$, and were grid lines painted over the fill
+rather than only on the background, the error would grow with $|z|$ to $0.22$ at the extremes. Inverting Equation~\ref{eq:height} gives
 $z=(h-0.5)\cdot 3/0.4$, and the training objective is
 \begin{equation}
 \mathcal{L} \;=\; \mathrm{MSE}(\hat{x}, x)\;+\;\lambda\left(\tfrac{3}{0.4}\right)^{2}
-\mathrm{MSE}\big(\hat{h}_c,\,h_c\big),\qquad \lambda=0.1 .
+\mathrm{MSE}\big(\hat{h}_c,\,h_c\big),\qquad \lambda=0.1 ,
 \label{eq:loss}
 \end{equation}
-The constant converts height units into the units of the context-standardised series, so the second
-term is a squared error on values rather than on gray levels. It is computed column-wise and is
+with both terms taken over the masked future tokens only. The constant converts height units into
+the units of the context-standardised series, so the second term is a squared error on values rather
+than on gray levels. It is computed column-wise and is
 therefore independent of $P$ and of how many periods a frame holds. The pixel term is retained
 because early in training the read-out of a blurry prediction carries little signal.
 

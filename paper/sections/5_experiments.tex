@@ -15,7 +15,7 @@ contributes (\S\ref{sec:design}); and why the naive alternative fails (\S\ref{se
 Time-Series-Library splits \citep{tslib} (ETT 12/4/4 months, others 70/10/20), a
 \texttt{StandardScaler} fitted on the target dataset's training portion, all channels, stride-1 test
 origins, $H\in\{96,192,336,720\}$, MSE/MAE on standardised values, and their per-dataset context
-lengths and periods (Appendix~\ref{app:impl}). Running their released checkpoint through our harness
+lengths and periods (listed in Appendix~\ref{app:impl}). Running their released checkpoint through our harness
 reproduces their published numbers to three decimals (ETTh1 at $H{=}96$: $0.3527/0.3833$ against
 $0.353/0.383$). One checkpoint and one inference rule serve all 24 cells, with no parameter
 updated on any evaluation dataset.
