@@ -36,10 +36,13 @@ Design decisions and checkpoint selection used held-out pretraining data only.
 
 A series is turned into a video, not into an image. Let $P$ be the dominant period, taken from the
 sampling frequency as in \citet{visionts}, and let $k$ be the number of periods packed into one
-frame. A clip of $F$ frames covers $FkP$ observations: frame $f$ holds the observations of periods
-$[fk,(f+1)k)$, drawn as an area chart in a $224\times224$ frame. Within a frame the horizontal axis
-is phase inside the period and the vertical axis is value; \emph{across} frames the axis is time
-measured in periods. Consecutive frames therefore differ by whatever changed from one period to the
+frame. A clip of $F$ frames covers $FkP$ observations: frame $f$ holds the $kP$ consecutive observations of
+periods $[fk,(f+1)k)$, drawn side by side as an area chart in a $224\times224$ frame. Within a frame
+the horizontal axis is position inside that block of $k$ periods --- phase, when $k=1$ --- and the
+vertical axis is value; \emph{across} frames the axis is time measured in blocks of $k$ periods. The
+$kP$ samples are spread over the 224 columns by a fixed integer partition, so each sample owns
+$\lfloor 224/kP \rfloor$ or $\lceil 224/kP \rceil$ adjacent columns and the mapping is invertible by
+construction. Consecutive frames therefore differ by whatever changed from one period to the
 next --- level, amplitude, shape --- and a seasonal series renders as an almost static video while a
 drifting or regime-switching one renders as a moving one.
 
@@ -67,11 +70,12 @@ Appendix~\ref{app:16f}.
 masked and must be predicted from the visible past. This is the formulation the title refers to: the model
 maps an observed past to a predicted future state of the series and is scored on that prediction, in
 the sense of \citet{lecun2022}, and unlike the backbone's native masked-reconstruction objective it
-never sees a neighbour on the far side of what it is predicting. With probability $0.3$ the leading tubelets are
-additionally hidden so that shorter contexts are also trained on, which is the regime the shorter
-evaluation datasets present at test time. A fraction of batches retains the backbone's original tube
-masking, as a regulariser; Appendix~\ref{app:impl} gives the exact schedule and which loss applies
-to which batch type.
+never sees a neighbour on the far side of what it is predicting. With probability $0.3$ a uniformly drawn $1\ldots(F-h_p-8)/2$
+leading tubelets are additionally hidden, so that shorter contexts are trained on as well; those
+hidden tokens are predicted but excluded from the loss. Thirty per cent of batches instead retain the
+backbone's original tube masking at a $0.75$ ratio, as a regulariser. The two batch types are
+supervised differently: forecast batches take both loss terms on the future tokens only, while tube
+batches take the pixel term on all masked tokens and carry no value term (Appendix~\ref{app:impl}).
 
 \paragraph{Supervise in value space.} A predicted frame is a picture, and the quantity the task is
 scored on is a number, so the decoder that converts one into the other belongs inside the loss. For

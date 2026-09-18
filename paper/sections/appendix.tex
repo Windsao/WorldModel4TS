@@ -6,15 +6,21 @@
 \paragraph{Rendering.} Frames are $224\times224$ grayscale, replicated to three channels. Fill level
 $0.12$, background $0.92$, grid lines every 28 rows at $0.80$. Values are standardised with the
 statistics of the visible context, clipped to $z\in[-3,3]$ and mapped to height by
-Equation~\ref{eq:height}. A clip holds $16kP$ observations in $F$ frames; tubelet size is 2, giving
-$16\times14\times14 = 3136$ tokens at $F=32$.
+Equation~\ref{eq:height}. A clip holds $FkP$ observations in $F$ frames; tubelet size is 2, giving
+$16\times14\times14 = 3136$ tokens at $F=32$. Equation~\ref{eq:readout} is applied to the mean of the
+three replicated colour channels. At evaluation the decoded $z$ values are mapped back to the
+dataset's scale by $\hat{x} = \hat{z}\,\sigma_{\mathrm{ctx}} + \mu_{\mathrm{ctx}}$, using the same
+visible-context statistics that produced the rendering.
 
 \paragraph{Training.} VideoMAE-B initialised from Kinetics-400, \texttt{norm\_pix\_loss} off, AdamW
 ($\beta_1{=}0.9$, $\beta_2{=}0.95$), learning rate $10^{-4}$ with cosine decay and 500 warm-up
 steps, weight decay $0.05$ (or $0$ with prior anchoring at $\lambda_{\mathrm{sp}}=0.05$), bf16,
-micro-batch 8 with 4-step gradient accumulation for an effective batch of 32. Masked future length
-$h_p$ is sampled from $\{2,4\}$; with probability $0.3$ the leading tubelets are additionally
-hidden; $30\%$ of batches use tube masking instead. Frame scale $k\in\{1,2,4\}$ with probability
+micro-batch 8 with 4-step gradient accumulation for an effective batch of 32. Seventy per cent of batches are forecast batches with
+masked future length $h_p$ drawn from $\{2,4\}$ frames (1--2 tubelets) and, with probability $0.3$, a
+uniformly drawn $1\ldots(F-h_p-8)/2$ additional leading tubelets hidden and excluded from the loss;
+the remaining $30\%$ use tube masking at ratio $0.75$ with the pixel term on all masked tokens and no
+value term. Grid lines are drawn on the background only and are occluded by the fill, so a filled
+pixel is never a grid pixel. Frame scale $k\in\{1,2,4\}$ with probability
 $0.5/0.3/0.2$. Learning rate $2\times10^{-4}$ is worse and $5\times10^{-5}$ ties $10^{-4}$.
 
 \paragraph{Corpus.} 98 LOTSA subsets, 184{,}013 series, 654.2M observations, with $20\%$ synthetic
@@ -111,8 +117,8 @@ The rule of Section~\ref{sec:inference} maps $(P, H)$ to a configuration with no
 Table~\ref{tab:passes} lists the configuration it selects for each evaluation cell and the number of
 forward passes that configuration costs. \texttt{mp} (multiperiod) predicts one block of frames with $k$
 periods per frame; the \texttt{sc} suffix lists the frame scales that are averaged, each of which is
-a separate pass; \texttt{rollout2} feeds the prediction back and predicts twice. The system uses one
-checkpoint and one rule for all cells, but it is not single-pass everywhere.
+a separate pass; \texttt{rollout2} feeds the prediction back and predicts twice. The three $P{=}24$ datasets share a configuration, as the rule
+depends only on $(P,H,L)$. Nine of the 24 cells use more than one pass; the other fifteen use one.
 
 \begin{table}[h]
 \caption{Inference configuration and forward passes per evaluation cell.}
@@ -124,9 +130,8 @@ checkpoint and one rule for all cells, but it is not single-pass everywhere.
 \toprule
 Dataset & $P$ & $H{=}96$ & $H{=}192$ & $H{=}336$ & $H{=}720$ \\
 \midrule
-ETTh1 / ETTh2 & 24 & \texttt{sc124} (3) & \texttt{sc12} (2) & \texttt{mp} (1) & \texttt{rollout2} (2) \\
+ETTh1 / ETTh2 / ECL & 24 & \texttt{sc124} (3) & \texttt{sc12} (2) & \texttt{mp} (1) & \texttt{rollout2} (2) \\
 ETTm1 / ETTm2 & 96 & \texttt{mp} (1) & \texttt{mp} (1) & \texttt{mp} (1) & \texttt{mp} (1) \\
-ECL & 24 & \texttt{mp} (1) & \texttt{mp} (1) & \texttt{mp} (1) & \texttt{mp} (1) \\
 Weather & 144 & \texttt{mp} (1) & \texttt{mp} (1) & \texttt{mp} (1) & \texttt{mp} (1) \\
 \bottomrule
 \end{tabular}

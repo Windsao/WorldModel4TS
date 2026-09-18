@@ -142,6 +142,6 @@ Table~\ref{tab:ablation}; what the figure establishes is the direction of each c
 Two seeds of the 60k model were trained and evaluated on the complete six-dataset grid: they give
 mean MSE/MAE of $0.2852/0.3279$ and $0.2838/0.3272$, a spread of $0.0014$ and $0.0007$.
 Table~\ref{tab:main} reports the first, which is the weaker of the two. Inference is not single-pass everywhere: the rule averages
-frame scales on short-horizon cells and rolls out beyond one prediction block, so 6 of the 24 cells
-cost 2--3 forward passes (Appendix~\ref{app:inference}), and variants that did not improve on the
+frame scales on short-horizon cells and rolls out beyond one prediction block, so 9 of the 24 cells cost two or three
+forward passes (Appendix~\ref{app:inference}), and variants that did not improve on the
 reported system, including a two-seed prediction ensemble, are listed in Appendix~\ref{app:failed}.

@@ -109,3 +109,33 @@ into the main limitations because it qualifies the zero-shot framing.
 **Stale reading, no action.** One reader reported that the headline came from a single seed with no
 error bar. That was true of the build they read; the second seed's evaluation completed during the
 rewrite and both seeds are now reported.
+
+### 6b. Method-specification findings from the second blind reader
+
+The second reader attempted to reimplement Section 3 from the paper alone and could not. Every gap
+below was checked against the code and the result files before being fixed; one of them was a factual
+error in the paper's own appendix table.
+
+1. **Appendix D's inference table was wrong for electricity.** It listed all four electricity cells as
+   single-pass `multiperiod`. The result files show electricity follows the same $P{=}24$ pattern as
+   the ETTh sets: `sc124`/`sc12`/`multiperiod`/`rollout2`. The table is corrected and the main-text
+   count changes from "6 of 24 cells use more than one pass" to **9 of 24**. The reader found this by
+   noticing that the table contradicted the rule as the paper had described it.
+2. **The inference rule was described imprecisely, which made it look self-contradictory.** The paper
+   stated a "$kP \le 96$" threshold as if it constrained every frame; in the implementation it
+   constrains only which additional scales enter the multi-scale average, while the base
+   $k = \lceil H/4P \rceil$ may exceed it. Section 3.5 now gives the rule explicitly: $h_p$, $k$, the
+   visible-context frame count, the scale-admissibility condition and the rollout condition, with
+   $h_p$ shown to stay inside the trained set $\{2,4\}$.
+3. **The rule depends on the context length $L$, not only on $(P,H)$.** Stated.
+4. **The rendering description was wrong for $k>1$.** "The horizontal axis is phase inside the period"
+   holds only at one period per frame; with $k$ periods the frame carries $kP$ consecutive samples
+   laid side by side. Corrected, with the column-to-sample partition stated so the mapping is visibly
+   invertible.
+5. **Clip length contradicted itself.** Section 3.2 said $FkP$ observations per clip, Appendix A said
+   $16kP$ — a leftover from the 16-frame configuration. Appendix A now says $FkP$.
+6. **The masking schedule was incomplete.** The lead-mask count, the tube-mask ratio, and which loss
+   applies to which batch type are now given in both Section 3.3 and Appendix A.
+7. **Two omissions that blocked reimplementation** are now stated: Equation 2 is applied to the mean
+   of the three replicated channels, and the inverse transform back to the dataset scale is written
+   out.
