@@ -5,9 +5,9 @@
 
 \paragraph{What the evidence supports, and what bounds it.}
 Two claims stand on separate experiments. A video-pretrained backbone is a better starting point than
-an image-pretrained one when the adaptation budget is small: at 5k updates, everything but the weights
-held fixed, it leads by $3$--$5\%$ at every horizon, and random initialisation of the same
-architecture is far behind both. And a transfer framework is what makes any of these initialisations
+an image-pretrained one when the adaptation budget is small: at 5k updates, everything but the
+weights held fixed, it leads by $3$--$5\%$ at every horizon; and pretrained weights matter far more
+than either choice, since removing them costs $14\%$ under an otherwise identical trainer. And a transfer framework is what makes any of these initialisations
 usable: under its own objective the same backbone gets worse at forecasting as that objective
 improves, and the value-space read-out is worth $5$--$8\%$ over pixel-only supervision under a
 matched ablation. Together they give the system result of Section~\ref{sec:main}; no experiment
@@ -21,7 +21,12 @@ is that the visual prior matters less than the transfer design.
 
 \paragraph{Limitations that bound the central claim.}
 Our lead is on MSE only: against the same-size VisionTS++ base we take 17 of 24 cells on MSE but 11
-on MAE, and the mean MAE is $0.328$ against $0.326$. The video initialisation's advantage is a 5k-update result and is gone by 20k.
+on MAE, and the mean MAE is $0.328$ against $0.326$. The video initialisation's advantage is a 5k-update result, is gone by 20k, and was never measured at
+the 60k of the reported system: we did not train a 60k image-initialised counterpart, so nothing here
+shows that the headline number requires a video initialisation rather than any strong visual prior.
+The inference rule's thresholds were also chosen on development runs over four of the six evaluation
+datasets, so the zero-shot protocol is clean of parameter updates but not of all benchmark
+knowledge.
 Two seeds of the main model differ by $0.0014$ in mean MSE, which is smaller than our margin over the
 nearest baseline but of the same order as the differences among the leading models in
 Table~\ref{tab:main}. The budget comparison is in corpus size, optimizer updates and

@@ -72,3 +72,40 @@ run directories in `route_b/`). Nothing there was modified for this rewrite and 
 | 5.2 | "Monotonic degradation with scale" | §4.6 | NARROWED | Described as a trend over the checkpoints we measured, not as a scaling law. |
 | 5.3 | Figure 2(a) vs 2(b) is an objective comparison | Fig. 2 caption, §4.6 | NARROWED | Panel (a) is 16-frame, panel (b) is 32-frame, so they differ in two ways. The caption and the text both say so and point at Table 4 for the matched comparison. |
 | 5.4 | Weight-norm shrinkage explains the degradation | App. E | NARROWED | Reported as the one quantity that moves monotonically, explicitly not isolated as the cause. |
+
+## 6. Blind comprehension audit
+
+Two fresh-context model readers were given only the compiled PDF, with no description of the intended
+story, and asked to extract the research question, contribution, difference from the nearest
+baseline, best-supported result with its budget, the system-versus-initialisation distinction, and
+the main evidence boundary, each with a page or table citation. They are model readers, not
+independent human reviewers; this is a self-audit and is labelled as one. Their findings, classified:
+
+**Factual inconsistencies in the manuscript (fixed).**
+1. *The paper violated its own panel rule.* Table 5's caption forbids comparing across its two
+   panels, and then §4.4 and §1 both did exactly that, using the random-init V-JEPA arm against the
+   ImageNet ViT-B arm to argue "the effect is not capacity" — the single piece of evidence for that
+   claim. Now the random-init control is stated within its own panel (a $14\%$ gap from the weights
+   alone, same trainer and architecture), and the cross-panel observation is marked as suggestive
+   rather than controlled.
+2. *Comparator switching inside one sentence.* §4.2 quoted $0.181$ (VisionTS++ large) and $0.222$
+   (VisionTS++ base) as if from one baseline row. Both rows are now named.
+3. *Terminology.* The title says "world-model transfer" while §2 disclaimed every strong sense of the
+   term, so the title asserted what the body retracted. The operational definition now appears in the
+   abstract at first use, and §2 and §3.4 scope that definition instead of retracting it.
+
+**A genuine evidence gap (documented, not invented away).**
+The initialisation study runs at 5k and 20k updates; the reported system is 60k, past the crossover
+where the image initialisation caught up, and no 60k image-initialised counterpart was trained. The
+paper now says in the introduction, the experiments and the discussion that it does not claim the
+headline number requires a video initialisation. Recorded as G6 in `REMAINING_EVIDENCE_GAPS.md` with
+the minimal experiment that would close it.
+
+**Already disclosed, reader confirmed it was findable.** The inference rule's thresholds were chosen
+on development runs over four of the six evaluation datasets; the leakage screen covered an earlier
+build of the corpus. Both were already in the paper; the first has been promoted from the appendix
+into the main limitations because it qualifies the zero-shot framing.
+
+**Stale reading, no action.** One reader reported that the headline came from a single seed with no
+error bar. That was true of the build they read; the second seed's evaluation completed during the
+rewrite and both seeds are now reported.

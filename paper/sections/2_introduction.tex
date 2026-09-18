@@ -56,10 +56,12 @@ making it.
 
 Two controlled experiments locate the video prior's contribution. Changing only the starting weights,
 it leads an ImageNet initialisation by $3$--$5\%$ at every horizon at 5k updates, and by 20k the
-image initialisation has caught up; random initialisation of the same architecture is the worst arm
-we ran, worse than an image-pretrained backbone $3.5\times$ smaller, so the effect is not capacity.
-What video pretraining supplies here is adaptation efficiency --- the binding constraint in this
-regime --- and not a higher ceiling.
+image initialisation has caught up; separately, removing the pretrained weights altogether costs
+$14\%$ under an otherwise identical trainer. What video pretraining supplies here is adaptation
+efficiency --- the binding constraint in this regime --- and not a higher ceiling. We ran that
+comparison at 5k and 20k updates and not at the 60k of the reported system, so the efficiency claim
+is the one the study supports; we do not claim the headline number depends on the video
+initialisation.
 
 \paragraph{Contributions.}
 \begin{itemize}

@@ -64,10 +64,10 @@ Appendix~\ref{app:16f}.
 \label{sec:objective}
 
 \paragraph{Predict a future block, not a random subset.} The trailing $h_p$ frames of the clip are
-masked and must be predicted from the visible past. This is the part of the formulation we call
-world-model-style: the model maps an observed past to a predicted future state, in the sense of
-\citet{lecun2022}, and unlike the backbone's native masked-reconstruction objective it never sees a
-neighbour on the far side of what it is predicting. With probability $0.3$ the leading tubelets are
+masked and must be predicted from the visible past. This is the formulation the title refers to: the model
+maps an observed past to a predicted future state of the series and is scored on that prediction, in
+the sense of \citet{lecun2022}, and unlike the backbone's native masked-reconstruction objective it
+never sees a neighbour on the far side of what it is predicting. With probability $0.3$ the leading tubelets are
 additionally hidden so that shorter contexts are also trained on, which is the regime the shorter
 evaluation datasets present at test time. A fraction of batches retains the backbone's original tube
 masking, as a regulariser; Appendix~\ref{app:impl} gives the exact schedule and which loss applies

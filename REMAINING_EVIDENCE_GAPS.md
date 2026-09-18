@@ -59,6 +59,19 @@ paragraph of §4.4 to a footnote — together about fifteen lines, none of them 
 
 ## Needs a new experiment
 
+**G6. A 60k image-initialised counterpart. (Most important experimental gap.)**
+The initialisation study runs at 5k and 20k updates. The reported system is a 60k run, which sits
+past the crossover where the image initialisation caught up, and we never trained a 60k
+image-initialised model. The paper therefore cannot claim --- and does not claim --- that its
+headline 0.285 requires a video initialisation rather than any strong visual prior; what it shows is
+what the video prior is worth at 5k and that it is gone by 20k. A blind reader identified this as the
+weakest point of the argument, and it is.
+*Minimal version:* one 60k run from the ImageNet MAE-B initialisation with everything else fixed,
+then the six-dataset grid: about 19 GPU-hours of training plus the evaluation. *Affects:* whether the
+paper can attribute any part of the headline result to the video prior specifically, or must present
+the prior's value strictly as a low-budget result.
+
+
 **G7. Pixel-objective budget curve at 32 frames.**
 Figure 2 compares a 16-frame pixel-objective curve with a 32-frame value-objective curve, so the two
 panels differ in two respects. The controlled objective comparison exists only at 20k updates

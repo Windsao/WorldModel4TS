@@ -26,11 +26,12 @@ not a criticism of the image-based systems we compare against.
 VideoMAE \citep{videomae} reconstructs masked spatiotemporal tubes, so its temporal structure is
 implicit rather than a forward model; V-JEPA \citep{vjepa} and V-JEPA~2 \citep{vjepa2} predict
 latent representations of masked regions and are used for planning, closer to the world-model
-formulation of \citet{lecun2022} and \citet{dreamer}. We use both as initialisations. Our training
-stage is world-model-\emph{style} in one operational sense: it maps an observed past to a predicted
-future and is scored on that prediction. We claim nothing about action conditioning, planning,
-learned simulation or physical understanding, none of which we test, and we do not describe the
-VideoMAE checkpoint itself as any of those things.
+formulation of \citet{lecun2022} and \citet{dreamer}. We use both as initialisations. The sense in which
+this paper's training stage is a world model is the operational one stated in the abstract: it maps
+an observed past to a predicted future state of the series and is scored on that prediction. That is
+the whole of the definition we use, and the title should be read with it --- we test no claim about
+action conditioning, planning, learned simulation or physical understanding, and we do not describe
+the VideoMAE checkpoint itself as any of those things.
 
 \paragraph{What is new here, component by component.}
 Each element of Section~\ref{sec:method} is a change relative to a specific existing practice.

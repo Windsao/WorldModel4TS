@@ -32,8 +32,9 @@ Baselines are quoted from \citet{visiontspp} and \citet{visionts}; we did not re
 
 Table~\ref{tab:main} reports four-horizon averages. Our model has the lowest mean MSE of the models
 compared, $0.285$ against $0.289$ for VisionTS++ large and $0.291$ for its base model, and takes the
-most first places across the twelve dataset columns. The margin comes from electricity ($0.163$
-against $0.181$, a $10\%$ reduction) and weather ($0.215$ against $0.222$); ETTh1 goes to VisionTS
+most first places across the twelve dataset columns. The margin comes from electricity ($0.163$ against
+$0.181$ for VisionTS++ large, a $10\%$ reduction) and weather ($0.215$ against $0.222$ for
+VisionTS++ base and $0.226$ for large); ETTh1 goes to VisionTS
 ($0.390$ against $0.404$) and ETTh2 to VisionTS++ large ($0.327$ against $0.335$), both hourly sets
 at long horizons, where our 32-frame window has to trade phase resolution for coverage.
 
@@ -77,14 +78,20 @@ practitioner would have to pay for again.
 Table~\ref{tab:backbone} answers this with two controls, split into panels because only within a
 panel is the initialisation the sole difference. In the upper panel --- same rendering, objective,
 corpus, schedule and inference rule, ViT-B either way --- the video initialisation leads the ImageNet
-one by $3$--$5\%$ at every horizon after 5k updates. The lower panel adds the random-init control:
-the same ViT-L architecture and trainer with no pretrained weights reaches $0.280$ at $H{=}96$
-against $0.245$ pretrained, and is worse than an image-pretrained backbone $3.5\times$ smaller. The
-transferred quantity is therefore not capacity.
+one by $3$--$5\%$ at every horizon after 5k updates. The lower panel adds the random-init control, which is
+the cleanest statement about pretraining as such: the same ViT-L architecture under the same trainer,
+data and schedule reaches $0.280$ at $H{=}96$ with no pretrained weights against $0.245$ with them,
+a $14\%$ gap from the weights alone. That randomly initialised ViT-L is also worse than the
+pretrained ViT-B a third its size in the upper panel, which is suggestive about capacity, but that
+particular comparison crosses the two trainers and we do not treat it as controlled.
 
-Two boundaries belong with this result. The advantage is budget-dependent: at 20k updates the image
-initialisation has caught up and is slightly ahead at the longest horizon, so what video pretraining
-supplies is adaptation efficiency rather than a higher ceiling. And the panels are not comparable to
+Two boundaries belong with this result, and the first is consequential. The advantage is
+budget-dependent: at 20k updates the image initialisation has caught up and is slightly ahead at the
+longest horizon, so what video pretraining supplies is adaptation efficiency rather than a higher
+ceiling. The reported 60k system sits past that crossover and we did not train a 60k image-initialised
+counterpart, so this study does not establish that the headline number requires the video
+initialisation --- it establishes what the video prior is worth at the budgets we ran the comparison
+at. And the panels are not comparable to
 each other --- the lower arms use a different trainer (latent prediction with an added predictor, an
 EMA target encoder, no tube-masked batches) on a larger backbone --- so nothing here shows a
 predictive video objective beating a reconstructive one; at ViT-B the two are within $0.002$. The
