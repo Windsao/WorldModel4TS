@@ -154,6 +154,42 @@ short-clip regime, though we did not isolate it as the cause. The 60k native-obj
 was never evaluated downstream, so no value is reported for it.
 
 %----------------------------------------------------------------------
+\section{Scope and caveats}
+\label{app:scope}
+%----------------------------------------------------------------------
+
+\paragraph{Where the model loses.} Mid-to-long horizons on the hourly ETT sets stay behind the
+strongest baselines, because the context is capped at 32 frames of at most four periods: covering
+$H{=}720$ with $P{=}24$ trades phase resolution for coverage.
+
+\paragraph{Seeds.} A second seed of the 60k model reaches a five-dataset mean of $0.3079/0.3418$
+against seed 0's $0.3096/0.3428$, a spread of about $0.5\%$, but its four electricity cells were
+still evaluating, so the six-dataset headline in Table~\ref{tab:main} comes from one seed and carries
+no error bar.
+
+\paragraph{How the inference rule was fixed.} The rule contains no dataset identity and all 24
+main-table cells were produced by it. Its two thresholds --- keep $kP \le 96$ samples per frame, and
+roll out only when $P < 96$ --- were chosen by comparing configurations on development runs over four
+of the six datasets, so the rule is dataset-agnostic in form but was not selected blind to the
+benchmark.
+
+\paragraph{Corpus composition and overlap.} The corpus was built without domain exclusion. It
+contains no ETT data of any kind. It does contain Monash \texttt{weather} (2{,}850 series, 40.6M
+observations; daily Australian stations, a different source from the 10-minute Jena set used as the
+LSF weather benchmark) and Monash \texttt{traffic\_hourly} (820 series, 14.2M observations; the same
+freeway-occupancy source as the LSF traffic benchmark), along with \texttt{PEMS\_*},
+\texttt{LOOP\_SEATTLE}, \texttt{lcl} and \texttt{london\_smart\_meters}. Traffic is therefore
+excluded from every table in this paper. An exact-match anchor screen of the benchmark files against
+the corpus returned no matches, but it was run against an earlier, domain-excluded build (278.2M
+observations) rather than the 654.2M build these models used; repeating it on the build in use is
+the first item in our list of open checks. The screen also cannot detect rescaled, aggregated or
+interpolated copies.
+
+\paragraph{Architecture matching.} The ViT-B initialisation comparison is size-matched rather than
+architecturally exact: the V-JEPA arms carry an added predictor, an EMA target encoder, a latent loss
+term and a re-initialised read-out head, and they do not train on tube-masked batches.
+
+%----------------------------------------------------------------------
 \section{Alternatives that did not work}
 \label{app:failed}
 %----------------------------------------------------------------------

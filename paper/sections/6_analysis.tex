@@ -3,37 +3,25 @@
 \label{sec:analysis}
 %----------------------------------------------------------------------
 
-\paragraph{Two factors, separately supported.}
-Two questions are easy to conflate here. Whether video pretraining is a useful starting point is
-answered by Section~\ref{sec:backbone}: yes at a 5k-update budget, where both video initialisations
-lead the image one and all three lead random initialisation by a wide margin. Whether a transfer
-design is needed to realise it is answered by Sections~\ref{sec:design} and~\ref{sec:diagnosis}:
-yes, since the same backbone under its native objective gets worse at forecasting as that objective
-improves. Our experiments support the two separately; none isolates their interaction, so we do not attribute
-the end-to-end accuracy to the initialisation alone. The value-space term's benefit also grows with
-horizon ($5\%$ at $H{=}96$, $8\%$ at $H{=}720$), consistent with long horizons being generated
-rather than interpolated, though the ablation does not establish that mechanism.
+\paragraph{What the evidence supports, and what bounds it.}
+Two claims stand on separate experiments. A video-pretrained backbone is a better starting point than
+an image-pretrained one when the adaptation budget is small: at 5k updates, everything but the weights
+held fixed, it leads by $3$--$5\%$ at every horizon, and random initialisation of the same
+architecture is far behind both. And a transfer framework is what makes any of these initialisations
+usable: under its own objective the same backbone gets worse at forecasting as that objective
+improves, and the value-space read-out is worth $5$--$8\%$ over pixel-only supervision under a
+matched ablation. Together they give the system result of Section~\ref{sec:main}; no experiment
+separates their interaction, so we attribute the end-to-end accuracy to the framework as a whole.
 
-\paragraph{Where the initialisation advantage stops.}
-The advantage does not persist. At 5k updates video initialisation leads by $3$--$5\%$ at every
-horizon; at 20k the two are level (Table~\ref{tab:backbone}). Video pretraining therefore buys
-adaptation efficiency rather than a higher ceiling within the budgets we can run, which is why the
-headline claim is about what a limited pretraining budget reaches and not about video backbones
-being better in general. The comparison also answers a question about initialisation only: the
-image-initialised arm is not a stand-in for VisionTS++, which differs in rendering, head and
-schedule.
+The video advantage closes by 20k updates (Table~\ref{tab:backbone}). We keep that beside the claim
+it bounds, because it says what the video prior supplies: not a higher attainable accuracy but a
+lower cost of reaching it --- the quantity a small adaptation budget is short of, and what makes the
+headline result a statement about efficiency. At a large adaptation budget, the expectation it sets
+is that the visual prior matters less than the transfer design.
 
-\paragraph{Limitations.}
-Our advantage is metric-dependent: against the same-size VisionTS++ base we win 17 of 24 cells on
-MSE but only 11 on MAE, and the mean MAE is $0.328$ against $0.326$, which is worse, not equal.
-Mid-to-long horizons on the hourly ETT sets remain behind, because the context is capped at 32
-frames of at most four periods. The second seed of the 60k model was still missing its electricity
-cells at the time of writing, so the headline number is a single seed. The inference rule carries no
-dataset identity, but its two thresholds were chosen on development runs over four of the six
-datasets, so it was not selected blind to the benchmark. The exact-match leakage screen that returned
-no matches was run against an earlier, domain-excluded build of the corpus rather than the one these
-models used; that corpus contains Monash \texttt{weather} (a different source from the LSF weather
-benchmark) and \texttt{traffic\_hourly} (the same source as the LSF traffic benchmark, which is why
-traffic appears nowhere here). Finally, the evaluation is one six-dataset protocol, budget is
-reported in corpus size, updates and sample presentations rather than FLOPs, and the ViT-B backbone
-comparison is size-matched rather than architecturally exact.
+\paragraph{Limitations that bound the central claim.}
+Our lead is on MSE only: against the same-size VisionTS++ base we take 17 of 24 cells on MSE but 11
+on MAE, and the mean MAE is $0.328$ against $0.326$. The video initialisation's advantage is a
+5k-update result and is gone by 20k. The budget comparison is in corpus size, optimizer updates and
+sample presentations, not FLOPs, and excludes the upstream video pretraining we inherit. Appendix~\ref{app:scope} collects the
+caveats that scope the work rather than the claim.

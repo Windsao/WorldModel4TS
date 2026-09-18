@@ -1,12 +1,14 @@
 % Initialisation study. Split into two panels because only within a panel is the contrast
 % initialisation-only; across panels the trainer itself differs.
 \begin{table}[t]
-\caption{Initialisation study, five-dataset mean MSE (ETT$\times$4 and weather) at
-$H{=}96/336/720$. \emph{Within} each panel the arms differ only in the weights the model starts
-from; \emph{across} panels they do not, because the latent-prediction arms use a different trainer
-(an added predictor, an EMA target encoder, a latent loss term, and no tube-masked batches) and a
-larger backbone. Two seeds are listed where both were run. The video prior is worth $3$--$5\%$ at a
-5k-update budget and the image initialisation has caught up by 20k.}
+\caption{Initialisation study: five-dataset mean MSE (ETT$\times$4 and weather) at
+$H{=}96/336/720$, averaged over datasets. \emph{Within} a panel the arms differ only in the weights
+the model starts from, with identical rendering, objective, corpus, schedule and inference rule;
+\emph{across} panels they differ in trainer and backbone size as well, so the panels are not
+comparable to one another. Two seeds are listed where both were run. Takeaway: the video prior is
+worth $3$--$5\%$ at a 5k-update budget and is matched by the image prior by 20k, while random
+initialisation of the same architecture is worse than an image-pretrained backbone $3.5\times$
+smaller.}
 \label{tab:backbone}
 \begin{center}
 \setlength{\tabcolsep}{3pt}

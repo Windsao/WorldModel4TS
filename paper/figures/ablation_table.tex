@@ -1,8 +1,10 @@
 % Objective ablation and budget curve under the forecast-aligned objective.
 \begin{table}[t]
-\caption{Ablation of the transfer design. Five-dataset mean MSE (ETT$\times$4 and weather),
-32-frame clips, identical corpus, masking, schedule and inference rule; only the listed component
-changes.}
+\caption{Ablation of the transfer design: five-dataset mean MSE (ETT$\times$4 and weather) at three
+horizons, averaged over datasets, with 32-frame clips and an identical corpus, masking schedule,
+optimiser schedule and inference rule; only the listed component changes. Takeaway: replacing the
+value-space read-out with pixel-only supervision costs $5$--$8\%$, with the largest cost at the
+longest horizon, while prior anchoring changes nothing at this clip length.}
 \label{tab:ablation}
 \begin{center}
 \setlength{\tabcolsep}{6pt}

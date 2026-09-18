@@ -91,3 +91,54 @@ REMAINING_EVIDENCE_GAPS.md             new
 
 No file under `/nyx-storage1` (raw results, checkpoints, logs) was modified, and no training or
 evaluation job was started for this rewrite.
+
+---
+
+## 6. Second pass: evidence-first and confident (addendum)
+
+Applied `CLAUDE_ICLR_EVIDENCE_FIRST_ADDENDUM.md` on top of the rewrite above. The first pass had
+corrected the paper's factual problems but had over-corrected the prose: several verified results
+were stated so defensively that a reader could not tell what was actually established. This pass
+changes the register without changing any number.
+
+The reference the addendum names (arXiv:2608.08975) does not resolve, so nothing from it is used or
+cited; the addendum is self-contained and was applied on its own terms.
+
+**Claims stated directly instead of hedged.** "A plausible reading is that...", "consistent with this
+and does not establish it", "we have no uncertainty estimate that would let us call the difference
+immaterial" and similar constructions were removed where they were attached to directly measured
+results. Observation, interpretation and generalisation are now separated explicitly: the measured
+facts are stated flatly, the drift reading of the objective mismatch is labelled an interpretation
+once, and nothing is broadened past the tested budget.
+
+**The headline is the trade-off, not an MSE value.** The abstract and introduction now lead with
+"leading mean MSE band at 0.3% of the corpus, 1/27 of the sample presentations and 18.9 GPU-hours"
+rather than with a list of isolated numbers, and both say in the same breath that the MSE margin is
+small and that mean MAE is behind. The efficiency claim is the substantive one and is labelled as
+such.
+
+**Novelty made specific.** Section 2 gains a paragraph that, for each of the three components, names
+the nearest existing practice, what changes, and which experiment supports it — including the two
+places where we have no isolating experiment (rendering vs frame-based prediction) and where the
+component is a recipe choice rather than an ablated contribution (scale alignment).
+
+**Headings describe results.** Empirical subsections are now named for what they show ("Lowest mean
+MSE of the models compared, behind on mean MAE"; "18.9 GPU-hours on 0.3% of the archive"; "The
+native objective and forecasting accuracy move in opposite directions") rather than for the topic.
+
+**Captions are self-contained.** Each main table caption now states the comparison, the aggregation,
+the conditions held fixed, and a one-line takeaway; the initialisation table's caption says in the
+caption itself that the two panels are not comparable to each other.
+
+**Limitations split by function.** The three limitations that bound the central claim (MSE-only lead,
+the 20k catch-up, the budget units) stay in the discussion beside that claim. The caveats that scope
+the work — hourly-ETT losses, the single seed, how the inference rule's thresholds were fixed, corpus
+composition and the leakage screen — move to a new Appendix F so they are complete without being
+scattered through the argument.
+
+**Blind comprehension audit.** Two fresh-context model readers were given only the compiled PDF, with
+no description of the intended story, and asked to extract the research question, the contribution,
+the difference from the nearest baseline, the best-supported result with its budget, the
+system-versus-initialisation distinction, and the main evidence boundary, each with a page or table
+citation. These are model readers, not independent human reviewers, and the exercise is labelled as a
+self-audit. Their findings and the resulting fixes are recorded in `CLAIM_EVIDENCE_AUDIT.md` §6.

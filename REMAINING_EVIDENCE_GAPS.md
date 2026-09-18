@@ -49,9 +49,12 @@ random-init control is ever run. *Affects:* nothing in the current paper; record
 rediscovered later.
 
 **G5. Page limit.**
-The main text through the conclusion fits in 9 pages with the current ICLR template; we did not
-verify what the 2027 call actually allows, since it is not published. No font, margin or table
-compression was used to fit.
+Everything through the discussion fits in 9 pages with the current ICLR template; the conclusion
+runs about eleven lines onto page 10. The 2027 call is not published, so we did not verify what it
+allows, and we did not shrink fonts, margins or tables to fit. If a 9-page limit applies, the three
+cheapest cuts are: fold the per-horizon summary sentence in §4.2 into the table caption, move the
+"what is new here, component by component" paragraph of §2 to the appendix, and drop the second
+paragraph of §4.4 to a footnote — together about fifteen lines, none of them load-bearing.
 
 ## Needs a new experiment
 

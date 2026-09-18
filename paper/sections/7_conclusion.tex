@@ -3,12 +3,13 @@
 \label{sec:conclusion}
 %----------------------------------------------------------------------
 
-A video-pretrained backbone is a useful starting point for forecasting but not a usable one:
-continuing its own objective on rendered series improves that objective while degrading forecasts.
-What makes the transfer work is a framework built around the forecasting task --- period-aligned
-frames, prediction of a masked future block, a differentiable read-out that puts the loss in value
-space, and a training scale distribution matched to the inference rule --- which reaches the lowest
-mean MSE among the models we compare on the six-dataset zero-shot protocol after 60k updates on 654M
-observations. Two results bound that claim: the video initialisation's lead closes by 20k updates,
-so what we show is adaptation efficiency rather than a higher ceiling, and the transfer design is
-what makes any initialisation usable at all.
+A video-pretrained backbone can be turned into a competitive zero-shot forecaster on a small
+time-series budget, but not by substitution: its own objective drives forecasting accuracy the wrong
+way, and what makes the weights usable is a transfer framework built around the task --- period-aligned
+frames, a predicted block of future frames, a differentiable read-out that places the loss on values,
+and a training scale distribution matched to the inference rule. One checkpoint under one rule then
+reaches the lowest mean MSE of the models we compare, after 18.9 GPU-hours on $0.3\%$ of the corpus
+behind the strongest visual baseline, while staying behind that baseline on mean MAE. The controlled
+study puts the video prior's contribution in adaptation efficiency: worth $3$--$5\%$ at 5k updates and
+matched by an image prior by 20k. At small adaptation budgets the temporal prior pays; the transfer
+design is what makes any prior pay at all.

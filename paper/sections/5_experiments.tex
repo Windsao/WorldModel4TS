@@ -17,121 +17,123 @@ Time-Series-Library splits \citep{tslib} (ETT 12/4/4 months, others 70/10/20), a
 origins, $H\in\{96,192,336,720\}$, MSE/MAE on standardised values, and their per-dataset context
 lengths and periods (Appendix~\ref{app:impl}). Running their released checkpoint through our harness
 reproduces their published numbers to three decimals (ETTh1 at $H{=}96$: $0.3527/0.3833$ against
-$0.353/0.383$). Zero-shot here means no parameter is updated on any evaluation dataset and no
-evaluation dataset appears in the pretraining corpus; the model is trained once and applied
-unchanged, with one checkpoint and one inference rule for all 24 cells.
+$0.353/0.383$). One checkpoint and one inference rule serve all 24 cells, with no parameter
+updated on any evaluation dataset.
 
 \paragraph{Ablations and baselines.} Ablations and initialisation studies use five datasets
-(ETT$\times$4 and weather) at three horizons, which is what one evaluation budget covers; the
-six-dataset four-horizon grid is reserved for the main table. Five- and six-dataset means are never
-mixed and every table says which it reports. Baseline numbers are quoted from \citet{visiontspp}
-and \citet{visionts}; we did not retrain them.
+(ETT$\times$4 and weather) at three horizons; the six-dataset four-horizon grid is reserved for the
+main table. Five- and six-dataset means are never mixed, and every table says which it reports.
+Baselines are quoted from \citet{visiontspp} and \citet{visionts}; we did not retrain them.
 
-\subsection{Accuracy under a small continual-pretraining budget}
+\subsection{Lowest mean MSE of the models compared, behind on mean MAE}
 \label{sec:main}
 
 \input{figures/main_table}
 
-Table~\ref{tab:main} reports four-horizon averages. Our model attains the lowest mean MSE among the
-models compared on this protocol, $0.285$, ahead of VisionTS++ large ($0.289$) and base ($0.291$),
-and takes the most first places over the twelve dataset columns. The gains are concentrated in
-electricity ($0.163$ against $0.181$) and weather ($0.215$ against $0.222$). Two datasets go the
-other way: ETTh1 to VisionTS ($0.390$ against our $0.404$) and ETTh2 to VisionTS++ large ($0.327$
-against $0.335$), both hourly sets where a longer tuned context helps at long horizons. Mean MAE is
-$0.328$ against VisionTS++ large's $0.326$: we are behind on that metric, and we have no uncertainty
-estimate that would let us call the difference immaterial.
+Table~\ref{tab:main} reports four-horizon averages. Our model has the lowest mean MSE of the models
+compared, $0.285$ against $0.289$ for VisionTS++ large and $0.291$ for its base model, and takes the
+most first places across the twelve dataset columns. The margin comes from electricity ($0.163$
+against $0.181$, a $10\%$ reduction) and weather ($0.215$ against $0.222$); ETTh1 goes to VisionTS
+($0.390$ against $0.404$) and ETTh2 to VisionTS++ large ($0.327$ against $0.335$), both hourly sets
+at long horizons, where our 32-frame window has to trade phase resolution for coverage.
+
+The metric picture is mixed and we state it plainly: mean MAE is $0.328$ against VisionTS++ large's
+$0.326$, so on that metric we are behind, and per cell against the same-size VisionTS++ base we take
+17 of 24 on MSE but only 11 on MAE (Appendix~\ref{app:perhorizon}). The claim this table supports is
+that the framework reaches the leading band on MSE, not that it dominates it.
 
 At 20k updates instead of 60k the same recipe reaches $0.288/0.331$, still first on mean MSE here at
 a third of the training.
 
 
 Averaged over the six datasets, error grows from $0.223/0.281$ at $H{=}96$ to $0.349/0.377$ at
-$H{=}720$ (Table~\ref{tab:perhorizon} in Appendix~\ref{app:perhorizon}). Per cell we win 18 of 24
-against VisionTS on both metrics, and 17 of 24 against VisionTS++ base on MSE but only 11 of 24 on
-MAE, the MAE losses falling mostly on weather; Appendix~\ref{app:perhorizon} gives every cell.
+$H{=}720$; Appendix~\ref{app:perhorizon} gives every cell against both baselines that publish
+per-horizon numbers.
 
-\subsection{Pretraining budget}
+\subsection{18.9 GPU-hours on 0.3\% of the archive}
 \label{sec:budget}
 
 \input{figures/budget_table}
 
-Table~\ref{tab:budget} states the resources on both sides in the units each paper reports. We use a
-corpus of 654.2M observations and 60k optimizer updates at an effective batch of 32. We report
-corpus size, optimizer updates and sample presentations separately, and we do not convert them into
-a compute claim: the models differ in size, the number of time points and visual tokens per sample
-differs between the two renderings, and we do not know the baselines' hardware or wall-clock. The
-comparison also excludes the original video pretraining of our backbone, which we inherit rather
-than pay for, exactly as the image-based systems inherit ImageNet pretraining.
+Table~\ref{tab:budget} states the resources on both sides in the units each paper reports. The main
+model is 60k optimizer updates at an effective batch of 32 over a 654.2M-observation corpus, and it
+took 18.9 hours on a single A40. Against VisionTS++'s reported 100k steps at batch 512 over the
+231B-observation LOTSA archive, that is $\approx$1/27 of the sample presentations and $\approx$0.3\%
+of the corpus.
 
-\subsection{What the video initialisation contributes}
+We keep these quantities separate rather than collapsing them into one efficiency number, because
+they are not interchangeable: the models differ in size, a sample contains a different number of
+time points and visual tokens under the two renderings, and the baseline's hardware and wall-clock
+are not reported. For the same reason we make no FLOP or speed-up claim. The accounting also
+excludes the upstream video pretraining we inherit, exactly as the image-based systems inherit
+ImageNet pretraining; what it measures is the cost of the time-series stage, which is the stage a
+practitioner would have to pay for again.
+
+\subsection{What the video initialisation is worth, and at which budget}
 \label{sec:backbone}
 
 \input{figures/backbone_table}
 
-Table~\ref{tab:backbone} is split into two panels, because only one kind of comparison here is an
-initialisation control. In the upper panel the rendering, objective, corpus, schedule and inference
-rule are identical and only the starting weights differ: at a 5k-update budget the video
-initialisation leads the ImageNet one by $3$--$5\%$ at every horizon. In the lower panel the arms
-run a different trainer --- a latent-prediction objective with an added predictor, an EMA target
-encoder and no tube-masked batches --- on a larger backbone, so those rows are a system comparison
-and not evidence that a predictive video objective beats a reconstructive one. What the lower panel
-does support is the random-init control, which shares its trainer and architecture exactly with the
-pretrained V-JEPA~2-L arm and reaches $0.280$ at $H{=}96$ against $0.245$: worse than an
-image-pretrained backbone $3.5\times$ smaller, so what transfers is not capacity.
+Table~\ref{tab:backbone} answers this with two controls, split into panels because only within a
+panel is the initialisation the sole difference. In the upper panel --- same rendering, objective,
+corpus, schedule and inference rule, ViT-B either way --- the video initialisation leads the ImageNet
+one by $3$--$5\%$ at every horizon after 5k updates. The lower panel adds the random-init control:
+the same ViT-L architecture and trainer with no pretrained weights reaches $0.280$ at $H{=}96$
+against $0.245$ pretrained, and is worse than an image-pretrained backbone $3.5\times$ smaller. The
+transferred quantity is therefore not capacity.
 
-The advantage is also budget-dependent. The right-hand column repeats the upper panel at 20k
-updates, where the image initialisation has caught up and is slightly ahead at the longest horizon.
-What the video prior buys is adaptation efficiency, not a higher ceiling. The image-initialised arm
-is an initialisation control and not a reimplementation of VisionTS++, which uses a different
-rendering and a multi-quantile objective.
+Two boundaries belong with this result. The advantage is budget-dependent: at 20k updates the image
+initialisation has caught up and is slightly ahead at the longest horizon, so what video pretraining
+supplies is adaptation efficiency rather than a higher ceiling. And the panels are not comparable to
+each other --- the lower arms use a different trainer (latent prediction with an added predictor, an
+EMA target encoder, no tube-masked batches) on a larger backbone --- so nothing here shows a
+predictive video objective beating a reconstructive one; at ViT-B the two are within $0.002$. The
+image-initialised arm is an initialisation control, not a reimplementation of VisionTS++.
 
-\subsection{What the transfer design contributes}
+\subsection{Value-space supervision accounts for the measured gain over pixel-only training}
 \label{sec:design}
 
 \input{figures/ablation_table}
 
-Table~\ref{tab:ablation} varies the training objective and the budget with everything else fixed.
-Replacing the forecast-aligned value-space term with pixel-only supervision, holding masking,
-rendering, corpus and schedule constant, costs $5\%$ at $H{=}96$, $5\%$ at $H{=}336$ and $8\%$ at
-$H{=}720$: in this matched comparison the value-space term accounts for the measured gain, and its
-effect grows with horizon. Prior anchoring \citep{l2sp} is inert at the 32-frame clip length of the
-main model, though it matters at 16 frames (Appendix~\ref{app:16f}).
+Table~\ref{tab:ablation} varies the supervision and the budget with everything else fixed. Replacing
+the value-space term with pixel-only supervision --- same masking, rendering, corpus, schedule and
+inference rule --- costs $5\%$ at $H{=}96$, $5\%$ at $H{=}336$ and $8\%$ at $H{=}720$. Under this
+matched comparison the read-out term accounts for the measured gain of the recipe, and its value
+grows with the horizon, which is where more of the output is generated rather than carried over from
+the visible context. Prior anchoring \citep{l2sp} is inert at the main model's 32-frame clip length
+and matters only at 16 frames (Appendix~\ref{app:16f}); we report it as an inherited regulariser
+that this configuration does not need.
 
 Under this objective the budget curve is monotonically improving: $0.250 \to 0.245 \to 0.242$ at
 $H{=}96$ for 5k, 20k and 60k updates. Scaling the other two knobs did not help --- a larger effective
 batch is equal or worse at every horizon and a $4\times$ larger in-domain corpus ties ours ---
 Appendix~\ref{app:failed}.
 
-\subsection{Why naive continual pretraining fails}
+\subsection{The native objective and forecasting accuracy move in opposite directions}
 \label{sec:diagnosis}
 
 \input{figures/budget_curve}
 
 Figure~\ref{fig:budget}a is the observation that motivated the design. Continuing VideoMAE's native
-masked-pixel objective on the rendered corpus improves its held-out pixel loss monotonically across
-the four checkpoints we evaluated ($0.0366 \to 0.0312$) while forecast error rises monotonically
-across the three we evaluated downstream ($0.339 \to 0.381$). Per cell, the 176k-step model is
-$5$--$60\%$ worse than the 20k-step model, with the damage concentrated at long horizons; ETTh2 at
-$H{=}720$ moves from $0.429$ to $0.617$. We did not evaluate the 60k native-objective checkpoint
-downstream, so that point is missing rather than interpolated, and we describe this as a trend over
-the checkpoints we measured rather than as a scaling law.
+masked-pixel objective on the rendered corpus lowers its held-out pixel loss monotonically over the
+four checkpoints we evaluated ($0.0366 \to 0.0312$) while forecast error rises monotonically over the
+three evaluated downstream ($0.339 \to 0.381$). Per cell the 176k model is $5$--$60\%$ worse than the
+20k one, worst at long horizons (ETTh2 at $H{=}720$: $0.429 \to 0.617$). The 60k native-objective
+checkpoint was not evaluated downstream, so that point is missing rather than interpolated, and this
+is a trend over the checkpoints we measured, not a scaling law.
 
 Alternative explanations were excluded by re-evaluating under matched software, and the training loss
 is flat, so this is not pixel-space overfitting (Appendix~\ref{app:diagnosis}).
 
-Figure~\ref{fig:budget}b shows the corresponding curve under our objective. The panels differ in clip
-length as well as objective (16 frames against 32), so they are not a controlled comparison; the
-controlled one is Table~\ref{tab:ablation}. What the figure establishes is the direction of each
-curve.
+Figure~\ref{fig:budget}b shows the curve under our objective. The panels differ in clip length as
+well as objective (16 against 32 frames), so the controlled objective comparison is
+Table~\ref{tab:ablation}; what the figure establishes is the direction of each curve.
 
-\subsection{Robustness and inference cost}
+\subsection{Seeds and inference cost}
 \label{sec:seeds}
 
-A second seed of the 60k model reaches a five-dataset mean of $0.3079/0.3418$ against seed 0's
-$0.3096/0.3428$, a spread of about $0.5\%$; its four electricity cells were still evaluating at the
-time of writing, so no six-dataset mean is available for it and the headline number in
-Table~\ref{tab:main} is a single seed. Inference is not
-single-pass everywhere, since the rule of Section~\ref{sec:inference} averages frame scales on
-short-horizon cells and rolls out beyond one prediction block. Appendix~\ref{app:inference} gives
-the per-cell pass counts, and Appendix~\ref{app:failed} the variants that did not improve on the
-reported system, including a two-seed prediction ensemble.
+A second seed of the 60k model agrees with the first to about $0.5\%$ on the five datasets it has
+finished (Appendix~\ref{app:scope}). Inference is not single-pass everywhere: the rule averages
+frame scales on short-horizon cells and rolls out beyond one prediction block, so 6 of the 24 cells
+cost 2--3 forward passes (Appendix~\ref{app:inference}), and variants that did not improve on the
+reported system, including a two-seed prediction ensemble, are listed in Appendix~\ref{app:failed}.

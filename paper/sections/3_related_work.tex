@@ -7,37 +7,46 @@
 Moirai \citep{moirai}, Chronos \citep{chronos}, Time-MoE \citep{timemoe}, Timer \citep{timer},
 TimesFM \citep{timesfm} and MOMENT \citep{moment} pretrain on large time-series corpora with
 tokenisation, quantisation or patching designed for the modality, and are evaluated zero-shot on
-held-out datasets. They set the accuracy we compare against, and they also set the resource
-expectation we are trying to undercut: the corpora are measured in tens or hundreds of billions of
-observations.
+held-out datasets. They set both the accuracy we compare against and the resource bar we are trying
+to undercut.
 
 \paragraph{Forecasting with visual backbones.}
-VisionTS \citep{visionts} renders a univariate series into a periodicity-aligned image, masks the
-right-hand portion, and inpaints it with a frozen ImageNet masked autoencoder \citep{mae}; decoding
-the completion gives a forecast that is competitive zero-shot without any time-series pretraining.
-VisionTS++ \citep{visiontspp} keeps the image construction and continues pretraining the backbone
-on LOTSA \citep{moirai}, with colourised multivariate rendering and a multi-quantile head, and
-reports the strongest zero-shot numbers on this protocol.
-
-Two points of contrast matter here. The visual prior that survives this transfer appears to be
-small: SVTime \citep{svtime} matches VisionTS with a 215k-parameter model and OccamVTS
-\citep{occamvts} distils a vision forecaster into $1\%$ of its parameters. And VisionTS++ does not
-optimise pixel reconstruction alone --- it trains a multi-quantile (pinball) objective on the
-forecast --- so the objective mismatch we report in Section~\ref{sec:diagnosis} is a statement about
-the configuration we tested, VideoMAE's native masked-pixel objective continued on rendered series,
-not a criticism of the image-based systems we compare with.
+VisionTS \citep{visionts} folds a series into a periodicity-aligned image and inpaints the
+right-hand portion with a frozen ImageNet masked autoencoder \citep{mae}. VisionTS++
+\citep{visiontspp} keeps that construction, continues pretraining on LOTSA, and adds colourised
+multivariate rendering and nine quantile heads trained with a pinball objective. Two observations
+from this line matter for us. The visual prior that survives the transfer appears to be small ---
+SVTime \citep{svtime} matches VisionTS with a 215k-parameter model and OccamVTS \citep{occamvts}
+distils a vision forecaster into $1\%$ of its parameters. And VisionTS++ already supervises numerical
+forecasts directly: our objective-mismatch result (Section~\ref{sec:diagnosis}) is a statement about
+VideoMAE's native masked-pixel objective continued on rendered series, the configuration we tested,
+not a criticism of the image-based systems we compare against.
 
 \paragraph{Video pretraining and future prediction.}
 VideoMAE \citep{videomae} reconstructs masked spatiotemporal tubes, so its temporal structure is
 implicit rather than a forward model; V-JEPA \citep{vjepa} and V-JEPA~2 \citep{vjepa2} predict
 latent representations of masked regions and are used for planning, closer to the world-model
 formulation of \citet{lecun2022} and \citet{dreamer}. We use both as initialisations. Our training
-stage is world-model-\emph{style} in one sense only, that it maps an observed past to a predicted
-future and is scored on that prediction; we claim nothing about action conditioning, planning or
-physical reasoning, none of which we test.
+stage is world-model-\emph{style} in one operational sense: it maps an observed past to a predicted
+future and is scored on that prediction. We claim nothing about action conditioning, planning,
+learned simulation or physical understanding, none of which we test, and we do not describe the
+VideoMAE checkpoint itself as any of those things.
+
+\paragraph{What is new here, component by component.}
+Each element of Section~\ref{sec:method} is a change relative to a specific existing practice.
+\emph{Rendering}: VisionTS folds a series into one image whose rows are periods; we render one
+period per \emph{frame}, so the period index becomes the model's temporal axis and the masked region
+is a block of future frames rather than a region of a still image. It is the representation all our
+arms run in; no experiment isolates it from frame-based prediction. \emph{Supervision}: value-space
+losses are standard in forecasting and VisionTS++ trains a quantile objective over values. What is
+new is putting a differentiable pixel-to-value read-out \emph{inside} a masked-video pretraining
+objective, which converts a video backbone's reconstruction loss into a forecasting loss without
+touching the backbone; Table~\ref{tab:ablation} measures it against pixel-only supervision under
+matched conditions. \emph{Scale alignment}: multi-scale training is common, but here the training
+distribution over periods-per-frame is set equal to the one the inference rule draws from --- a
+consistency property, part of the recipe rather than an independently ablated component.
 
 \paragraph{Transfer regularisation.}
-Continual pretraining of a strong backbone on a narrow corpus can erase the prior that motivated
-choosing it. L2-SP \citep{l2sp} decays weights toward their initial values rather than toward zero.
-It is an existing method, we use it only as an ablation arm, and we report that it helps at short
-clip lengths and is inert in the configuration of our main model.
+L2-SP \citep{l2sp} decays weights toward their initial values rather than toward zero. It is an
+existing method used here as an ablation arm: it helps at 16-frame clips and is inert in the
+configuration of our main model (Appendix~\ref{app:16f}).

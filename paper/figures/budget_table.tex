@@ -1,12 +1,13 @@
 % Budget comparison. Every column is a quantity each paper actually reports; nothing is converted
 % into FLOPs or wall-clock across systems.
 \begin{table}[t]
-\caption{Time-series pretraining budget, in the units each paper reports. Sample presentations are
-optimizer updates $\times$ effective batch, i.e.\ how many rendered windows the model was shown, not
-a compute measure: the two systems differ in model size and in how many time points and visual
-tokens a single sample contains. The original video or image pretraining of each backbone is
-inherited by both and excluded. VisionTS++ figures are as reported in \citet{visiontspp};
-`not reported' means the source does not state it. Our corpus is $\approx$0.3\% of the LOTSA archive and our main run makes $\approx$1/27 of VisionTS++'s sample presentations (1/80 for the 20k run).}
+\caption{Time-series pretraining budget in the units each paper reports. Sample presentations are
+optimizer updates $\times$ effective batch, i.e.\ how many rendered windows the model was shown;
+they are not a compute measure, since the two systems differ in model size and in the number of time
+points and visual tokens per sample. The upstream video or image pretraining that both inherit is
+excluded, as is any FLOP or wall-clock comparison across systems. VisionTS++ figures are as reported
+in \citet{visiontspp}. Takeaway: the reported accuracy is obtained from $\approx$0.3\% of the
+archive and $\approx$1/27 of the sample presentations, in 18.9 hours on one GPU.}
 \label{tab:budget}
 \begin{center}
 \setlength{\tabcolsep}{5pt}
