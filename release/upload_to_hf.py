@@ -1,8 +1,8 @@
 """Upload the paper's evaluated checkpoints to a HuggingFace repository.
 
-Uploads only the checkpoints the paper actually evaluates: the 60k VideoMAE-B main model and the two
-5k V-JEPA arms from the initialisation study. Nothing is copied locally; files stream from the
-cluster paths.
+Uploads the 60k VideoMAE-B main model, which is the checkpoint every number in the paper's main
+table comes from (377 MB). The 5k V-JEPA initialisation controls are 3.3 GB on their own and are
+uploaded only with --with-arms. Nothing is copied locally; files stream from the cluster paths.
 
 Needs a write token: set HF_TOKEN, or run `huggingface-cli login` first.
 
@@ -16,7 +16,7 @@ import os
 import sys
 
 ROOT = "/nyx-storage1/hanliu/wm4ts"
-FILES = [
+MAIN = [
     # (local path, path inside the repo)
     (f"{ROOT}/route_b/vmae_full_f32_savl_l2sp_v2_60k/step_60000/model.safetensors",
      "videomae_b_60k/model.safetensors"),
@@ -24,6 +24,10 @@ FILES = [
      "videomae_b_60k/config.json"),
     (f"{ROOT}/route_b/vmae_full_f32_savl_l2sp_v2_60k/run_config.json",
      "videomae_b_60k/run_config.json"),
+]
+# The V-JEPA arms are 5k-step initialisation controls, not the reported model. Each world_model.pt
+# bundles encoder, predictor, EMA target copy and read-out, so V-JEPA 2-L alone is 2.5 GB.
+ARMS = [
     (f"{ROOT}/route_j/vjepa2_wm_f32_savl_l2sp_v2_5k/step_5000/world_model.pt",
      "vjepa2_l_5k/world_model.pt"),
     (f"{ROOT}/route_j/vjepa2_wm_f32_savl_l2sp_v2_5k/step_5000/route_j.json",
@@ -40,8 +44,11 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--repo", required=True, help="target repo id, e.g. anon-user/wm4ts-checkpoints")
     ap.add_argument("--private", action="store_true", help="create the repo unlisted")
+    ap.add_argument("--with-arms", action="store_true",
+                    help="also upload the 5k V-JEPA initialisation controls (+3.3 GB)")
     ap.add_argument("--dry-run", action="store_true")
     a = ap.parse_args()
+    FILES = MAIN + (ARMS if a.with_arms else [])
 
     missing = [p for p, _ in FILES if not os.path.exists(p)]
     total = sum(os.path.getsize(p) for p, _ in FILES if os.path.exists(p))
