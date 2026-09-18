@@ -1,26 +1,73 @@
-# A time-series world model from a video backbone
+# World-model transfer for data-efficient time-series forecasting
 
-Render a time series as a video, train a pretrained video backbone to **predict the future frames**,
-and decode those frames back to numbers. With the prediction objective expressed in *value* space
-rather than pixel space, the resulting zero-shot forecaster reaches the **lowest six-dataset mean MSE
-in the published zero-shot LSF table**, using about **1/13 of the continual-pretraining steps and 0.3%
-of the data** of the strongest competitor.
+Render a time series as a video, train a video-pretrained backbone to **predict the future frames**,
+and decode those frames back into numbers with a differentiable read-out that carries the training
+loss. The result is a zero-shot forecaster that reaches the leading accuracy band on the standard
+long-sequence benchmark after **18.9 GPU-hours** on a corpus of **654M observations**, about 0.3% of
+the archive the strongest visual baseline trains on.
 
-| | six-dataset mean MSE | mean MAE |
+| six-dataset, four-horizon mean | MSE | MAE |
 |---|---:|---:|
-| **Ours** (VideoMAE-B, 32-frame clips, 60k steps) | **0.285** | 0.328 |
-| VisionTS++ large (ViT-L) | 0.289 | 0.326 |
+| **Ours** (VideoMAE-B, 32-frame clips, 60k updates) | **0.285** | 0.328 |
+| VisionTS++ large (ViT-L) | 0.289 | **0.326** |
 | VisionTS++ base (ViT-B) | 0.291 | 0.327 |
-| Moirai base | 0.311 | 0.344 |
-| VisionTS | 0.315 | 0.352 |
+| VisionTS | 0.309 | 0.345 |
+| Moirai base | 0.310 | 0.344 |
 
-Earlier versions of this repository reported a **negative** result for frozen, zero-shot use of video
-backbones; that record is preserved in [`PROGRESS.md`](PROGRESS.md) and
-[`VIDEO_TS_RESCUE_RESULTS.md`](VIDEO_TS_RESCUE_RESULTS.md). The result below is the continual-
-pretraining regime, which is where the prior does pay off. The paper plan, including what is still
-missing, is in [`PAPER_PLAN.md`](PAPER_PLAN.md).
+Lowest mean MSE of the models compared here; **behind on mean MAE**, and per cell against the
+same-size VisionTS++ base we win 17 of 24 on MSE but only 11 on MAE. Baselines are quoted from the
+VisionTS and VisionTS++ papers, with one correction: VisionTS++ Table 4's ETTm2 average row is
+typeset one column to the left from the VisionTS column onward, so the ETTm2 and Avg figures here are
+the re-derived assignment (see `CLAIM_EVIDENCE_AUDIT.md`).
 
----
+## Released weights
+
+**https://huggingface.co/Windsao/wm4ts-checkpoints**
+
+```python
+from transformers import VideoMAEForPreTraining
+model = VideoMAEForPreTraining.from_pretrained(
+    "Windsao/wm4ts-checkpoints", subfolder="videomae_b_60k")
+```
+
+`videomae_b_60k/` is the main model: every number in the table above comes from it, under one
+inference rule, for all 24 evaluation cells. `vjepa2_l_5k/` and `vjepa2_1_b_5k/` are the 5k-update
+V-JEPA arms of the initialisation study; they are **not** `from_pretrained`-loadable and need
+`pilot/pretrain_route_j.py:load_ckpt`.
+
+### Reproducing a benchmark number from the released weights
+
+```bash
+git clone https://github.com/Windsao/WorldModel4TS && cd WorldModel4TS
+pip install torch transformers==4.46.3 timm einops pandas numpy huggingface_hub
+
+# 1. fetch the main checkpoint
+python -c "
+from huggingface_hub import snapshot_download
+print(snapshot_download('Windsao/wm4ts-checkpoints', allow_patterns='videomae_b_60k/*'))"
+
+# 2. one evaluation cell: dataset x horizon. --mode auto applies the paper's inference rule
+python pilot/eval_lsf.py --dataset ETTh1 --pred-len 96 \
+    --model <snapshot>/videomae_b_60k --data-dir <lsf data> --tag repro --mode auto
+# -> ETTh1 H=96  MSE 0.3519  MAE 0.3800
+
+# 3. all 24 cells, then the tables
+for ds in ETTh1 ETTh2 ETTm1 ETTm2 electricity weather; do
+  for h in 96 192 336 720; do
+    python pilot/eval_lsf.py --dataset $ds --pred-len $h --model <snapshot>/videomae_b_60k \
+        --data-dir <lsf data> --tag repro --mode auto
+  done
+done
+python pilot/final_bigtable.py repro --names "Ours"
+```
+
+The LSF datasets (ETTh1, ETTh2, ETTm1, ETTm2, electricity, weather) are the standard
+Time-Series-Library files; `--data-dir` should hold `ETTh1.csv`, `electricity.txt` and so on.
+Evaluation is CPU-feasible but slow; one A40 does the full grid in a few hours, and
+`pilot/par_grid.sh` splits it across a Slurm cluster.
+
+**Do not evaluate these weights on the traffic benchmark and call the result zero-shot.** The
+pretraining corpus contains Monash `traffic_hourly`, which is the same source.
 
 ## Protocol
 
@@ -38,23 +85,23 @@ Best value per column in **bold**. `–` = not reported by that paper.
 
 | Model | ETTm1 | ETTm2 | ETTh1 | ETTh2 | electricity | weather | Avg |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| **Ours (VideoMAE-B, 32f, 60k)** | **0.352**/**0.369** | **0.241**/0.302 | 0.404/0.416 | 0.335/0.376 | **0.163**/**0.254** | **0.215**/0.252 | **0.285**/0.328 |
+| **Ours (VideoMAE-B, 32f, 60k)** | **0.352**/**0.369** | **0.241**/0.302 | 0.405/0.416 | 0.335/0.376 | **0.163**/**0.254** | **0.215**/0.252 | **0.285**/0.328 |
 | Ours (20k steps, 6.3 GPU-hours) | 0.360/0.371 | 0.242/0.304 | 0.400/0.417 | 0.342/0.381 | 0.169/0.261 | 0.217/0.253 | 0.288/0.331 |
 | Ours (20k, two-seed prediction ensemble) | 0.351/– | 0.242/– | 0.401/– | 0.338/– | 0.168/– | 0.215/– | 0.286/– |
 | VisionTS++ large | 0.354/0.369 | 0.244/**0.298** | 0.403/0.418 | **0.327**/**0.365** | 0.181/0.264 | 0.226/0.243 | 0.289/**0.326** |
 | VisionTS++ base | 0.360/0.372 | 0.244/**0.298** | 0.402/0.416 | 0.333/0.370 | 0.184/0.265 | 0.222/**0.241** | 0.291/0.327 |
-| VisionTS | 0.374/0.372 | 0.318/0.366 | **0.390**/**0.414** | 0.333/0.375 | 0.207/0.294 | 0.269/0.292 | 0.315/0.352 |
-| Moirai small | 0.448/0.410 | 0.272/0.321 | 0.400/0.424 | 0.341/0.379 | 0.233/0.320 | 0.242/0.267 | 0.323/0.353 |
-| Moirai base | 0.382/0.388 | 0.276/0.320 | 0.434/0.439 | 0.346/0.382 | 0.188/0.274 | 0.238/0.261 | 0.311/0.344 |
-| Moirai large | 0.390/0.389 | 0.317/0.366 | 0.510/0.469 | 0.354/0.377 | 0.188/0.273 | 0.260/0.275 | 0.337/0.358 |
-| Chronos small | 0.640/0.500 | 0.310/0.350 | 0.545/0.472 | 0.424/0.430 | 0.220/0.284 | 0.300/0.318 | 0.407/0.392 |
-| Chronos base | 0.646/0.500 | 0.295/0.338 | 0.591/0.468 | 0.406/0.411 | 0.215/0.279 | 0.293/0.315 | 0.408/0.385 |
-| Chronos large | 0.556/0.465 | 0.300/0.341 | 0.589/0.466 | 0.455/0.427 | 0.204/0.274 | 0.279/0.306 | 0.397/0.380 |
-| Time-MoE small | 0.394/0.416 | 0.316/0.361 | 0.400/0.424 | 0.367/0.404 | – | 0.266/0.297 | – |
-| Time-MoE base | 0.376/0.406 | 0.349/0.380 | 0.394/0.420 | 0.405/0.415 | – | 0.270/0.300 | – |
-| Timer 28B | 0.487/0.457 | 0.328/0.347 | 0.444/0.457 | 0.358/0.407 | – | 0.304/0.331 | – |
+| VisionTS | 0.374/0.372 | 0.282/0.321 | **0.390**/**0.414** | 0.333/0.375 | 0.207/0.294 | 0.269/0.292 | 0.309/0.345 |
+| Moirai small | 0.448/0.410 | 0.300/0.341 | 0.400/0.424 | 0.341/0.379 | 0.233/0.320 | 0.242/0.267 | 0.323/0.353 |
+| Moirai base | 0.382/0.388 | 0.272/0.321 | 0.434/0.439 | 0.346/0.382 | 0.188/0.274 | 0.238/0.261 | 0.311/0.344 |
+| Moirai large | 0.390/0.389 | 0.276/0.320 | 0.510/0.469 | 0.354/0.377 | 0.188/0.273 | 0.260/0.275 | 0.337/0.358 |
+| Chronos small | 0.640/0.500 | 0.349/0.380 | 0.545/0.472 | 0.424/0.430 | 0.220/0.284 | 0.300/0.318 | 0.407/0.392 |
+| Chronos base | 0.646/0.500 | 0.310/0.350 | 0.591/0.468 | 0.406/0.411 | 0.215/0.279 | 0.293/0.315 | 0.408/0.385 |
+| Chronos large | 0.556/0.465 | 0.295/0.338 | 0.589/0.466 | 0.455/0.427 | 0.204/0.274 | 0.279/0.306 | 0.397/0.380 |
+| Time-MoE small | 0.394/0.416 | 0.318/0.366 | 0.400/0.424 | 0.367/0.404 | – | 0.266/0.297 | – |
+| Time-MoE base | 0.376/0.406 | 0.316/0.361 | 0.394/0.420 | 0.405/0.415 | – | 0.270/0.300 | – |
+| Timer 28B | 0.487/0.457 | 0.316/0.371 | 0.444/0.457 | 0.358/0.407 | – | 0.304/0.331 | – |
 | TimesFM | 0.433/0.419 | – | 0.473/0.444 | 0.392/0.406 | – | – | – |
-| MOMENT | 0.670/0.537 | 0.316/0.371 | 0.684/0.566 | 0.362/0.410 | 0.765/0.687 | 0.294/0.326 | 0.515/0.483 |
+| MOMENT | 0.670/0.537 | 0.317/0.366 | 0.684/0.566 | 0.362/0.410 | 0.765/0.687 | 0.294/0.326 | 0.515/0.483 |
 
 Four of six datasets are won outright; ETTh1 and ETTh2 go to VisionTS by 3.5% and 0.6%.
 
@@ -165,6 +212,8 @@ causality tests that check the context encoding never sees the future.
 
 ## Status
 
-Complete: main table, ablations, budget curves, backbone study with a random-init control.
-Running or pending: a second seed of the 60k model, a second benchmark (GIFT-Eval), an inference-cost
-table, and the per-backbone budget-curve figure. See [`PAPER_PLAN.md`](PAPER_PLAN.md).
+Complete: main table, ablations, budget curves, backbone study with a random-init control, and two
+seeds of the 60k model (0.2852/0.3279 and 0.2838/0.3272; the table reports the weaker one).
+Open: a second benchmark, a 60k image-initialised control, and a leakage re-screen against the corpus
+actually used. The paper draft is in `paper/`, with `CLAIM_EVIDENCE_AUDIT.md`,
+`REWRITE_CHANGELOG.md` and `REMAINING_EVIDENCE_GAPS.md` next to it.

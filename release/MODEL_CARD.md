@@ -7,15 +7,27 @@ tags:
 pipeline_tag: time-series-forecasting
 ---
 
-# A video-pretrained backbone adapted for zero-shot time-series forecasting
+# Video-pretrained backbones adapted for zero-shot time-series forecasting
 
-The main checkpoint from *World-Model Transfer for Data-Efficient Time-Series Forecasting*. A
-VideoMAE-B backbone is adapted to forecasting by rendering a series one period per video frame,
-predicting a masked block of future frames from the visible past, and decoding those frames back
-into values with a differentiable read-out that carries the training loss.
+Checkpoints from *World-Model Transfer for Data-Efficient Time-Series Forecasting*. A video backbone
+is adapted to forecasting by rendering a series one period per video frame, predicting a masked block
+of future frames from the visible past, and decoding those frames back into values with a
+differentiable read-out that carries the training loss.
 
-This single checkpoint, under a single inference rule, produces every number in the paper's main
-table: **mean MSE 0.285 and mean MAE 0.328** across six standard long-sequence datasets (ETTh1,
+| Directory | Backbone | Role | Size |
+|---|---|---|---|
+| `videomae_b_60k/` | VideoMAE-B, Kinetics-400 init | **Main model.** Every number in the main table | 377 MB |
+| `vjepa2_l_5k/` | V-JEPA 2 ViT-L | Initialisation study, 5k updates | 2.5 GB |
+| `vjepa2_1_b_5k/` | V-JEPA 2.1 ViT-B | Initialisation study, 5k updates | 790 MB |
+
+All three were trained here on the same corpus with the same recipe; the V-JEPA pair are the
+5k-update arms of the initialisation study, not tuned models. Five-dataset mean MSE at
+H=96/336/720: V-JEPA 2-L 0.245/0.329/0.379, V-JEPA 2.1-B 0.252/0.335/0.382, against VideoMAE-B
+0.250/0.337/0.384 at the same 5k budget.
+
+## The main model
+
+`videomae_b_60k/` under a single inference rule produces every number in the paper's main table: **mean MSE 0.285 and mean MAE 0.328** across six standard long-sequence datasets (ETTh1,
 ETTh2, ETTm1, ETTm2, electricity, weather) and four horizons (96, 192, 336, 720), evaluated
 zero-shot.
 
@@ -25,14 +37,22 @@ baseline trains on.
 
 ## Loading
 
+The main model is a standard `transformers` checkpoint:
+
 ```python
 from transformers import VideoMAEForPreTraining
 model = VideoMAEForPreTraining.from_pretrained("Windsao/wm4ts-checkpoints", subfolder="videomae_b_60k")
 ```
 
-The weights alone are not a forecaster. The renderer, the differentiable read-out and the inference
-rule live in the code repository; `run_config.json` records the exact training configuration this
-checkpoint came from.
+The two V-JEPA directories are **not** `from_pretrained`-loadable. Each holds a `world_model.pt`
+state dict, which bundles the encoder, the predictor, the EMA target copy and the read-out head, plus
+a `route_j.json` naming the arm. They need the code repository's own loader
+(`pilot/pretrain_route_j.py`, `load_ckpt`), and the V-JEPA 2.1 arm additionally needs Meta's V-JEPA
+2.1 source on the path.
+
+The weights alone are not a forecaster in any case: the renderer, the differentiable read-out and the
+inference rule live in the code repository. Each directory's `run_config.json` or `route_j.json`
+records the configuration it came from.
 
 ## Intended use and limits
 
@@ -49,6 +69,9 @@ using it, know that:
   on CRPS or WQL benchmarks.
 - Accuracy is reported on one six-dataset protocol. Mean MAE is behind the strongest baseline
   (0.328 against 0.326), and on per-cell MAE against a same-size baseline the model wins 11 of 24.
+- The V-JEPA arms ran 5k updates as initialisation controls and were never trained to the main
+  model's budget. They are published for reproducing the initialisation study, not as forecasters to
+  deploy.
 
 ## Citation
 

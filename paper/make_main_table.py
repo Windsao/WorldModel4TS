@@ -15,7 +15,7 @@ DS = ["ETTm1", "ETTm2", "ETTh1", "ETTh2", "ECL", "Weather"]
 
 # name -> [(mse, mae) per dataset] + ("avg" computed from the source tables, None where unreported)
 ROWS = [
-    ("\\textbf{Ours}", "vis", [(.352, .369), (.241, .302), (.404, .416), (.335, .376),
+    ("\\textbf{Ours}", "vis", [(.352, .369), (.241, .302), (.405, .416), (.335, .376),
                               (.163, .254), (.215, .252)], (.285, .328)),
     ("VisionTS++ (ViT-L)", "vis", [(.354, .369), (.244, .298), (.403, .418), (.327, .365),
                                    (.181, .264), (.226, .243)], (.289, .326)),
