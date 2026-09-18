@@ -21,7 +21,9 @@ is that the visual prior matters less than the transfer design.
 
 \paragraph{Limitations that bound the central claim.}
 Our lead is on MSE only: against the same-size VisionTS++ base we take 17 of 24 cells on MSE but 11
-on MAE, and the mean MAE is $0.328$ against $0.326$. The video initialisation's advantage is a
-5k-update result and is gone by 20k. The budget comparison is in corpus size, optimizer updates and
+on MAE, and the mean MAE is $0.328$ against $0.326$. The video initialisation's advantage is a 5k-update result and is gone by 20k.
+Two seeds of the main model differ by $0.0014$ in mean MSE, which is smaller than our margin over the
+nearest baseline but of the same order as the differences among the leading models in
+Table~\ref{tab:main}. The budget comparison is in corpus size, optimizer updates and
 sample presentations, not FLOPs, and excludes the upstream video pretraining we inherit. Appendix~\ref{app:scope} collects the
 caveats that scope the work rather than the claim.

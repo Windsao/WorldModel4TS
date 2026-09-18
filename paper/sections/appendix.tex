@@ -162,10 +162,12 @@ was never evaluated downstream, so no value is reported for it.
 strongest baselines, because the context is capped at 32 frames of at most four periods: covering
 $H{=}720$ with $P{=}24$ trades phase resolution for coverage.
 
-\paragraph{Seeds.} A second seed of the 60k model reaches a five-dataset mean of $0.3079/0.3418$
-against seed 0's $0.3096/0.3428$, a spread of about $0.5\%$, but its four electricity cells were
-still evaluating, so the six-dataset headline in Table~\ref{tab:main} comes from one seed and carries
-no error bar.
+\paragraph{Seeds.} Two seeds of the 60k model were trained and evaluated on all 24 cells. Their
+six-dataset four-horizon means are $0.2852/0.3279$ (seed 0) and $0.2838/0.3272$ (seed 1). Per
+dataset the two agree to within $0.005$ on MSE everywhere except ETTm1 ($0.3523$ against $0.3472$).
+Table~\ref{tab:main} reports seed 0, the weaker of the two; the two-seed mean would be
+$0.2845/0.3276$. We report a single seed's full grid rather than an average so that every number in
+the paper comes from one checkpoint under one inference rule.
 
 \paragraph{How the inference rule was fixed.} The rule contains no dataset identity and all 24
 main-table cells were produced by it. Its two thresholds --- keep $kP \le 96$ samples per frame, and

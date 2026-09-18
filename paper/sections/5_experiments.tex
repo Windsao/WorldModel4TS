@@ -132,8 +132,9 @@ Table~\ref{tab:ablation}; what the figure establishes is the direction of each c
 \subsection{Seeds and inference cost}
 \label{sec:seeds}
 
-A second seed of the 60k model agrees with the first to about $0.5\%$ on the five datasets it has
-finished (Appendix~\ref{app:scope}). Inference is not single-pass everywhere: the rule averages
+Two seeds of the 60k model were trained and evaluated on the complete six-dataset grid: they give
+mean MSE/MAE of $0.2852/0.3279$ and $0.2838/0.3272$, a spread of $0.0014$ and $0.0007$.
+Table~\ref{tab:main} reports the first, which is the weaker of the two. Inference is not single-pass everywhere: the rule averages
 frame scales on short-horizon cells and rolls out beyond one prediction block, so 6 of the 24 cells
 cost 2--3 forward passes (Appendix~\ref{app:inference}), and variants that did not improve on the
 reported system, including a two-seed prediction ensemble, are listed in Appendix~\ref{app:failed}.

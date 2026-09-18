@@ -38,7 +38,7 @@ run directories in `route_b/`). Nothing there was modified for this rewrite and 
 | 2.5 | "18 of 24 cells against VisionTS, all six losses on hourly ETT" | §4.2, App. B | **CORRECTED** | The count 18/24 is right (and it is also 18/24 on MAE), but five of the six losses are hourly-ETT cells and the sixth is ETTm1 at $H{=}720$; the old wording contradicted the paper's own table. Both are now stated per cell. |
 | 2.5b | Comparison against VisionTS++ per cell | §4.2, App. B | **ADDED** | VisionTS++ v3 publishes per-horizon results, so the head-to-head is now reported: we win 17 of 24 on MSE but only 11 of 24 on MAE, with the MAE losses concentrated on weather. This is unfavourable and is stated in the main text and in the limitations. |
 | 2.6 | A prediction-space two-seed ensemble appears as a secondary row of Table 1 | previously App. E | REMOVED | No such row existed in the table. The ensemble is now discussed in §4.7 and in the appendix and is explicitly not part of the reported system. |
-| 2.7 | Seed variance | §4.7 | **UPDATED** | A second seed of the **60k** model exists with 20 of 24 cells (all four electricity cells were still evaluating). Five-dataset means: seed 0 = 0.3096/0.3428, seed 1 = 0.3079/0.3418, a spread of ~0.5%. The paper reports exactly this and states that the headline six-dataset number is a single seed. |
+| 2.7 | Seed variance | §4.7, App. F | **RESOLVED** | Both seeds of the 60k model now have all 24 cells: 0.2852/0.3279 (seed 0) and 0.2838/0.3272 (seed 1), a spread of 0.0014 MSE. Table 1 reports seed 0, the weaker of the two, so the headline is the conservative number; the paper states both and does not average them, so that every reported cell comes from one checkpoint. |
 
 ## 3. Method and implementation
 

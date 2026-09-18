@@ -2,8 +2,9 @@
 
 Only items that affect a conclusion in the paper. Each says whether it needs a *source or code
 check* (cheap, no compute) or a *new experiment* (and if so, the minimal version). Nothing here has been
-started; the paper states each of these conservatively today. Three items from the first pass of this
-file were closed by the audits and are no longer listed: the VisionTS ETTm2 inconsistency (resolved
+started; the paper states each of these conservatively today. Closed since the first pass and no
+longer listed: the second 60k seed, whose evaluation finished at all 24 cells (0.2838/0.3272 against
+seed 0's 0.2852/0.3279 — the paper reports the weaker seed), and three items resolved by the audits: the VisionTS ETTm2 inconsistency (resolved
 and corrected in the tables), the availability of VisionTS++ per-horizon numbers (now used), and the
 synthetic-share and step-semantics questions about our own runs (both settled from the code).
 
@@ -57,13 +58,6 @@ cheapest cuts are: fold the per-horizon summary sentence in §4.2 into the table
 paragraph of §4.4 to a footnote — together about fifteen lines, none of them load-bearing.
 
 ## Needs a new experiment
-
-**G6. The last four cells of the 60k second seed.**
-A second seed of the 60k model exists and agrees with seed 0 to ~0.5% on the five datasets it has
-(0.3079/0.3418 against 0.3096/0.3428), but its four electricity cells were still evaluating, so the
-six-dataset headline is reported from one seed. *Minimal version:* finish those four evaluation
-cells, which are queued; no training needed. *Affects:* whether the headline number can carry a
-two-seed range.
 
 **G7. Pixel-objective budget curve at 32 frames.**
 Figure 2 compares a 16-frame pixel-objective curve with a 32-frame value-objective curve, so the two
