@@ -1,10 +1,10 @@
-%----------------------------------------------------------------------
+%======================================================================
 \section{Experiments}
 \label{sec:experiments}
-%----------------------------------------------------------------------
+%======================================================================
 
 The experiments answer four questions in order: the accuracy the framework reaches under a small
-time-series pretraining budget (\S\ref{sec:main}--\S\ref{sec:budget}); what the video
+time-series pretraining budget (\S\ref{sec:main} and \S\ref{sec:budget}); what the video
 initialisation contributes and where that stops (\S\ref{sec:backbone}); what the transfer design
 contributes (\S\ref{sec:design}); and why the naive alternative fails (\S\ref{sec:diagnosis}).
 
@@ -76,9 +76,10 @@ practitioner would have to pay for again.
 \input{figures/backbone_table}
 
 Table~\ref{tab:backbone} answers this with two controls, split into panels because only within a
-panel is the initialisation the sole difference. In the upper panel --- same rendering, objective,
-corpus, schedule and inference rule, ViT-B either way --- the video initialisation leads the ImageNet
-one by $3$--$5\%$ at every horizon after 5k updates. The lower panel adds the random-init control, which is
+panel is the initialisation the sole difference. In the upper panel, where rendering, objective,
+corpus, schedule and inference rule are identical and the backbone is ViT-B either way, the video
+initialisation leads the ImageNet
+one by $3$ to $5\%$ at every horizon after 5k updates. The lower panel adds the random-init control, which is
 the cleanest statement about pretraining as such: the same ViT-L architecture under the same trainer,
 data and schedule reaches $0.280$ at $H{=}96$ with no pretrained weights against $0.245$ with them,
 a $14\%$ gap from the weights alone. That randomly initialised ViT-L is also worse than the
@@ -90,10 +91,11 @@ budget-dependent: at 20k updates the image initialisation has caught up and is s
 longest horizon, so what video pretraining supplies is adaptation efficiency rather than a higher
 ceiling. The reported 60k system sits past that crossover and we did not train a 60k image-initialised
 counterpart, so this study does not establish that the headline number requires the video
-initialisation --- it establishes what the video prior is worth at the budgets we ran the comparison
+initialisation; it establishes what the video prior is worth at the budgets we ran the comparison
 at. And the panels are not comparable to
-each other --- the lower arms use a different trainer (latent prediction with an added predictor, an
-EMA target encoder, no tube-masked batches) on a larger backbone --- so nothing here shows a
+each other, because the lower arms use a different trainer (latent prediction with an added
+predictor, an EMA target encoder, no tube-masked batches) on a larger backbone, so nothing here
+shows a
 predictive video objective beating a reconstructive one; at ViT-B the two are within $0.002$. The
 image-initialised arm is an initialisation control, not a reimplementation of VisionTS++.
 
@@ -103,8 +105,8 @@ image-initialised arm is an initialisation control, not a reimplementation of Vi
 \input{figures/ablation_table}
 
 Table~\ref{tab:ablation} varies the supervision and the budget with everything else fixed. Replacing
-the value-space term with pixel-only supervision --- same masking, rendering, corpus, schedule and
-inference rule --- costs $5\%$ at $H{=}96$, $5\%$ at $H{=}336$ and $8\%$ at $H{=}720$. Under this
+the value-space term with pixel-only supervision, with masking, rendering, corpus, schedule and
+inference rule held constant, costs $5\%$ at $H{=}96$, $5\%$ at $H{=}336$ and $8\%$ at $H{=}720$. Under this
 matched comparison the read-out term accounts for the measured gain of the recipe, and its value
 grows with the horizon, which is where more of the output is generated rather than carried over from
 the visible context. Prior anchoring \citep{l2sp} is inert at the main model's 32-frame clip length
@@ -112,9 +114,9 @@ and matters only at 16 frames (Appendix~\ref{app:16f}); we report it as an inher
 that this configuration does not need.
 
 Under this objective the budget curve is monotonically improving: $0.250 \to 0.245 \to 0.242$ at
-$H{=}96$ for 5k, 20k and 60k updates. Scaling the other two knobs did not help --- a larger effective
-batch is equal or worse at every horizon and a $4\times$ larger in-domain corpus ties ours ---
-Appendix~\ref{app:failed}.
+$H{=}96$ for 5k, 20k and 60k updates. Scaling the other two knobs did not help: a larger effective
+batch is equal or worse at every horizon, and a $4\times$ larger in-domain corpus ties ours
+(Appendix~\ref{app:failed}).
 
 \subsection{The native objective and forecasting accuracy move in opposite directions}
 \label{sec:diagnosis}
@@ -124,7 +126,7 @@ Appendix~\ref{app:failed}.
 Figure~\ref{fig:budget}a is the observation that motivated the design. Continuing VideoMAE's native
 masked-pixel objective on the rendered corpus lowers its held-out pixel loss monotonically over the
 four checkpoints we evaluated ($0.0366 \to 0.0312$) while forecast error rises monotonically over the
-three evaluated downstream ($0.339 \to 0.381$). Per cell the 176k model is $5$--$60\%$ worse than the
+three evaluated downstream ($0.339 \to 0.381$). Per cell the 176k model is $5$ to $60\%$ worse than the
 20k one, worst at long horizons (ETTh2 at $H{=}720$: $0.429 \to 0.617$). The 60k native-objective
 checkpoint was not evaluated downstream, so that point is missing rather than interpolated, and this
 is a trend over the checkpoints we measured, not a scaling law.

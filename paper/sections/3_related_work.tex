@@ -1,7 +1,7 @@
-%----------------------------------------------------------------------
+%======================================================================
 \section{Related work}
 \label{sec:related}
-%----------------------------------------------------------------------
+%======================================================================
 
 \paragraph{Time-series foundation models.}
 Moirai \citep{moirai}, Chronos \citep{chronos}, Time-MoE \citep{timemoe}, Timer \citep{timer},
@@ -15,7 +15,7 @@ VisionTS \citep{visionts} folds a series into a periodicity-aligned image and in
 right-hand portion with a frozen ImageNet masked autoencoder \citep{mae}. VisionTS++
 \citep{visiontspp} keeps that construction, continues pretraining on LOTSA, and adds colourised
 multivariate rendering and nine quantile heads trained with a pinball objective. Two observations
-from this line matter for us. The visual prior that survives the transfer appears to be small ---
+from this line matter for us. The visual prior that survives the transfer appears to be small:
 SVTime \citep{svtime} matches VisionTS with a 215k-parameter model and OccamVTS \citep{occamvts}
 distils a vision forecaster into $1\%$ of its parameters. And VisionTS++ already supervises numerical
 forecasts directly: our objective-mismatch result (Section~\ref{sec:diagnosis}) is a statement about
@@ -29,7 +29,7 @@ latent representations of masked regions and are used for planning, closer to th
 formulation of \citet{lecun2022} and \citet{dreamer}. We use both as initialisations. The sense in which
 this paper's training stage is a world model is the operational one stated in the abstract: it maps
 an observed past to a predicted future state of the series and is scored on that prediction. That is
-the whole of the definition we use, and the title should be read with it --- we test no claim about
+the whole of the definition we use, and the title should be read with it. We test no claim about
 action conditioning, planning, learned simulation or physical understanding, and we do not describe
 the VideoMAE checkpoint itself as any of those things.
 
@@ -44,8 +44,8 @@ new is putting a differentiable pixel-to-value read-out \emph{inside} a masked-v
 objective, which converts a video backbone's reconstruction loss into a forecasting loss without
 touching the backbone; Table~\ref{tab:ablation} measures it against pixel-only supervision under
 matched conditions. \emph{Scale alignment}: multi-scale training is common, but here the training
-distribution over periods-per-frame is set equal to the one the inference rule draws from --- a
-consistency property, part of the recipe rather than an independently ablated component.
+distribution over periods-per-frame is set equal to the one the inference rule draws from, a
+consistency property that is part of the recipe rather than an independently ablated component.
 
 \paragraph{Transfer regularisation.}
 L2-SP \citep{l2sp} decays weights toward their initial values rather than toward zero. It is an

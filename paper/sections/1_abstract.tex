@@ -3,20 +3,21 @@
 Zero-shot time-series forecasters are normally bought with data: the strongest open models pretrain
 on corpora of tens to hundreds of billions of observations. We show that a video-pretrained backbone
 plus a transfer framework designed for forecasting reaches the same accuracy band for a small
-fraction of that cost. The obstacle is that the transfer does not happen on its own --- continuing a
+fraction of that cost. The obstacle is that the transfer does not happen on its own. Continuing a
 video model's masked-pixel objective on rendered series lowers that objective while raising forecast
-error --- so we rebuild the adaptation stage around the forecasting task. A series is rendered one
-period per frame, which makes motion across frames the evolution from one period to the next; the
-model predicts a masked block of future frames from the visible past alone; a differentiable
-read-out decodes those frames back into values, and the loss is taken there rather than on pixels;
-and training samples exactly the frame scales the inference rule will use. After 60k optimizer
-updates on 654M observations --- 18.9 hours on one A40, about $0.3\%$ of the archive and $1/27$ of
-the sample presentations behind the strongest visual baseline --- a single checkpoint under a single
-rule attains a mean MSE of $0.285$ over six standard long-sequence datasets and four horizons, the
-lowest of the models we compare, against $0.289$ for VisionTS++ large; its mean MAE, $0.328$, is
-behind that model's $0.326$. Holding everything but the initialisation fixed, the video prior is
-worth $3$--$5\%$ at every horizon at a 5k-update budget, and an ImageNet prior catches up by 20k:
-what video pretraining buys in this regime is adaptation efficiency, which is precisely the
-resource the low-budget setting is short of.
+error, so we rebuild the adaptation stage around the forecasting task, in the one operational sense
+of \emph{world model} this paper uses: the model observes a past and is scored on the future it
+predicts. A series is rendered one period per frame, which makes motion across frames the evolution
+from one period to the next; the model predicts a masked block of future frames from the visible
+past alone; a differentiable read-out decodes those frames back into values, and the loss is taken
+there rather than on pixels; and training samples exactly the frame scales the inference rule will
+use. After 60k optimizer updates on 654M observations, which is 18.9 hours on one A40, about
+$0.3\%$ of the archive and $1/27$ of the sample presentations behind the strongest visual baseline,
+a single checkpoint under a single rule attains a mean MSE of $0.285$ over six standard
+long-sequence datasets and four horizons, the lowest of the models we compare, against $0.289$ for
+VisionTS++ large; its mean MAE, $0.328$, is behind that model's $0.326$. Holding everything but the
+initialisation fixed, the video prior is worth $3$ to $5\%$ at every horizon at a 5k-update budget,
+and an ImageNet prior catches up by 20k: what video pretraining buys in this regime is adaptation
+efficiency, which is precisely the resource the low-budget setting is short of.
 
 \end{abstract}

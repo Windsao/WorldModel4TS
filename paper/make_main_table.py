@@ -67,7 +67,7 @@ def main(out="paper/figures/main_table.tex"):
 
     def fmt(v, c):
         if v is None:
-            return "--"
+            return "n/r"
         s = f"{v:.3f}"
         if v == best[c]:
             return "\\textbf{" + s + "}"
@@ -83,7 +83,7 @@ def main(out="paper/figures/main_table.tex"):
     L.append("\\caption{Zero-shot long-sequence forecasting. Each entry averages the four horizons "
              "$H\\in\\{96,192,336,720\\}$; MSE and MAE are computed on standardised values. Our model "
              "uses one checkpoint and one inference rule for all 24 cells. Baselines are quoted from "
-             "\\citet{visiontspp} and \\citet{visionts}; `--' means the source does not report that "
+             "\\citet{visiontspp} and \\citet{visionts}; `n/r' means the source does not report that "
              "dataset. \\textbf{Bold}: best. \\underline{Underlined}: second best. The last column counts "
              "first places over the twelve dataset columns.}")
     L.append("\\label{tab:main}")
@@ -104,7 +104,7 @@ def main(out="paper/figures/main_table.tex"):
             L.append("\\midrule")
             prev = row[1]
         L.append(row[0] + " & " + " & ".join(fmt(v, c) for c, v in enumerate(vals)) +
-                 f" & {nf if nf else '--'} \\\\")
+                 f" & {nf if nf else '0'} \\\\")
     L.append("\\bottomrule")
     L.append("\\end{tabular}")
     L.append("\\end{center}")

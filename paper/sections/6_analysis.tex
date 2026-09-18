@@ -1,21 +1,21 @@
-%----------------------------------------------------------------------
+%======================================================================
 \section{Discussion}
 \label{sec:analysis}
-%----------------------------------------------------------------------
+%======================================================================
 
 \paragraph{What the evidence supports, and what bounds it.}
 Two claims stand on separate experiments. A video-pretrained backbone is a better starting point than
 an image-pretrained one when the adaptation budget is small: at 5k updates, everything but the
-weights held fixed, it leads by $3$--$5\%$ at every horizon; and pretrained weights matter far more
+weights held fixed, it leads by $3$ to $5\%$ at every horizon; and pretrained weights matter far more
 than either choice, since removing them costs $14\%$ under an otherwise identical trainer. And a transfer framework is what makes any of these initialisations
 usable: under its own objective the same backbone gets worse at forecasting as that objective
-improves, and the value-space read-out is worth $5$--$8\%$ over pixel-only supervision under a
+improves, and the value-space read-out is worth $5$ to $8\%$ over pixel-only supervision under a
 matched ablation. Together they give the system result of Section~\ref{sec:main}; no experiment
 separates their interaction, so we attribute the end-to-end accuracy to the framework as a whole.
 
 The video advantage closes by 20k updates (Table~\ref{tab:backbone}). We keep that beside the claim
 it bounds, because it says what the video prior supplies: not a higher attainable accuracy but a
-lower cost of reaching it --- the quantity a small adaptation budget is short of, and what makes the
+lower cost of reaching it. That is the quantity a small adaptation budget is short of, and what makes the
 headline result a statement about efficiency. At a large adaptation budget, the expectation it sets
 is that the visual prior matters less than the transfer design.
 

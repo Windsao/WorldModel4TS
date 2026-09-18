@@ -1,7 +1,7 @@
-%----------------------------------------------------------------------
+%======================================================================
 \section{A transfer framework from video pretraining to forecasting}
 \label{sec:method}
-%----------------------------------------------------------------------
+%======================================================================
 
 \input{figures/overview}
 
@@ -38,17 +38,17 @@ A series is turned into a video, not into an image. Let $x_{1:L}$ be the observe
 frequency as in \citet{visionts}, and $k$ the number of periods packed into one frame; $L$ per
 dataset follows \citet{visionts} and is listed in Appendix~\ref{app:impl}. A clip of $F$ frames covers $FkP$ observations: frame $f$ holds the $kP$ consecutive observations of
 periods $[fk,(f+1)k)$, drawn side by side as an area chart in a $224\times224$ frame. Within a frame
-the horizontal axis is position inside that block of $k$ periods --- phase, when $k=1$ --- and the
+the horizontal axis is position inside that block of $k$ periods (phase, when $k=1$), and the
 vertical axis is value; \emph{across} frames the axis is time measured in blocks of $k$ periods. The
 $kP$ samples are spread over the 224 columns by a fixed integer partition, so each sample owns
 $\lfloor 224/kP \rfloor$ or $\lceil 224/kP \rceil$ adjacent columns and the mapping is invertible by
 construction. Consecutive frames therefore differ by whatever changed from one period to the
-next --- level, amplitude, shape --- and a seasonal series renders as an almost static video while a
+next, whether level, amplitude or shape, and a seasonal series renders as an almost static video while a
 drifting or regime-switching one renders as a moving one.
 
 This is what separates the representation from image folding. Folding a series into a 2-D image also
 aligns periods, but the model then sees one static picture to complete. Here the period axis is the
-model's \emph{time} axis --- the axis a video backbone was pretrained to extrapolate along --- and
+model's \emph{time} axis, the axis a video backbone was pretrained to extrapolate along, and
 the masked region is a block of future frames.
 
 Concretely, values are standardised with the mean and standard deviation of the visible context
@@ -73,7 +73,7 @@ Appendix~\ref{app:16f}.
 masked and must be predicted from the visible past. This is the formulation the title refers to: the model
 maps an observed past to a predicted future state of the series and is scored on that prediction, in
 the sense of \citet{lecun2022}, and unlike the backbone's native masked-reconstruction objective it
-never sees a neighbour on the far side of what it is predicting. With probability $0.3$ a uniformly drawn $1\ldots(F-h_p-8)/2$
+never sees a neighbour on the far side of what it is predicting. With probability $0.3$ a uniformly drawn $1$ to $(F-h_p-8)/2$
 leading tubelets are additionally hidden, so that shorter contexts are trained on as well; those
 hidden tokens are predicted but excluded from the loss. Thirty per cent of batches instead retain the
 backbone's original tube masking at a $0.75$ ratio, as a regulariser. The two batch types are
@@ -127,8 +127,8 @@ A forecaster must cover horizons from one period to many, and in this representa
 single predicted block can cover is $h_p k P$. Inference therefore varies $k$ with the requested
 horizon (\S\ref{sec:inference}), and training must cover the same range or the model meets
 resolutions it never saw. We sample $k\in\{1,2,4\}$ during training with probabilities
-$0.5/0.3/0.2$, which is the distribution the inference rule draws from. This is a
-training--inference consistency property of the framework rather than a generic augmentation: the
+$0.5/0.3/0.2$, which is the distribution the inference rule draws from. This is a consistency
+property between training and inference rather than a generic augmentation: the
 set of scales is determined by the inference rule, not chosen for diversity.
 
 \subsection{Inference}

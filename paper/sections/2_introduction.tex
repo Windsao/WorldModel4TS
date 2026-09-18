@@ -1,11 +1,11 @@
-%----------------------------------------------------------------------
+%======================================================================
 \section{Introduction}
 \label{sec:intro}
-%----------------------------------------------------------------------
+%======================================================================
 
 Zero-shot forecasters are trained once and applied to datasets they have never seen. The open models
-that do this well --- Moirai \citep{moirai}, Chronos \citep{chronos}, Time-MoE \citep{timemoe},
-TimesFM \citep{timesfm} --- reach that ability by pretraining on time-series corpora of tens to
+that do this well, among them Moirai \citep{moirai}, Chronos \citep{chronos}, Time-MoE
+\citep{timemoe} and TimesFM \citep{timesfm}, reach that ability by pretraining on time-series corpora of tens to
 hundreds of billions of observations. The cost is the point: it decides who can build such a model
 and how often it can be rebuilt when the data distribution moves. We ask what the accuracy ceiling
 looks like at a small fraction of that budget, and we get there by starting from a backbone that
@@ -16,10 +16,9 @@ lets a frozen ImageNet masked autoencoder \citep{mae} inpaint the missing portio
 \citep{visiontspp} continues that backbone's pretraining on rendered series with a multi-quantile
 head and reports the strongest published zero-shot numbers on the standard long-sequence protocol.
 Both inherit a prior over spatial structure from a model that has never seen anything change over
-time. Video pretraining offers a different inheritance --- representations built from sequences, and
-in the predictive variants an explicit forward model \citep{videomae, vjepa2} --- and the useful
-question about it is not whether it raises the ceiling but whether it lowers the cost of reaching
-one: \emph{does a video-pretrained backbone reach a given forecasting accuracy under a smaller
+time. Video pretraining offers a different inheritance: representations built from sequences and, in the
+predictive variants, an explicit forward model \citep{videomae, vjepa2}. The useful question about
+it is not whether it raises the ceiling but whether it lowers the cost of reaching one: \emph{does a video-pretrained backbone reach a given forecasting accuracy under a smaller
 time-series adaptation budget?}
 
 Getting an answer takes more than swapping the backbone. A numeric series has to become a video whose
@@ -44,10 +43,11 @@ design choices for a transfer problem, not three independent inventions: Section
 places each against its nearest existing method, and Section~\ref{sec:design} reports the ablation
 that each is supported by.
 
-The result is a position on the accuracy--resource trade-off rather than a large accuracy jump.
-Sixty thousand optimizer updates at an effective batch of 32 over 654M observations --- 18.9 hours on
-one A40, about $0.3\%$ of the LOTSA archive and $1/27$ of the sample presentations behind VisionTS++
---- give one checkpoint that, under one inference rule, reaches a mean MSE of $0.285$ over six
+The result is a position on the trade-off between accuracy and resources rather than a large
+accuracy jump.
+Sixty thousand optimizer updates at an effective batch of 32 over 654M observations, which is 18.9
+hours on one A40, about $0.3\%$ of the LOTSA archive and $1/27$ of the sample presentations behind
+VisionTS++, give one checkpoint that, under one inference rule, reaches a mean MSE of $0.285$ over six
 standard datasets and four horizons: the lowest of the models we compare (VisionTS++ large $0.289$,
 base $0.291$, VisionTS $0.309$), by a small margin. On mean MAE we are behind, $0.328$ against
 $0.326$, and per cell against VisionTS++ base we take 17 of 24 on MSE but 11 on MAE. The efficiency
@@ -55,10 +55,10 @@ statement is the substantive one; the accuracy statement is that we stay in the 
 making it.
 
 Two controlled experiments locate the video prior's contribution. Changing only the starting weights,
-it leads an ImageNet initialisation by $3$--$5\%$ at every horizon at 5k updates, and by 20k the
+it leads an ImageNet initialisation by $3$ to $5\%$ at every horizon at 5k updates, and by 20k the
 image initialisation has caught up; separately, removing the pretrained weights altogether costs
 $14\%$ under an otherwise identical trainer. What video pretraining supplies here is adaptation
-efficiency --- the binding constraint in this regime --- and not a higher ceiling. We ran that
+efficiency, the binding constraint in this regime, and not a higher ceiling. We ran that
 comparison at 5k and 20k updates and not at the 60k of the reported system, so the efficiency claim
 is the one the study supports; we do not claim the headline number depends on the video
 initialisation.
@@ -72,12 +72,12 @@ initialisation.
 \item Evidence that this reaches the accuracy band of the strongest published zero-shot models at
       $0.3\%$ of their time-series corpus, $1/27$ of their sample presentations and 18.9 GPU-hours,
       with the budget reported in separated units and no compute claim
-      (Sections~\ref{sec:main}--\ref{sec:budget}).
+      (Sections~\ref{sec:main} and~\ref{sec:budget}).
 \item A measurement of what the video prior is worth and where it stops: a matched-size, matched-recipe
       initialisation study with a random-init control at two adaptation budgets
       (Section~\ref{sec:backbone}).
-\item A diagnosis of why the naive route fails --- the backbone's own objective and forecasting
-      accuracy move in opposite directions as pretraining continues --- which is the motivation for
-      the framework and a caution for anyone continuing a vision objective on rendered series
+\item A diagnosis of why the naive route fails, the backbone's own objective and forecasting
+      accuracy moving in opposite directions as pretraining continues, which motivates the framework
+      and cautions anyone continuing a vision objective on rendered series
       (Section~\ref{sec:diagnosis}).
 \end{itemize}
